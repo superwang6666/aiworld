@@ -5,11 +5,12 @@ import { Sparkles, Download, Loader2, FlaskConical } from 'lucide-react';
 import { WorldRule, ValidationResult } from '@/types';
 import RuleCard from '@/components/RuleCard';
 import ValidationReport from '@/components/ValidationReport';
+import GameAnalysisStep from '@/components/GameAnalysisStep';
 
-type WorkflowStep = 'premise' | 'validation' | 'artStyle' | 'rules';
+type WorkflowStep = 'gameAnalysis' | 'premise' | 'validation' | 'artStyle' | 'rules';
 
 export default function Home() {
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>('premise');
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>('gameAnalysis');
   const [corePremise, setCorePremise] = useState('');
   const [artStyle, setArtStyle] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -206,6 +207,15 @@ export default function Home() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold ${
+                currentStep === 'gameAnalysis' ? 'bg-[#00ff88] text-black' :
+                ['premise', 'validation', 'artStyle', 'rules'].includes(currentStep) ? 'bg-green-500/20 text-green-400 border border-green-500' :
+                'bg-gray-700 text-gray-400'
+              }`}>0</div>
+              <span className="text-sm font-mono text-gray-400">Game Analysis</span>
+            </div>
+            <div className="flex-1 h-px bg-gray-800 mx-4"></div>
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold ${
                 currentStep === 'premise' ? 'bg-[#00ff88] text-black' :
                 ['validation', 'artStyle', 'rules'].includes(currentStep) ? 'bg-green-500/20 text-green-400 border border-green-500' :
                 'bg-gray-700 text-gray-400'
@@ -239,6 +249,22 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Step 0: Game Analysis */}
+        {currentStep === 'gameAnalysis' && (
+          <GameAnalysisStep
+            onComplete={(insights) => {
+              // 将提取的启发应用到核心设定输入框
+              if (insights && insights.length > 0) {
+                setCorePremise(insights.join('\n\n'));
+              }
+              setCurrentStep('premise');
+            }}
+            onSkip={() => {
+              setCurrentStep('premise');
+            }}
+          />
+        )}
 
         {/* Step 1: Core Premise Input */}
         {currentStep === 'premise' && (
