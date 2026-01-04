@@ -4,6 +4,7 @@
 `.env` 文件已经重新创建为干净格式，内容为：
 ```
 DEEPSEEK_API_KEY=sk-c3a254f89029480181f5d34002dcf2e0
+RAWG_API_KEY=0034c6e112bd43efbd29aaca7596e8e8
 ```
 
 ## ⚠️ 重要：必须重启服务器

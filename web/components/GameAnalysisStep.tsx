@@ -33,19 +33,19 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to search games');
+        const data = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
       setSearchResults(data.games || []);
 
       if (data.games?.length === 0) {
-        setError('未找到相关游戏，请尝试其他关键词');
+        setError('未找到相关游戏，请尝试其他关键词（如具体游戏名称：Hades, Elden Ring）');
       }
     } catch (err: any) {
+      console.error('Search error details:', err);
       setError(err.message || '搜索失败，请稍后重试');
-      console.error('Search failed:', err);
     } finally {
       setIsSearching(false);
     }

@@ -16,11 +16,12 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.RAWG_API_KEY || '';
 
     // 构建RAWG API请求
+    // 优先使用 -added (最受欢迎) 而不是 -metacritic (评分高但可能太小众)
     const params = new URLSearchParams({
       key: apiKey,
       search: query.trim(),
-      page_size: '10',  // 返回前10个结果
-      ordering: '-metacritic',  // 按评分排序
+      page_size: '15',  // 返回前15个结果（过滤后取10个）
+      ordering: '-added',  // 按人气排序
     });
 
     if (genre) {
@@ -40,19 +41,26 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
-    // 格式化响应
-    const games = data.results.map((game: any) => ({
-      id: game.id,
-      name: game.name,
-      released: game.released || 'Unknown',
-      rating: game.rating || 0,
-      metacritic: game.metacritic || null,
-      platforms: game.platforms?.map((p: any) => p.platform.name) || [],
-      genres: game.genres?.map((g: any) => g.name) || [],
-      background_image: game.background_image || '',
-      description: game.description_raw || '',
-      tags: game.tags?.slice(0, 5).map((t: any) => t.name) || [],
-    }));
+    // 格式化响应，并过滤低质量结果
+    const games = data.results
+      .filter((game: any) =>
+        // 过滤条件：必须有发行日期且评分 > 2.5，或者Metacritic评分存在
+        (game.released && game.released !== 'Unknown' && game.rating > 2.5) ||
+        game.metacritic !== null
+      )
+      .slice(0, 10)  // 只取前10个
+      .map((game: any) => ({
+        id: game.id,
+        name: game.name,
+        released: game.released || 'Unknown',
+        rating: game.rating || 0,
+        metacritic: game.metacritic || null,
+        platforms: game.platforms?.map((p: any) => p.platform.name) || [],
+        genres: game.genres?.map((g: any) => g.name) || [],
+        background_image: game.background_image || '',
+        description: game.description_raw || '',
+        tags: game.tags?.slice(0, 5).map((t: any) => t.name) || [],
+      }));
 
     return NextResponse.json({
       games,
