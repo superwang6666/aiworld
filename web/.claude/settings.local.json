@@ -6,7 +6,9 @@
       "Bash(curl:*)",
       "Bash(dir:*)",
       "Bash(tree:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx kill-port:*)"
     ]
   }
 }

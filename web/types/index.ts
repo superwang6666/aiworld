@@ -59,6 +59,7 @@ export interface GameInfo {
   description: string;             // 游戏描述
   developers?: string[];           // 开发商
   tags?: string[];                 // 标签
+  recommendationReason?: string;   // AI推荐理由
 }
 
 export interface GameAnalysis {

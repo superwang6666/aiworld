@@ -10,7 +10,7 @@ interface GameAnalysisStepProps {
 }
 
 export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisStepProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [anomalyDescription, setAnomalyDescription] = useState('');
   const [searchResults, setSearchResults] = useState<GameInfo[]>([]);
   const [selectedGames, setSelectedGames] = useState<Set<number>>(new Set());
   const [isSearching, setIsSearching] = useState(false);
@@ -18,18 +18,18 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
   const [analysis, setAnalysis] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 处理搜索
+  // AI语义分析并推荐游戏
   const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
+    if (!anomalyDescription.trim()) return;
 
     setIsSearching(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/game-search', {
+      const response = await fetch('/api/recommend-games', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: searchQuery }),
+        body: JSON.stringify({ anomalyDescription: anomalyDescription }),
       });
 
       if (!response.ok) {
@@ -41,11 +41,11 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
       setSearchResults(data.games || []);
 
       if (data.games?.length === 0) {
-        setError('未找到相关游戏，请尝试其他关键词（如具体游戏名称：Hades, Elden Ring）');
+        setError('AI 未能找到匹配的游戏，请尝试更具体的描述');
       }
     } catch (err: any) {
       console.error('Search error details:', err);
-      setError(err.message || '搜索失败，请稍后重试');
+      setError(err.message || 'AI 推荐失败，请稍后重试');
     } finally {
       setIsSearching(false);
     }
@@ -108,39 +108,41 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
         <p className="text-sm text-[#e5e5e5] font-mono">
           <span className="text-[#00ff88] font-bold">步骤 0: 游戏类型分析（可选）</span>
           <br />
-          搜索并分析同类型的代表作游戏，AI将提取核心元素为你的世界观构建提供参考。
+          描述你的核心异质点，AI 将推荐具有相似概念的代表作游戏，并分析它们的核心元素为你的世界观构建提供参考。
         </p>
       </div>
 
-      {/* 搜索区域 */}
+      {/* 输入核心异质点 */}
       <div className="border border-gray-800 bg-[#111111] rounded-lg p-6">
         <label className="block text-sm font-bold text-[#00ff88] uppercase mb-2 font-mono">
-          搜索代表作游戏
+          描述你的核心异质点
         </label>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="例如: roguelike, 开放世界, 潜行, Hades, Elden Ring"
-            className="flex-1 px-4 py-3 bg-black border border-gray-700 rounded focus:outline-none focus:border-[#00ff88]/50 text-[#e5e5e5] font-mono"
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          />
-          <button
-            onClick={handleSearch}
-            disabled={isSearching || !searchQuery.trim()}
-            className="px-6 py-3 bg-[#00ff88] text-black font-bold rounded hover:bg-[#00cc6f] disabled:bg-gray-700 disabled:text-gray-500 transition-colors flex items-center gap-2"
-          >
-            {isSearching ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Search className="w-5 h-5" />
-            )}
-          </button>
-        </div>
+        <textarea
+          value={anomalyDescription}
+          onChange={(e) => setAnomalyDescription(e.target.value)}
+          placeholder="例如：一个谎言会增加重力的世界、时间倒流的社会、记忆可以交易的城市..."
+          className="w-full h-32 px-4 py-3 bg-black border border-gray-700 rounded focus:outline-none focus:border-[#00ff88]/50 text-[#e5e5e5] font-mono resize-none"
+        />
         <p className="mt-2 text-xs text-gray-500 font-mono">
-          提示: 可搜索游戏类型（如"roguelike"）或具体游戏名称（如"Hades"）
+          AI 将分析你的核心异质点，并推荐具有相似概念或机制的代表作游戏
         </p>
+        <button
+          onClick={handleSearch}
+          disabled={isSearching || !anomalyDescription.trim()}
+          className="mt-4 w-full flex items-center justify-center gap-3 px-6 py-3 bg-[#00ff88] text-black font-bold rounded hover:bg-[#00cc6f] disabled:bg-gray-700 disabled:text-gray-500 transition-colors"
+        >
+          {isSearching ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>AI 分析并推荐游戏中...</span>
+            </>
+          ) : (
+            <>
+              <Search className="w-5 h-5" />
+              <span>AI 推荐相关游戏</span>
+            </>
+          )}
+        </button>
       </div>
 
       {/* 错误提示 */}
@@ -154,7 +156,7 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
       {searchResults.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-bold text-[#00ff88] font-mono">
-            搜索结果 ({searchResults.length}) - 请多选游戏
+            AI 推荐的游戏 ({searchResults.length}) - 请多选分析
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {searchResults.map((game) => (
@@ -178,6 +180,11 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
                     <p className="text-xs text-gray-400 mt-1">
                       {game.genres.join(', ')} | {game.released}
                     </p>
+                    {game.recommendationReason && (
+                      <p className="text-xs text-[#00ff88] mt-2 italic">
+                        💡 {game.recommendationReason}
+                      </p>
+                    )}
                     <div className="flex gap-2 mt-2">
                       {game.metacritic && (
                         <div className="inline-block px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded">
