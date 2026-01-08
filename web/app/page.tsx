@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { Sparkles, Download, Loader2, FlaskConical } from 'lucide-react';
-import { WorldRule, ValidationResult } from '@/types';
+import { WorldRule, ValidationResult, DEACAnalysis } from '@/types';
 import RuleCard from '@/components/RuleCard';
 import ValidationReport from '@/components/ValidationReport';
 import GameAnalysisStep from '@/components/GameAnalysisStep';
+import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
 
 type WorkflowStep = 'gameAnalysis' | 'premise' | 'validation' | 'artStyle' | 'rules';
 
@@ -18,6 +19,10 @@ export default function Home() {
   const [isValidating, setIsValidating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // DEAC 专家系统状态
+  const [deacAnalysis, setDeacAnalysis] = useState<DEACAnalysis | null>(null);
+  const [deacLoading, setDeacLoading] = useState(false);
 
   const handleValidatePremise = async () => {
     if (!corePremise.trim()) {
@@ -47,6 +52,78 @@ export default function Home() {
       const data = await response.json();
       setValidationResult(data);
       setCurrentStep('validation');
+
+      // 触发 DEAC 专家分析
+      setDeacLoading(true);
+      fetch('/api/deac/analyze-gap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          heterogeneity_point: corePremise.trim(),
+          validation_result: data,
+        }),
+      })
+        .then(res => res.json())
+        .then(gapData => {
+          // 使用差距分析调度专家
+          return fetch('/api/deac/dispatch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              heterogeneity_point: corePremise.trim(),
+              gap_analysis: gapData.gap_analysis,
+              context: {
+                core_premise: corePremise.trim(),
+                validation_result: data,
+                current_step: 'validation',
+              },
+              generate_special_experts: true,
+            }),
+          });
+        })
+        .then(res => res.json())
+        .then(dispatchData => {
+          // 综合专家响应
+          return fetch('/api/deac/synthesize', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              expert_responses: dispatchData.expert_responses,
+              heterogeneity_point: corePremise.trim(),
+            }),
+          }).then(res => res.json()).then(synthesisData => ({
+            ...dispatchData,
+            synthesis: synthesisData.synthesis,
+          }));
+        })
+        .then(fullAnalysis => {
+          setDeacAnalysis({
+            timestamp: new Date().toISOString(),
+            heterogeneity_point: corePremise.trim(),
+            gap_analysis: fullAnalysis.gap_analysis || {
+              heterogeneity_point: corePremise.trim(),
+              covered_laws: [],
+              uncovered_laws: [],
+              partial_coverage: [],
+              special_expertise_needed: [],
+              confidence_score: 0
+            },
+            activated_experts: fullAnalysis.activated_experts || [],
+            expert_responses: fullAnalysis.expert_responses || [],
+            synthesis: fullAnalysis.synthesis || {
+              consensus: '',
+              disagreements: [],
+              emergent_insights: [],
+              risk_assessment: ''
+            },
+            special_experts_generated: fullAnalysis.special_experts_generated || [],
+          });
+          setDeacLoading(false);
+        })
+        .catch(err => {
+          console.error('DEAC 分析错误:', err);
+          setDeacLoading(false);
+        });
     } catch (err: any) {
       setError(err.message || 'An error occurred while validating premise');
       console.error('Validation error:', err);
@@ -312,11 +389,17 @@ export default function Home() {
 
         {/* Step 2: Validation Results */}
         {currentStep === 'validation' && validationResult && (
-          <ValidationReport
-            result={validationResult}
-            onAccept={handleAcceptValidation}
-            onReject={handleRejectValidation}
-          />
+          <>
+            <ValidationReport
+              result={validationResult}
+              onAccept={handleAcceptValidation}
+              onReject={handleRejectValidation}
+            />
+            <ExpertInsightsPanel
+              analysis={deacAnalysis}
+              isLoading={deacLoading}
+            />
+          </>
         )}
 
         {/* Step 3: Art Style Input */}

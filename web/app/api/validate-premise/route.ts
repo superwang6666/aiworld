@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+// 辅助函数:获取基础 URL
+function getBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+}
+
 const VALIDATION_PROMPT = `You are an expert World-Building Validator specializing in the "Core Anomaly Verification" methodology.
 
 Your task is to analyze a proposed Core Premise and determine if it meets the criteria for a truly unique and "structural" (non-decorative) world-building foundation.
@@ -167,6 +175,29 @@ export async function POST(request: NextRequest) {
     if (!validationResult.eraserTest || typeof validationResult.eraserTest !== 'object') {
       throw new Error('Invalid response format: eraserTest object missing');
     }
+
+    // 触发 DEAC 分析(非阻塞后台服务)
+    // 不等待 - 让它在后台运行
+    fetch(`${getBaseUrl()}/api/deac/dispatch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        heterogeneity_point: corePremise,
+        gap_analysis: null, // 将由 dispatch 端点内部计算
+        context: {
+          core_premise: corePremise,
+          validation_result: validationResult,
+          current_step: 'validation',
+          user_preferences: {
+            enable_special_generation: true,
+            max_experts: 5,
+          }
+        },
+        generate_special_experts: true,
+      })
+    })
+      .then(() => console.log('DEAC 分析已触发'))
+      .catch(err => console.error('DEAC 触发错误:', err));
 
     return NextResponse.json(validationResult);
   } catch (error: any) {
