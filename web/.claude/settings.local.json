@@ -9,7 +9,10 @@
       "Bash(npm install:*)",
       "Bash(taskkill:*)",
       "Bash(npx kill-port:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(test:*)",
+      "Bash(node -r dotenv/config -r ts-node/register:*)",
+      "Bash(npx dotenv:*)"
     ]
   }
 }

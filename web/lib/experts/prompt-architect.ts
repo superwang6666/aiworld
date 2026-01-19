@@ -1,5 +1,7 @@
 import OpenAI from 'openai';
 import { ExpertConfig, ValidationResult } from '@/types';
+import { smartMatchExpert } from './expert-matcher';
+import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
 
 interface SpecialExpertRequest {
   domain: string;
@@ -10,9 +12,44 @@ interface SpecialExpertRequest {
 }
 
 /**
- * 使用 LLM 生成特殊专家配置
+ * 智能生成或复用特殊专家
+ *
+ * 此函数会:
+ * 1. 检查已缓存的特殊专家
+ * 2. 如果找到相似的专家则复用或更新
+ * 3. 只在必要时创建新专家
  */
 export async function generateSpecialExpert(request: SpecialExpertRequest): Promise<ExpertConfig> {
+  console.log(`\n🔍 正在为领域 "${request.domain}" 智能匹配专家...`);
+
+  // 使用智能匹配器
+  const matchResult = await smartMatchExpert(request);
+
+  if (matchResult.action === 'reuse') {
+    console.log(`♻️  ${matchResult.reason}`);
+    return matchResult.expert!;
+  } else if (matchResult.action === 'update') {
+    console.log(`🔄 ${matchResult.reason}`);
+    return matchResult.expert!;
+  } else {
+    console.log(`✨ ${matchResult.reason}`);
+    console.log(`正在创建新的特殊专家...`);
+
+    // 创建新专家
+    const newExpert = await generateNewSpecialExpert(request);
+
+    // 缓存新专家
+    await cacheSpecialExpert(newExpert);
+
+    console.log(`✅ 已创建并缓存新专家: ${newExpert.name}\n`);
+    return newExpert;
+  }
+}
+
+/**
+ * 使用 LLM 生成新的特殊专家配置(内部函数)
+ */
+async function generateNewSpecialExpert(request: SpecialExpertRequest): Promise<ExpertConfig> {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
   const baseURL = process.env.DEEPSEEK_API_KEY ? 'https://api.deepseek.com' : undefined;
   const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini';
