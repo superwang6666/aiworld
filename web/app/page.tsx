@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Sparkles, Download, Loader2, FlaskConical } from 'lucide-react';
-import { WorldRule, ValidationResult, DEACAnalysis } from '@/types';
+import { WorldRule, ValidationResult, DEACAnalysis, LawWeight } from '@/types';
 import RuleCard from '@/components/RuleCard';
 import ValidationReport from '@/components/ValidationReport';
 import GameAnalysisStep from '@/components/GameAnalysisStep';
@@ -16,6 +16,8 @@ export default function Home() {
   const [premiseSuggestion, setPremiseSuggestion] = useState<string | null>(null); // 游戏分析建议
   const [artStyle, setArtStyle] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [lawWeights, setLawWeights] = useState<LawWeight[]>([]); // 新增：法则权重
+  const [generationMode, setGenerationMode] = useState<'fast' | 'deep'>('fast'); // 新增：生成模式
   const [rules, setRules] = useState<WorldRule[]>([]);
   const [isValidating, setIsValidating] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -52,6 +54,7 @@ export default function Home() {
 
       const data = await response.json();
       setValidationResult(data);
+      setLawWeights(data.lawWeights || []); // 保存法则权重
       setCurrentStep('validation');
 
       // 触发 DEAC 专家分析
@@ -84,13 +87,14 @@ export default function Home() {
         })
         .then(res => res.json())
         .then(dispatchData => {
-          // 综合专家响应
+          // 综合专家响应（传递法则权重以使用加权算法）
           return fetch('/api/deac/synthesize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               expert_responses: dispatchData.expert_responses,
               heterogeneity_point: corePremise.trim(),
+              law_weights: data.lawWeights, // 传递法则权重
             }),
           }).then(res => res.json()).then(synthesisData => ({
             ...dispatchData,
@@ -152,6 +156,32 @@ export default function Home() {
     setError(null);
 
     try {
+      let expertResponses = undefined;
+
+      // 深度模式：等待DEAC分析完成
+      if (generationMode === 'deep') {
+        if (!deacAnalysis || deacLoading) {
+          // 如果DEAC还在加载，等待它完成
+          setError('正在等待专家分析完成，请稍候...');
+          // 轮询检查DEAC状态
+          const maxWaitTime = 30000; // 最多等待30秒
+          const startTime = Date.now();
+
+          while (deacLoading && (Date.now() - startTime < maxWaitTime)) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+
+          if (deacLoading) {
+            throw new Error('专家分析超时，请切换到快速模式或稍后重试');
+          }
+        }
+
+        if (deacAnalysis && deacAnalysis.expert_responses) {
+          expertResponses = deacAnalysis.expert_responses;
+          console.log(`🧠 使用 ${expertResponses.length} 个专家的洞察进行深度生成`);
+        }
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
@@ -160,6 +190,9 @@ export default function Home() {
         body: JSON.stringify({
           corePremise: corePremise.trim(),
           artStyle: artStyle.trim(),
+          lawWeights: lawWeights, // 传递法则权重
+          mode: generationMode, // 传递生成模式
+          expertResponses: expertResponses, // 深度模式传递专家响应
         }),
       });
 
@@ -420,6 +453,59 @@ export default function Home() {
               onAccept={handleAcceptValidation}
               onReject={handleRejectValidation}
             />
+
+            {/* 法则权重显示 */}
+            {lawWeights && lawWeights.length > 0 && (
+              <div className="mb-6 border border-[#00ff88]/20 rounded-lg p-6 bg-[#0f0f0f]">
+                <h3 className="text-lg font-mono font-bold text-[#00ff88] mb-4">
+                  ⚖️ 法则权重分析
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  根据核心设定的影响，系统计算了7个法则的权重。权重越高的法则将生成更多规则。
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {lawWeights.map((lw) => (
+                    <div
+                      key={lw.law}
+                      className={`border rounded p-3 ${
+                        lw.impactLevel === 'critical'
+                          ? 'border-red-500/50 bg-red-500/5'
+                          : lw.impactLevel === 'major'
+                          ? 'border-yellow-500/50 bg-yellow-500/5'
+                          : lw.impactLevel === 'minor'
+                          ? 'border-blue-500/50 bg-blue-500/5'
+                          : 'border-gray-600/50 bg-gray-600/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono font-bold text-sm">{lw.law}</span>
+                        <span className="text-xs font-mono text-gray-400">
+                          {(lw.weight * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2 mb-2">
+                        <div
+                          className={`h-2 rounded-full ${
+                            lw.impactLevel === 'critical'
+                              ? 'bg-red-500'
+                              : lw.impactLevel === 'major'
+                              ? 'bg-yellow-500'
+                              : lw.impactLevel === 'minor'
+                              ? 'bg-blue-500'
+                              : 'bg-gray-500'
+                          }`}
+                          style={{ width: `${lw.weight * 100}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {lw.rulesCount} 条规则
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <ExpertInsightsPanel
               analysis={deacAnalysis}
               isLoading={deacLoading}
@@ -451,20 +537,73 @@ export default function Home() {
               </p>
             </div>
 
+            {/* 生成模式选择 */}
+            <div className="border border-gray-800 bg-[#111111] rounded-lg p-6">
+              <label className="block text-sm font-bold text-[#00ff88] uppercase mb-3 font-mono">
+                Generation Mode
+              </label>
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="generationMode"
+                    value="fast"
+                    checked={generationMode === 'fast'}
+                    onChange={(e) => setGenerationMode(e.target.value as 'fast' | 'deep')}
+                    className="mt-1 w-4 h-4 text-[#00ff88] border-gray-700 focus:ring-[#00ff88]/30"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-mono text-[#e5e5e5] group-hover:text-[#00ff88] transition-colors">
+                      <span className="font-bold">快速模式</span> (推荐)
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 font-mono">
+                      立即生成规则，基于法则权重。DEAC专家分析在后台异步运行，可稍后查看。
+                    </p>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="generationMode"
+                    value="deep"
+                    checked={generationMode === 'deep'}
+                    onChange={(e) => setGenerationMode(e.target.value as 'fast' | 'deep')}
+                    className="mt-1 w-4 h-4 text-[#00ff88] border-gray-700 focus:ring-[#00ff88]/30"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-mono text-[#e5e5e5] group-hover:text-[#00ff88] transition-colors">
+                      <span className="font-bold">深度模式</span>
+                      <span className="ml-2 text-xs">
+                        {deacLoading ? (
+                          <span className="text-yellow-400">(专家分析中...)</span>
+                        ) : deacAnalysis && deacAnalysis.expert_responses ? (
+                          <span className="text-green-400">✓ {deacAnalysis.expert_responses.length} 个专家就绪</span>
+                        ) : null}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 font-mono">
+                      等待DEAC专家分析完成后，整合专家洞察生成规则。耗时10-15秒，规则更具深度和一致性。
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
             <button
               onClick={handleGenerate}
-              disabled={isGenerating || !artStyle.trim()}
+              disabled={isGenerating || !artStyle.trim() || (generationMode === 'deep' && deacLoading)}
               className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#00ff88] text-black font-bold uppercase rounded hover:bg-[#00cc6f] disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors font-mono"
             >
               {isGenerating ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>GENERATING RULES...</span>
+                  <span>{generationMode === 'deep' ? 'DEEP GENERATION IN PROGRESS...' : 'GENERATING RULES...'}</span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  <span>GENERATE WORLD RULES</span>
+                  <span>GENERATE WORLD RULES {generationMode === 'deep' && '(DEEP MODE)'}</span>
                 </>
               )}
             </button>

@@ -45,6 +45,23 @@ export interface ValidationResult {
   recommendations: string[];
 }
 
+// ==================== 法则权重系统 ====================
+
+export interface LawWeight {
+  law: Law;
+  weight: number;        // 0-1，归一化权重
+  impactLevel: 'critical' | 'major' | 'minor' | 'negligible';
+  rulesCount: number;    // 建议生成的规则数量
+  reasoning?: string;    // 权重计算的原因说明
+}
+
+// ==================== 生成选项 ====================
+
+export interface GenerationOptions {
+  mode: 'fast' | 'deep';  // 快速模式 vs 深度模式
+  waitForDEAC?: boolean;  // 是否等待DEAC完成（深度模式自动为true）
+}
+
 // ==================== 游戏分析相关类型 ====================
 
 export interface GameInfo {

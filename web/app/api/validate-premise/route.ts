@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { calculateLawWeights } from '@/lib/laws/weight-calculator';
 
 // 辅助函数:获取基础 URL
 function getBaseUrl(): string {
@@ -176,6 +177,9 @@ export async function POST(request: NextRequest) {
       throw new Error('Invalid response format: eraserTest object missing');
     }
 
+    // 计算法则权重
+    const lawWeights = calculateLawWeights(validationResult);
+
     // 触发 DEAC 分析(非阻塞后台服务)
     // 不等待 - 让它在后台运行
     fetch(`${getBaseUrl()}/api/deac/dispatch`, {
@@ -199,7 +203,10 @@ export async function POST(request: NextRequest) {
       .then(() => console.log('DEAC 分析已触发'))
       .catch(err => console.error('DEAC 触发错误:', err));
 
-    return NextResponse.json(validationResult);
+    return NextResponse.json({
+      ...validationResult,
+      lawWeights, // 添加法则权重到返回结果
+    });
   } catch (error: any) {
     console.error('Error validating premise:', error);
     return NextResponse.json(
