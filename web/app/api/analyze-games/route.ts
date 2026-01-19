@@ -42,7 +42,8 @@ const ANALYSIS_PROMPT = `你是游戏设计与世界观构建专家。你的任�
       }
     ],
     "coreGenreElements": ["可提取的类型核心元素"],
-    "worldBuildingInsights": ["对世界观构建的启发"]
+    "worldBuildingInsights": ["对世界观构建的启发"],
+    "premiseSummary": "将worldBuildingInsights总结成一句话的核心设定，作为用户创作世界观的参考起点"
   }
 }
 
@@ -50,7 +51,8 @@ const ANALYSIS_PROMPT = `你是游戏设计与世界观构建专家。你的任�
 1. 聚焦最重要的3-5个特征，避免过度细节
 2. 使用双引号(")表示字符串
 3. 提取的元素应具体且可操作
-4. 世界观启发应与七大法则（Space/Survival/Cognition/Scarcity/Time/Power/Metaphysics）关联`;
+4. 世界观启发应与七大法则（Space/Survival/Cognition/Scarcity/Time/Power/Metaphysics）关联
+5. premiseSummary应该是一句简洁但富有启发性的话，整合所有worldBuildingInsights的核心思想，适合作为世界观创作的起点`;
 
 export async function POST(request: NextRequest) {
   try {

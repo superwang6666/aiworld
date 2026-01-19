@@ -5,7 +5,7 @@ import { Search, CheckCircle, Circle, Sparkles, Loader2, ArrowRight } from 'luci
 import { GameInfo } from '@/types';
 
 interface GameAnalysisStepProps {
-  onComplete: (insights: string[]) => void;
+  onComplete: (premiseSummary: string) => void;
   onSkip: () => void;
 }
 
@@ -96,8 +96,8 @@ export default function GameAnalysisStep({ onComplete, onSkip }: GameAnalysisSte
 
   // 应用到世界观
   const handleApplyInsights = () => {
-    if (analysis?.comparativeAnalysis?.worldBuildingInsights) {
-      onComplete(analysis.comparativeAnalysis.worldBuildingInsights);
+    if (analysis?.comparativeAnalysis?.premiseSummary) {
+      onComplete(analysis.comparativeAnalysis.premiseSummary);
     }
   };
 

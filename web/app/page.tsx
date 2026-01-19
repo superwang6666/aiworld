@@ -13,6 +13,7 @@ type WorkflowStep = 'gameAnalysis' | 'premise' | 'validation' | 'artStyle' | 'ru
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('gameAnalysis');
   const [corePremise, setCorePremise] = useState('');
+  const [premiseSuggestion, setPremiseSuggestion] = useState<string | null>(null); // 游戏分析建议
   const [artStyle, setArtStyle] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [rules, setRules] = useState<WorldRule[]>([]);
@@ -330,11 +331,9 @@ export default function Home() {
         {/* Step 0: Game Analysis */}
         {currentStep === 'gameAnalysis' && (
           <GameAnalysisStep
-            onComplete={(insights) => {
-              // 将提取的启发应用到核心设定输入框
-              if (insights && insights.length > 0) {
-                setCorePremise(insights.join('\n\n'));
-              }
+            onComplete={(summary) => {
+              // 将总结存储为建议，而不是直接填入
+              setPremiseSuggestion(summary);
               setCurrentStep('premise');
             }}
             onSkip={() => {
@@ -346,6 +345,32 @@ export default function Home() {
         {/* Step 1: Core Premise Input */}
         {currentStep === 'premise' && (
           <div className="space-y-6 animate-fade-in">
+            {/* 游戏分析建议（如果有） */}
+            {premiseSuggestion && (
+              <div className="border border-[#00ff88]/50 bg-[#00ff88]/10 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-[#00ff88] flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-[#00ff88] uppercase mb-2 font-mono">
+                      游戏分析建议
+                    </h3>
+                    <p className="text-[#e5e5e5] text-sm font-mono mb-3">
+                      {premiseSuggestion}
+                    </p>
+                    <button
+                      onClick={() => {
+                        setCorePremise(premiseSuggestion);
+                        setPremiseSuggestion(null);
+                      }}
+                      className="text-xs px-3 py-1.5 bg-[#00ff88]/20 hover:bg-[#00ff88]/30 text-[#00ff88] rounded border border-[#00ff88]/50 transition-colors font-mono"
+                    >
+                      采纳此建议
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="border border-gray-800 bg-[#111111] rounded-lg p-6">
               <label className="block text-sm font-bold text-[#00ff88] uppercase mb-2 font-mono">
                 Core World Premise
