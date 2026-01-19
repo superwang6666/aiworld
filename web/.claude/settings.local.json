@@ -12,7 +12,8 @@
       "Bash(rm:*)",
       "Bash(test:*)",
       "Bash(node -r dotenv/config -r ts-node/register:*)",
-      "Bash(npx dotenv:*)"
+      "Bash(npx dotenv:*)",
+      "Bash(timeout /t 5)"
     ]
   }
 }
