@@ -364,19 +364,44 @@ export default function Home() {
     }
 
     try {
+      // 计算统计信息
+      const activeRulesCount = rules.filter(r => !r.rejected).length;
+      const confirmedRulesCount = rules.filter(r => r.confirmed).length;
+
+      // 转换标签权重为快照格式
+      const tagWeightSnapshot: Record<string, { weight: number; usage: number; deletions: number }> = {};
+      Object.keys(tagWeights).forEach(tagId => {
+        const tag = tagWeights[tagId];
+        tagWeightSnapshot[tagId] = {
+          weight: tag.weight,
+          usage: tag.usage_count,
+          deletions: tag.deletion_count,
+        };
+      });
+
+      const archive = {
+        id: '', // 服务端会生成
+        name: archiveName.trim(),
+        core_premise: corePremise,
+        art_style: artStyle,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        validation_result: validationResult,
+        law_weights: lawWeights,
+        deac_analysis: deacAnalysis,
+        rules: rules,
+        tag_weights: tagWeightSnapshot,
+        discipline_coverage: [], // 可选: 后续实现学科统计
+        total_rules_generated: rules.length,
+        active_rules_count: activeRulesCount,
+        confirmed_rules_count: confirmedRulesCount,
+        generation_sessions: 1,
+      };
+
       const response = await fetch('/api/archive/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: archiveName.trim(),
-          core_premise: corePremise,
-          art_style: artStyle,
-          validation_result: validationResult,
-          law_weights: lawWeights,
-          deac_analysis: deacAnalysis,
-          rules: rules,
-          tag_weights: tagWeights,
-        }),
+        body: JSON.stringify({ archive }),
       });
 
       if (response.ok) {
@@ -399,7 +424,47 @@ export default function Home() {
       const response = await fetch(`/api/archive/load?id=${archiveId}`);
 
       if (response.ok) {
-        const archive = await response.json();
+        const data = await response.json();
+        const archive = data.archive; // API返回 { archive: WorldArchive }
+
+        if (!archive) {
+          alert('存档数据格式错误');
+          return;
+        }
+
+        console.log('加载存档:', archive.name, {
+          rules: archive.rules?.length,
+          tagWeights: Object.keys(archive.tag_weights || {}).length
+        });
+
+        // 恢复标签权重 (从快照格式转换回RuleTag格式)
+        const restoredTagWeights: Record<string, RuleTag> = {};
+        const baseWeights = initializeTagWeights();
+
+        Object.keys(archive.tag_weights || {}).forEach(tagId => {
+          const snapshot = archive.tag_weights[tagId];
+          const baseTag = baseWeights[tagId];
+
+          if (baseTag) {
+            restoredTagWeights[tagId] = {
+              ...baseTag,
+              weight: snapshot.weight,
+              usage_count: snapshot.usage,
+              deletion_count: snapshot.deletions,
+            };
+          } else {
+            // 可能是LLM生成的标签,需要从存档的规则中查找
+            restoredTagWeights[tagId] = {
+              id: tagId,
+              name: tagId, // 临时使用ID作为名称
+              category: 'mechanism',
+              weight: snapshot.weight,
+              usage_count: snapshot.usage,
+              deletion_count: snapshot.deletions,
+              source: 'llm',
+            };
+          }
+        });
 
         // 恢复所有状态
         setCorePremise(archive.core_premise);
@@ -408,7 +473,7 @@ export default function Home() {
         setLawWeights(archive.law_weights || []);
         setDeacAnalysis(archive.deac_analysis || null);
         setRules(archive.rules || []);
-        setTagWeights(archive.tag_weights || initializeTagWeights());
+        setTagWeights(restoredTagWeights);
         setCurrentStep('rules');
         setShowArchiveManager(false);
 
