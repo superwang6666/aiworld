@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Download, Loader2, FlaskConical } from 'lucide-react';
-import { WorldRule, ValidationResult, DEACAnalysis, LawWeight } from '@/types';
+import { Sparkles, Download, Loader2, FlaskConical, Archive } from 'lucide-react';
+import { WorldRule, ValidationResult, DEACAnalysis, LawWeight, RuleTag } from '@/types';
 import RuleCard from '@/components/RuleCard';
+import ArchiveManager from '@/components/ArchiveManager';
+import { initializeTagWeights } from '@/lib/tags/tag-manager';
 import ValidationReport from '@/components/ValidationReport';
 import GameAnalysisStep from '@/components/GameAnalysisStep';
 import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
@@ -26,6 +28,11 @@ export default function Home() {
   // DEAC 专家系统状态
   const [deacAnalysis, setDeacAnalysis] = useState<DEACAnalysis | null>(null);
   const [deacLoading, setDeacLoading] = useState(false);
+
+  // HIL-Archive 系统状态
+  const [tagWeights, setTagWeights] = useState<Record<string, RuleTag>>(initializeTagWeights());
+  const [showArchiveManager, setShowArchiveManager] = useState(false);
+  const [archiveName, setArchiveName] = useState('');
 
   const handleValidatePremise = async () => {
     if (!corePremise.trim()) {
@@ -202,7 +209,47 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setRules(data.rules || []);
+      const generatedRules = data.rules || [];
+
+      // 为规则生成标签
+      if (generatedRules.length > 0) {
+        try {
+          console.log('开始为规则生成标签...', {
+            rulesCount: generatedRules.length,
+            tagWeightsKeys: Object.keys(tagWeights).length
+          });
+
+          const tagResponse = await fetch('/api/tags/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rules: generatedRules,
+              tagWeights: tagWeights,
+            }),
+          });
+
+          if (tagResponse.ok) {
+            const tagData = await tagResponse.json();
+            console.log('标签生成成功:', {
+              rulesWithTags: tagData.rules?.length,
+              updatedWeightsKeys: Object.keys(tagData.updatedWeights || {}).length
+            });
+            setRules(tagData.rules);
+            setTagWeights(tagData.updatedWeights);
+          } else {
+            const errorData = await tagResponse.json();
+            console.error('标签生成失败:', errorData);
+            // 如果标签生成失败,至少显示规则
+            setRules(generatedRules);
+          }
+        } catch (tagError) {
+          console.error('Failed to generate tags:', tagError);
+          setRules(generatedRules);
+        }
+      } else {
+        setRules(generatedRules);
+      }
+
       setCurrentStep('rules');
     } catch (err: any) {
       setError(err.message || 'An error occurred while generating rules');
@@ -212,16 +259,172 @@ export default function Home() {
     }
   };
 
-  const handleToggleRule = (id: string) => {
+    const handleToggleRule = async (id: string) => {
+    const rule = (rules || []).find(r => r.id === id);
+    if (!rule) return;
+
+    const wasConfirmed = rule.confirmed;
+    const willBeConfirmed = !wasConfirmed;
+
+    // 更新规则状态
     setRules((prevRules) =>
-      prevRules.map((rule) =>
-        rule.id === id ? { ...rule, confirmed: !rule.confirmed } : rule
+      prevRules.map((r) =>
+        r.id === id ? { ...r, confirmed: willBeConfirmed } : r
       )
+    );
+
+    // 如果确认规则,提升标签权重
+    if (willBeConfirmed && rule.tags && rule.tags.length > 0) {
+      try {
+        const response = await fetch('/api/tags/update-weights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tags: rule.tags,
+            action: 'confirm',
+            currentWeights: tagWeights,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setTagWeights(data.updatedWeights);
+
+          // 重新计算所有规则的删除评分
+          updateDeletionScores(data.updatedWeights);
+        }
+      } catch (err) {
+        console.error('Failed to update tag weights:', err);
+      }
+    }
+  };
+
+  const handleDeleteRule = async (id: string) => {
+    const rule = (rules || []).find(r => r.id === id);
+    if (!rule) return;
+
+    // 标记规则为已删除
+    setRules((prevRules) =>
+      prevRules.map((r) =>
+        r.id === id ? { ...r, rejected: true, confirmed: false } : r
+      )
+    );
+
+    // 降低标签权重
+    if (rule.tags && rule.tags.length > 0) {
+      try {
+        const response = await fetch('/api/tags/update-weights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tags: rule.tags,
+            action: 'delete',
+            currentWeights: tagWeights,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setTagWeights(data.updatedWeights);
+
+          // 重新计算所有规则的删除评分
+          updateDeletionScores(data.updatedWeights);
+        }
+      } catch (err) {
+        console.error('Failed to update tag weights:', err);
+      }
+    }
+  };
+
+  // 更新所有规则的删除评分
+  const updateDeletionScores = (weights: Record<string, RuleTag>) => {
+    setRules((prevRules) =>
+      prevRules.map((rule) => {
+        if (!rule.tags || rule.tags.length === 0) {
+          return { ...rule, deletion_score: 0.5 };
+        }
+
+        const totalWeight = rule.tags.reduce((sum, tagId) => {
+          return sum + (weights[tagId]?.weight || 0.5);
+        }, 0);
+
+        const avgWeight = totalWeight / rule.tags.length;
+        const deletion_score = 1 - avgWeight;
+
+        return { ...rule, deletion_score };
+      })
     );
   };
 
+  // 保存存档
+  const handleSaveArchive = async () => {
+    if (!archiveName.trim() || (rules || []).length === 0) {
+      alert('Please provide an archive name and ensure you have generated rules.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/archive/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: archiveName.trim(),
+          core_premise: corePremise,
+          art_style: artStyle,
+          validation_result: validationResult,
+          law_weights: lawWeights,
+          deac_analysis: deacAnalysis,
+          rules: rules,
+          tag_weights: tagWeights,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`Archive "${archiveName}" saved successfully!`);
+        setArchiveName('');
+      } else {
+        const data = await response.json();
+        alert(`Failed to save archive: ${data.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to save archive:', err);
+      alert('Failed to save archive. Please try again.');
+    }
+  };
+
+  // 加载存档
+  const handleLoadArchive = async (archiveId: string) => {
+    try {
+      const response = await fetch(`/api/archive/load?id=${archiveId}`);
+
+      if (response.ok) {
+        const archive = await response.json();
+
+        // 恢复所有状态
+        setCorePremise(archive.core_premise);
+        setArtStyle(archive.art_style || '');
+        setValidationResult(archive.validation_result);
+        setLawWeights(archive.law_weights || []);
+        setDeacAnalysis(archive.deac_analysis || null);
+        setRules(archive.rules || []);
+        setTagWeights(archive.tag_weights || initializeTagWeights());
+        setCurrentStep('rules');
+        setShowArchiveManager(false);
+
+        alert(`Archive "${archive.name}" loaded successfully!`);
+      } else {
+        const data = await response.json();
+        alert(`Failed to load archive: ${data.error}`);
+      }
+    } catch (err) {
+      console.error('Failed to load archive:', err);
+      alert('Failed to load archive. Please try again.');
+    }
+  };
+
   const handleExport = () => {
-    const confirmedRules = rules.filter((rule) => rule.confirmed);
+    const confirmedRules = (rules || []).filter((rule) => rule.confirmed);
 
     if (confirmedRules.length === 0) {
       alert('No rules confirmed. Please confirm at least one rule before exporting.');
@@ -289,7 +492,7 @@ export default function Home() {
     setError(null);
   };
 
-  const confirmedCount = rules.filter((r) => r.confirmed).length;
+  const confirmedCount = (rules || []).filter((r) => r.confirmed).length;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5]">
@@ -617,19 +820,26 @@ export default function Home() {
         )}
 
         {/* Step 4: Generated Rules */}
-        {currentStep === 'rules' && rules.length > 0 && (
+        {currentStep === 'rules' && (
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <h2 className="text-xl font-bold text-[#00ff88] font-mono uppercase">
-                  Generated Rules ({rules.length})
+                  Generated Rules ({(rules || []).length})
                 </h2>
                 <span className="text-sm text-gray-400 font-mono">
-                  Confirmed: {confirmedCount}/{rules.length}
+                  Confirmed: {confirmedCount}/{(rules || []).length}
                 </span>
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setShowArchiveManager(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-900/30 border border-purple-700 text-purple-300 rounded hover:bg-purple-900/50 transition-colors font-mono text-sm"
+                >
+                  <Archive className="w-4 h-4" />
+                  Manage Archives
+                </button>
                 <button
                   onClick={handleResetWorkflow}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors font-mono text-sm"
@@ -647,18 +857,67 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {rules.map((rule) => (
-                <RuleCard
-                  key={rule.id}
-                  rule={rule}
-                  onToggle={handleToggleRule}
-                />
-              ))}
-            </div>
+            {/* 存档保存区域 */}
+            {(rules || []).length > 0 && (
+              <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-6">
+                <h3 className="text-lg font-bold text-purple-300 font-mono mb-4">Save World Archive</h3>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={archiveName}
+                    onChange={(e) => setArchiveName(e.target.value)}
+                    placeholder="Enter archive name..."
+                    className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded text-white font-mono focus:border-purple-500 focus:outline-none"
+                  />
+                  <button
+                    onClick={handleSaveArchive}
+                    disabled={!archiveName.trim() || (rules || []).length === 0}
+                    className="px-6 py-2 bg-purple-900/30 border border-purple-700 text-purple-300 rounded hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-mono"
+                  >
+                    Save Archive
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2 font-mono">
+                  Archive will include all rules, tag weights, and preferences
+                </p>
+              </div>
+            )}
+
+            {(rules || []).length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(rules || []).map((rule) => (
+                  <RuleCard
+                    key={rule.id}
+                    rule={rule}
+                    onToggle={handleToggleRule}
+                    onDelete={handleDeleteRule}
+                    tagWeights={tagWeights}
+                    showPrediction={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="border border-gray-800 bg-[#111111] rounded-lg p-8 text-center">
+                <p className="text-gray-400 font-mono">No rules generated yet.</p>
+                <button
+                  onClick={handleResetWorkflow}
+                  className="mt-4 px-6 py-2 bg-[#00ff88] text-black font-bold rounded hover:bg-[#00cc6f] transition-colors font-mono"
+                >
+                  Start Over
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>
+
+      {/* Archive Manager Modal */}
+      {showArchiveManager && (
+        <ArchiveManager
+          onLoadArchive={handleLoadArchive}
+          onClose={() => setShowArchiveManager(false)}
+        />
+      )}
 
       {/* Footer */}
       <footer className="border-t border-gray-800 mt-16 py-6">

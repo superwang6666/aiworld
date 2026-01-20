@@ -15,7 +15,10 @@
       "Bash(npx dotenv:*)",
       "Bash(timeout /t 5)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 15 tail:*)"
     ]
   }
 }

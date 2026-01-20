@@ -13,6 +13,13 @@ export interface WorldRule {
   rule: string;
   expert_logic: string;
   confirmed: boolean;
+
+  // HIL-Archive 系统扩展字段
+  tags: string[];                // 标签ID数组
+  discipline_codes: string[];    // 关联的学科代码数组
+  rejected: boolean;             // 是否被用户拒绝/删除
+  deletion_score?: number;       // 预测删除评分 (0-1, 越高越可能被删除)
+  created_at: string;            // 规则生成时间 (ISO 8601)
 }
 
 export interface GenerationRequest {
@@ -221,3 +228,141 @@ export interface DEACContext {
     enable_special_generation?: boolean; // 允许生成新专家
   };
 }
+
+// ==================== HIL-Archive 标签系统 ====================
+
+/**
+ * 规则标签配置
+ */
+export interface RuleTag {
+  id: string;                    // 标签ID (如: "brutal", "cyclic")
+  name: string;                  // 显示名称 (如: "残酷", "循环")
+  category: 'tone' | 'mechanism' | 'narrative' | 'logic'; // 标签类别
+  weight: number;                // 全局权重 (0-1, 初始0.5)
+  usage_count: number;           // 被使用次数
+  deletion_count: number;        // 关联规则被删除次数
+  source: 'predefined' | 'llm';  // 标签来源
+  created_at?: string;           // LLM生成标签的时间戳
+}
+
+/**
+ * 标签权重快照 (用于存档)
+ */
+export interface TagWeightSnapshot {
+  [tagId: string]: {
+    weight: number;
+    usage: number;
+    deletions: number;
+  };
+}
+
+// ==================== HIL-Archive 学科分类系统 ====================
+
+/**
+ * 学科分类 (基于《普通高等学校本科专业目录》)
+ */
+export interface AcademicDiscipline {
+  code: string;                  // 学科代码 (如: "0201" 理论经济学)
+  name: string;                  // 学科名称
+  level: 1 | 2;                  // 1=门类, 2=专业类
+  parent_code: string | null;    // 父级代码 (门类为null)
+  related_laws: Law[];           // 关联的七大法则
+  expert_ids?: string[];         // 相关专家ID
+  keywords: string[];            // 关键词 (用于规则匹配)
+}
+
+/**
+ * 学科覆盖统计
+ */
+export interface DisciplineCoverage {
+  discipline_code: string;
+  discipline_name: string;
+  rule_count: number;            // 该学科下的规则总数
+  confirmed_count: number;       // 已确认的规则数
+  last_generated?: string;       // 最后生成规则时间 (ISO 8601)
+}
+
+// ==================== HIL-Archive 世界存档系统 ====================
+
+/**
+ * 完整世界存档
+ */
+export interface WorldArchive {
+  id: string;                    // 存档唯一ID (UUID)
+  name: string;                  // 用户自定义存档名称
+  core_premise: string;          // 核心异质点
+  art_style?: string;            // 美术风格
+
+  // 时间戳
+  created_at: string;            // 创建时间 (ISO 8601)
+  updated_at: string;            // 最后更新时间
+
+  // 验证结果
+  validation_result: ValidationResult;
+  law_weights: LawWeight[];
+  deac_analysis?: DEACAnalysis;
+
+  // 规则库 (包括已删除的规则,通过rejected字段标识)
+  rules: WorldRule[];
+
+  // 标签权重快照 (记录用户偏好)
+  tag_weights: TagWeightSnapshot;
+
+  // 学科覆盖统计
+  discipline_coverage: DisciplineCoverage[];
+
+  // 元数据统计
+  total_rules_generated: number;   // 总共生成的规则数
+  active_rules_count: number;      // 未被删除的规则数
+  confirmed_rules_count: number;   // 已确认的规则数
+  generation_sessions: number;     // 生成批次计数
+}
+
+/**
+ * 存档元数据 (用于列表显示)
+ */
+export interface ArchiveMetadata {
+  id: string;
+  name: string;
+  core_premise: string;          // 核心异质点 (用于预览)
+  created_at: string;
+  updated_at: string;
+  rules_count: number;           // 活跃规则数 (不包括已删除)
+  preview_rules: string[];       // 前3条规则预览
+}
+
+/**
+ * 标签生成请求
+ */
+export interface TagGenerationRequest {
+  rule: WorldRule;               // 要打标签的规则
+  existing_tags: RuleTag[];      // 已有的所有标签 (用于复用)
+}
+
+/**
+ * 标签生成响应
+ */
+export interface TagGenerationResponse {
+  rule_id: string;
+  predefined_tags: string[];     // 从预定义标签池匹配的标签ID
+  llm_generated_tags: RuleTag[]; // LLM生成的新标签
+  recommended_tags: string[];    // 最终推荐的标签ID列表
+}
+
+/**
+ * 学科映射请求
+ */
+export interface DisciplineMappingRequest {
+  rule: WorldRule;
+  disciplines: AcademicDiscipline[];
+}
+
+/**
+ * 学科映射响应
+ */
+export interface DisciplineMappingResponse {
+  rule_id: string;
+  discipline_codes: string[];    // 映射到的学科代码数组
+  confidence: number;            // 映射置信度 (0-1)
+}
+
