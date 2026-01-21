@@ -104,7 +104,8 @@ ${r.warnings?.length ? `警告: ${r.warnings.join('; ')}` : ''}
 3. 提取涌现洞察(结合多个视角产生的新想法)${emergentInsights.length > 0 ? '\n   注意: 算法已生成基础洞察，请在此基础上深化' : ''}
 4. 提供整体风险评估
 
-必须返回有效的 JSON,结构如下:
+重要: 必须返回严格有效的 JSON 格式，不要包含任何额外的文本或解释。
+所有字符串值中的引号必须正确转义。结构如下:
 {
   "consensus": "专家共识的详细描述",
   "disagreements": [{"topic": "分歧主题", "perspectives": [{"expert": "专家名", "view": "观点"}]}],
@@ -127,7 +128,43 @@ ${r.warnings?.length ? `警告: ${r.warnings.join('; ')}` : ''}
     // 清理可能的 markdown 代码块
     content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
 
-    const synthesis = JSON.parse(content);
+    // 清理可能的前后空白
+    content = content.trim();
+
+    let synthesis;
+    try {
+      synthesis = JSON.parse(content);
+    } catch (parseError: any) {
+      console.error('JSON 解析失败，原始内容:', content);
+      console.error('解析错误:', parseError.message);
+
+      // 尝试修复常见的 JSON 问题
+      try {
+        // 移除可能的 BOM 或其他不可见字符
+        content = content.replace(/^\uFEFF/, '');
+
+        // 尝试找到 JSON 对象的开始和结束
+        const jsonStart = content.indexOf('{');
+        const jsonEnd = content.lastIndexOf('}');
+
+        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+          const extractedJson = content.substring(jsonStart, jsonEnd + 1);
+          synthesis = JSON.parse(extractedJson);
+          console.log('✓ 成功从响应中提取 JSON');
+        } else {
+          throw new Error('无法从响应中提取有效的 JSON 对象');
+        }
+      } catch (retryError) {
+        // 如果仍然失败，返回一个默认结构
+        console.error('JSON 修复失败，使用默认结构');
+        synthesis = {
+          consensus: '由于 AI 响应格式问题，综合分析暂时不可用。',
+          disagreements: [],
+          emergent_insights: emergentInsights.length > 0 ? emergentInsights : ['请查看各专家的详细分析'],
+          risk_assessment: '请参考各专家的独立风险评估。'
+        };
+      }
+    }
 
     // 返回综合结果 + 加权预测（如果有）
     return NextResponse.json({
