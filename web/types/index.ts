@@ -20,6 +20,7 @@ export interface WorldRule {
   rejected: boolean;             // 是否被用户拒绝/删除
   deletion_score?: number;       // 预测删除评分 (0-1, 越高越可能被删除)
   created_at: string;            // 规则生成时间 (ISO 8601)
+  isNew?: boolean;               // 是否为新生成的规则 (替换删除规则)
 }
 
 export interface GenerationRequest {

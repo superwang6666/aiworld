@@ -1,7 +1,7 @@
 'use client';
 
 import { WorldRule, Law, RuleTag } from '@/types';
-import { Check, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Check, X, Trash2, AlertTriangle, Sparkles } from 'lucide-react';
 import { getPredefinedTagById } from '@/config/predefined-tags';
 
 interface RuleCardProps {
@@ -55,16 +55,25 @@ export default function RuleCard({
         ${lawColorClass}
         ${rule.confirmed ? 'opacity-100 ring-2 ring-cyan-400' : 'opacity-70 hover:opacity-100'}
         ${isDanger ? 'ring-2 ring-red-500/50' : isWarning ? 'ring-1 ring-yellow-500/50' : ''}
+        ${rule.isNew ? 'ring-2 ring-[#00ff88]/50 animate-pulse-glow' : ''}
       `}
     >
+      {/* NEW 标识 */}
+      {rule.isNew && (
+        <div className="absolute -top-2 -left-2 bg-[#00ff88] text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+          <Sparkles className="w-3 h-3" />
+          NEW
+        </div>
+      )}
+
       {/* 预测警告标识 */}
-      {isDanger && (
+      {isDanger && !rule.isNew && (
         <div className="absolute -top-2 -right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
           <AlertTriangle className="w-3 h-3" />
           高风险
         </div>
       )}
-      {isWarning && !isDanger && (
+      {isWarning && !isDanger && !rule.isNew && (
         <div className="absolute -top-2 -right-2 bg-yellow-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
           <AlertTriangle className="w-3 h-3" />
           预测

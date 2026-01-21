@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Download, Loader2, FlaskConical, Archive } from 'lucide-react';
 import { WorldRule, ValidationResult, DEACAnalysis, LawWeight, RuleTag } from '@/types';
 import RuleCard from '@/components/RuleCard';
@@ -333,6 +333,58 @@ export default function Home() {
       } catch (err) {
         console.error('Failed to update tag weights:', err);
       }
+    }
+
+    // 重新生成同一法则的新规则
+    try {
+      console.log(`重新生成 ${rule.law} 法则的新规则...`);
+      const response = await fetch('/api/generate-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          corePremise: corePremise.trim(),
+          artStyle: artStyle.trim(),
+          law: rule.law,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newRule = data.rule;
+
+        // 为新规则生成标签
+        try {
+          const tagResponse = await fetch('/api/tags/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rules: [newRule],
+              tagWeights: tagWeights,
+            }),
+          });
+
+          if (tagResponse.ok) {
+            const tagData = await tagResponse.json();
+            const ruleWithTags = tagData.rules[0];
+
+            // 将新规则添加到列表末尾
+            setRules((prevRules) => [...prevRules, ruleWithTags]);
+            setTagWeights(tagData.updatedWeights);
+            console.log('✓ 新规则已生成并添加到列表末尾');
+          } else {
+            // 如果标签生成失败,至少添加规则
+            setRules((prevRules) => [...prevRules, newRule]);
+          }
+        } catch (tagError) {
+          console.error('Failed to generate tags for new rule:', tagError);
+          setRules((prevRules) => [...prevRules, newRule]);
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to regenerate rule:', errorData.error);
+      }
+    } catch (err) {
+      console.error('Failed to regenerate rule:', err);
     }
   };
 
