@@ -37,7 +37,7 @@ Next.js **只在启动时**加载 `.env` 文件。如果你修改了 `.env` 文�
 ### 方案 1: 使用 .env.local
 创建一个新文件 `.env.local`（与 `.env` 同级），内容相同：
 ```
-DEEPSEEK_API_KEY=sk-c3a254f89029480181f5d34002dcf2e0
+DEEPSEEK_API_KEY=sk-your_deepseek_api_key_here
 ```
 Next.js 会优先读取 `.env.local`
 
@@ -61,6 +61,6 @@ Get-Content .env -Raw
 
 应该只显示一行，没有额外的空格或换行：
 ```
-DEEPSEEK_API_KEY=sk-c3a254f89029480181f5d34002dcf2e0
+DEEPSEEK_API_KEY=sk-your_deepseek_api_key_here
 ```
 
