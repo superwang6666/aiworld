@@ -64,6 +64,12 @@ cp .env.example .env
 
 4. Edit `.env` and add your API key:
 
+
+**使用 RAWG (推荐):**
+```
+RAWG_API_KEY=sk-your_RAWG_api_key_here
+```
+
 **使用 DeepSeek (推荐):**
 ```
 DEEPSEEK_API_KEY=sk-your_deepseek_api_key_here
