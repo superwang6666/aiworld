@@ -33,6 +33,8 @@ export default function Home() {
   const [tagWeights, setTagWeights] = useState<Record<string, RuleTag>>(initializeTagWeights());
   const [showArchiveManager, setShowArchiveManager] = useState(false);
   const [archiveName, setArchiveName] = useState('');
+  const [currentArchiveId, setCurrentArchiveId] = useState<string>(''); // 当前存档ID
+  const [isTogglingRule, setIsTogglingRule] = useState(false); // 防止并发操作
 
   const handleValidatePremise = async () => {
     if (!corePremise.trim()) {
@@ -259,43 +261,97 @@ export default function Home() {
     }
   };
 
-    const handleToggleRule = async (id: string) => {
+  const handleToggleRule = async (id: string) => {
+    // 防止并发操作
+    if (isTogglingRule) {
+      console.log('规则切换操作正在进行中，请稍候...');
+      return;
+    }
+
     const rule = (rules || []).find(r => r.id === id);
     if (!rule) return;
 
     const wasConfirmed = rule.confirmed;
     const willBeConfirmed = !wasConfirmed;
 
-    // 更新规则状态
-    setRules((prevRules) =>
-      prevRules.map((r) =>
-        r.id === id ? { ...r, confirmed: willBeConfirmed } : r
-      )
-    );
+    setIsTogglingRule(true);
 
-    // 如果确认规则,提升标签权重
-    if (willBeConfirmed && rule.tags && rule.tags.length > 0) {
-      try {
-        const response = await fetch('/api/tags/update-weights', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            tags: rule.tags,
-            action: 'confirm',
-            currentWeights: tagWeights,
-          }),
-        });
+    try {
+      // 计算更新后的规则列表
+      let finalRules = rules.map((r) =>
+        r.id === id ? { ...r, confirmed: willBeConfirmed, isNew: false } : r
+      );
 
-        if (response.ok) {
-          const data = await response.json();
-          setTagWeights(data.updatedWeights);
+      // 如果确认规则,提升标签权重并重新计算删除评分
+      if (willBeConfirmed && rule.tags && rule.tags.length > 0) {
+        try {
+          const response = await fetch('/api/tags/update-weights', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tags: rule.tags,
+              action: 'confirm',
+              currentWeights: tagWeights,
+            }),
+          });
 
-          // 重新计算所有规则的删除评分
-          updateDeletionScores(data.updatedWeights);
+          if (response.ok) {
+            const data = await response.json();
+            setTagWeights(data.updatedWeights);
+
+            // 重新计算所有规则的删除评分（基于 finalRules）
+            finalRules = finalRules.map((r) => {
+              if (!r.tags || r.tags.length === 0) {
+                return { ...r, deletion_score: 0.5 };
+              }
+
+              const totalWeight = r.tags.reduce((sum, tagId) => {
+                return sum + (data.updatedWeights[tagId]?.weight || 0.5);
+              }, 0);
+
+              const avgWeight = totalWeight / r.tags.length;
+              const deletion_score = 1 - avgWeight;
+
+              return { ...r, deletion_score };
+            });
+          }
+        } catch (err) {
+          console.error('标签权重更新失败:', err);
         }
-      } catch (err) {
-        console.error('Failed to update tag weights:', err);
       }
+
+      // 只在这里调用一次 setRules
+      setRules(finalRules);
+
+      // 如果是确认规则(从未确认变为确认),触发自动存档和生成新规则
+      if (!wasConfirmed && willBeConfirmed) {
+        // 使用 requestAnimationFrame 确保 DOM 更新完成
+        requestAnimationFrame(async () => {
+          try {
+            console.log('🔄 开始自动存档和生成新规则...');
+
+            // 1. 自动保存存档（传递更新后的规则）
+            await autoSaveArchive(finalRules);
+            console.log('✓ 自动存档完成');
+
+            // 2. 生成一条新的随机法则规则
+            await generateRandomRule();
+            console.log('✓ 新规则生成完成');
+          } catch (err) {
+            console.error('❌ 自动存档或生成新规则失败:', err);
+          } finally {
+            // 在异步操作完成后才释放锁
+            setIsTogglingRule(false);
+            console.log('🔓 规则切换锁已释放');
+          }
+        });
+      } else {
+        // 如果不触发自动存档，立即释放锁
+        setIsTogglingRule(false);
+      }
+    } catch (err) {
+      console.error('❌ 规则切换失败:', err);
+      setIsTogglingRule(false);
     }
   };
 
@@ -303,12 +359,8 @@ export default function Home() {
     const rule = (rules || []).find(r => r.id === id);
     if (!rule) return;
 
-    // 标记规则为已删除
-    setRules((prevRules) =>
-      prevRules.map((r) =>
-        r.id === id ? { ...r, rejected: true, confirmed: false } : r
-      )
-    );
+    // 立即从界面移除规则(而不是标记为rejected)
+    setRules((prevRules) => prevRules.filter((r) => r.id !== id));
 
     // 降低标签权重
     if (rule.tags && rule.tags.length > 0) {
@@ -408,6 +460,120 @@ export default function Home() {
     );
   };
 
+  // 自动保存存档(确认规则时触发)
+  const autoSaveArchive = async (rulesToSave: WorldRule[] = rules) => {
+    // 如果没有存档名称,使用默认名称
+    const saveName = archiveName.trim() || `World-${new Date().toLocaleDateString('zh-CN')}`;
+
+    try {
+      const activeRulesCount = rulesToSave.filter(r => !r.rejected).length;
+      const confirmedRulesCount = rulesToSave.filter(r => r.confirmed).length;
+
+      const tagWeightSnapshot: Record<string, { weight: number; usage: number; deletions: number }> = {};
+      Object.keys(tagWeights).forEach(tagId => {
+        const tag = tagWeights[tagId];
+        tagWeightSnapshot[tagId] = {
+          weight: tag.weight,
+          usage: tag.usage_count,
+          deletions: tag.deletion_count,
+        };
+      });
+
+      const archive = {
+        id: currentArchiveId, // 使用当前存档ID,如果为空则会创建新存档
+        name: saveName,
+        core_premise: corePremise,
+        art_style: artStyle,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        validation_result: validationResult,
+        law_weights: lawWeights,
+        deac_analysis: deacAnalysis,
+        rules: rulesToSave,
+        tag_weights: tagWeightSnapshot,
+        discipline_coverage: [],
+        total_rules_generated: rulesToSave.length,
+        active_rules_count: activeRulesCount,
+        confirmed_rules_count: confirmedRulesCount,
+        generation_sessions: 1,
+      };
+
+      const response = await fetch('/api/archive/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archive }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // 保存返回的存档ID,用于后续更新
+        if (data.archive_id && !currentArchiveId) {
+          setCurrentArchiveId(data.archive_id);
+        }
+        console.log('✓ 存档已自动保存:', currentArchiveId ? '(覆盖更新)' : '(新建存档)');
+      }
+    } catch (err) {
+      console.error('自动保存存档失败:', err);
+    }
+  };
+
+  // 生成随机法则的新规则
+  const generateRandomRule = async () => {
+    const LAWS = ['Space', 'Survival', 'Cognition', 'Scarcity', 'Time', 'Power', 'Metaphysics'];
+    const randomLaw = LAWS[Math.floor(Math.random() * LAWS.length)];
+
+    try {
+      console.log(`生成随机法则 ${randomLaw} 的新规则...`);
+      const response = await fetch('/api/generate-single', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          corePremise: corePremise.trim(),
+          artStyle: artStyle.trim(),
+          law: randomLaw,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate rule');
+      }
+
+      const data = await response.json();
+      const newRule = data.rule;
+
+      // 为新规则生成标签
+      try {
+        const tagResponse = await fetch('/api/tags/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rules: [newRule],
+            tagWeights: tagWeights,
+          }),
+        });
+
+        if (tagResponse.ok) {
+          const tagData = await tagResponse.json();
+          const ruleWithTags = tagData.rules[0];
+
+          // 使用函数式更新，确保基于最新状态
+          setRules((prevRules) => [...prevRules, ruleWithTags]);
+          setTagWeights(tagData.updatedWeights);
+          console.log('✓ 新随机规则已生成并添加到列表末尾');
+        } else {
+          setRules((prevRules) => [...prevRules, newRule]);
+        }
+      } catch (tagError) {
+        console.error('Failed to generate tags for new rule:', tagError);
+        setRules((prevRules) => [...prevRules, newRule]);
+      }
+    } catch (err) {
+      console.error('Failed to generate random rule:', err);
+      throw err; // 重新抛出错误，让调用者处理
+    }
+  };
+
   // 保存存档
   const handleSaveArchive = async () => {
     if (!archiveName.trim() || (rules || []).length === 0) {
@@ -432,7 +598,7 @@ export default function Home() {
       });
 
       const archive = {
-        id: '', // 服务端会生成
+        id: currentArchiveId, // 使用当前存档ID,如果为空则创建新存档
         name: archiveName.trim(),
         core_premise: corePremise,
         art_style: artStyle,
@@ -458,6 +624,10 @@ export default function Home() {
 
       if (response.ok) {
         const data = await response.json();
+        // 保存返回的存档ID,用于后续更新
+        if (data.archive_id && !currentArchiveId) {
+          setCurrentArchiveId(data.archive_id);
+        }
         alert(`Archive "${archiveName}" saved successfully!`);
         setArchiveName('');
       } else {
@@ -526,6 +696,8 @@ export default function Home() {
         setDeacAnalysis(archive.deac_analysis || null);
         setRules(archive.rules || []);
         setTagWeights(restoredTagWeights);
+        setCurrentArchiveId(archive.id); // 设置当前存档ID,用于后续覆盖更新
+        setArchiveName(archive.name); // 恢复存档名称
         setCurrentStep('rules');
         setShowArchiveManager(false);
 
