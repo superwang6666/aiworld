@@ -387,7 +387,7 @@ export default function Home() {
       }
     }
 
-    // 重新生成同一法则的新规则
+    // 重新生成同一法则的新规则(带去重检测)
     try {
       console.log(`重新生成 ${rule.law} 法则的新规则...`);
       const response = await fetch('/api/generate-single', {
@@ -397,6 +397,7 @@ export default function Home() {
           corePremise: corePremise.trim(),
           artStyle: artStyle.trim(),
           law: rule.law,
+          existingRules: rules.filter(r => !r.rejected), // 传递现有规则用于去重检测
         }),
       });
 
@@ -404,36 +405,28 @@ export default function Home() {
         const data = await response.json();
         const newRule = data.rule;
 
-        // 为新规则生成标签
-        try {
-          const tagResponse = await fetch('/api/tags/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              rules: [newRule],
-              tagWeights: tagWeights,
-            }),
-          });
+        // API已经生成了标签,直接添加规则
+        setRules((prevRules) => [...prevRules, newRule]);
 
-          if (tagResponse.ok) {
-            const tagData = await tagResponse.json();
-            const ruleWithTags = tagData.rules[0];
-
-            // 将新规则添加到列表末尾
-            setRules((prevRules) => [...prevRules, ruleWithTags]);
-            setTagWeights(tagData.updatedWeights);
-            console.log('✓ 新规则已生成并添加到列表末尾');
-          } else {
-            // 如果标签生成失败,至少添加规则
-            setRules((prevRules) => [...prevRules, newRule]);
-          }
-        } catch (tagError) {
-          console.error('Failed to generate tags for new rule:', tagError);
-          setRules((prevRules) => [...prevRules, newRule]);
+        // 如果有重试信息,在控制台显示
+        if (data.retries > 0) {
+          console.log(`✓ 新规则已生成(经过${data.retries}次去重重试)`);
+        } else {
+          console.log('✓ 新规则已生成(无重复)');
         }
       } else {
         const errorData = await response.json();
-        console.error('Failed to regenerate rule:', errorData.error);
+        if (errorData.error === '无法生成不重复的规则,请稍后重试') {
+          console.error('⚠️ 语义去重检测:', {
+            相似度: errorData.similarity,
+            理由: errorData.reasoning,
+            重试次数: errorData.retries,
+          });
+          console.error('⚠️ 无法生成不重复的规则,已重试多次');
+          alert(`暂时无法生成不重复的规则\n相似度: ${errorData.similarity}%\n原因: ${errorData.reasoning}`);
+        } else {
+          console.error('Failed to regenerate rule:', errorData.error);
+        }
       }
     } catch (err) {
       console.error('Failed to regenerate rule:', err);
@@ -517,7 +510,7 @@ export default function Home() {
     }
   };
 
-  // 生成随机法则的新规则
+  // 生成随机法则的新规则(带去重检测)
   const generateRandomRule = async () => {
     const LAWS = ['Space', 'Survival', 'Cognition', 'Scarcity', 'Time', 'Power', 'Metaphysics'];
     const randomLaw = LAWS[Math.floor(Math.random() * LAWS.length)];
@@ -531,42 +524,35 @@ export default function Home() {
           corePremise: corePremise.trim(),
           artStyle: artStyle.trim(),
           law: randomLaw,
+          existingRules: rules.filter(r => !r.rejected), // 传递现有规则用于去重检测
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (errorData.error === '无法生成不重复的规则,请稍后重试') {
+          console.error('⚠️ 语义去重检测:', {
+            相似度: errorData.similarity,
+            理由: errorData.reasoning,
+            重试次数: errorData.retries,
+          });
+          console.warn('⚠️ 无法生成不重复的规则,已跳过');
+          return; // 静默失败,不影响用户体验
+        }
         throw new Error(errorData.error || 'Failed to generate rule');
       }
 
       const data = await response.json();
       const newRule = data.rule;
 
-      // 为新规则生成标签
-      try {
-        const tagResponse = await fetch('/api/tags/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            rules: [newRule],
-            tagWeights: tagWeights,
-          }),
-        });
+      // API已经生成了标签,直接添加规则
+      setRules((prevRules) => [...prevRules, newRule]);
 
-        if (tagResponse.ok) {
-          const tagData = await tagResponse.json();
-          const ruleWithTags = tagData.rules[0];
-
-          // 使用函数式更新，确保基于最新状态
-          setRules((prevRules) => [...prevRules, ruleWithTags]);
-          setTagWeights(tagData.updatedWeights);
-          console.log('✓ 新随机规则已生成并添加到列表末尾');
-        } else {
-          setRules((prevRules) => [...prevRules, newRule]);
-        }
-      } catch (tagError) {
-        console.error('Failed to generate tags for new rule:', tagError);
-        setRules((prevRules) => [...prevRules, newRule]);
+      // 如果有重试信息,在控制台显示
+      if (data.retries > 0) {
+        console.log(`✓ 新随机规则已生成(经过${data.retries}次去重重试)`);
+      } else {
+        console.log('✓ 新随机规则已生成(无重复)');
       }
     } catch (err) {
       console.error('Failed to generate random rule:', err);

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { Law } from '@/types';
+import { Law, WorldRule } from '@/types';
+import { checkRuleSemanticDuplication, SEMANTIC_DEDUPLICATION_CONFIG } from '@/lib/rules/semantic-matcher';
+import { generateTagsForRule } from '@/lib/tags/tag-generator';
 
 const LAWS = [
   { name: 'Space', description: 'Geography/Physics' },
@@ -14,7 +16,7 @@ const LAWS = [
 
 export async function POST(request: NextRequest) {
   try {
-    const { corePremise, artStyle, law } = await request.json();
+    const { corePremise, artStyle, law, existingRules = [] } = await request.json();
 
     if (!corePremise || !artStyle || !law) {
       return NextResponse.json(
@@ -146,17 +148,122 @@ Do not include any other text or markdown formatting.`;
       throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
     }
 
-    // Format the rule
-    const formattedRule = {
-      id: `rule-${Date.now()}-new`,
-      law: validLaw.name as Law,
-      rule: ruleData.rule || ruleData.Rule || ruleData.description || 'No description provided',
-      expert_logic: ruleData.expert_logic || ruleData.expertLogic || ruleData.expert_reasoning || 'No expert logic provided',
-      confirmed: false,
-      isNew: true, // 标记为新生成的规则
-    };
+    // 重试循环: 最多重试 MAX_RETRIES 次
+    let retryCount = 0;
+    let finalRule = null;
 
-    return NextResponse.json({ rule: formattedRule });
+    while (retryCount <= SEMANTIC_DEDUPLICATION_CONFIG.MAX_RETRIES) {
+      // Format the rule
+      const formattedRule: WorldRule = {
+        id: `rule-${Date.now()}-${retryCount}`,
+        law: validLaw.name as Law,
+        rule: ruleData.rule || ruleData.Rule || ruleData.description || 'No description provided',
+        expert_logic: ruleData.expert_logic || ruleData.expertLogic || ruleData.expert_reasoning || 'No expert logic provided',
+        confirmed: false,
+        isNew: true,
+        tags: [],
+        discipline_codes: [],
+        rejected: false,
+        created_at: new Date().toISOString(),
+      };
+
+      // 生成标签
+      try {
+        const tagResult = await generateTagsForRule(formattedRule);
+        formattedRule.tags = tagResult.recommendedTagIds;
+      } catch (tagError) {
+        console.error('标签生成失败,跳过去重检测:', tagError);
+        // 标签生成失败,直接返回规则(无法进行去重检测)
+        return NextResponse.json({ rule: formattedRule });
+      }
+
+      // 语义去重检测
+      if (existingRules.length > 0) {
+        const duplicationCheck = await checkRuleSemanticDuplication(formattedRule, existingRules);
+
+        if (duplicationCheck.isDuplicate) {
+          retryCount++;
+          console.log(`规则重复 (语义相似度: ${duplicationCheck.similarity}%),重试 ${retryCount}/${SEMANTIC_DEDUPLICATION_CONFIG.MAX_RETRIES}...`);
+          console.log(`相似原因: ${duplicationCheck.reasoning}`);
+
+          // 如果还有重试机会,重新生成规则
+          if (retryCount <= SEMANTIC_DEDUPLICATION_CONFIG.MAX_RETRIES) {
+            // 调整温度参数,增加随机性
+            const retryCompletion = await openai.chat.completions.create({
+              model: model,
+              messages: [
+                {
+                  role: 'system',
+                  content: systemPrompt,
+                },
+                {
+                  role: 'user',
+                  content: userPrompt,
+                },
+              ],
+              temperature: 0.9 + retryCount * 0.05, // 逐步提高温度
+              response_format: { type: 'json_object' },
+            });
+
+            const retryResponseContent = retryCompletion.choices[0]?.message?.content;
+            if (!retryResponseContent) {
+              throw new Error('重试时AI服务无响应');
+            }
+
+            // 解析重试的响应
+            let cleanedContent = retryResponseContent.trim();
+            const jsonMatch = cleanedContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+            if (jsonMatch) {
+              cleanedContent = jsonMatch[1].trim();
+            }
+            cleanedContent = cleanedContent.replace(/[""]/g, '"');
+            cleanedContent = cleanedContent.replace(/['']/g, "'");
+            cleanedContent = cleanedContent.replace(/:\s*'([^']*)'/g, (_match, content) => {
+              return `: "${content.replace(/"/g, '\\"')}"`;
+            });
+            cleanedContent = cleanedContent.replace(/'([^']+)':/g, (_match, content) => {
+              return `"${content}":`;
+            });
+            cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
+
+            const retryParsed = JSON.parse(cleanedContent);
+            ruleData = retryParsed.rule || retryParsed;
+
+            // 继续下一轮循环
+            continue;
+          } else {
+            // 重试次数用尽
+            console.error('重试次数用尽,仍然重复。返回错误。');
+            return NextResponse.json(
+              {
+                error: '无法生成不重复的规则,请稍后重试',
+                retries: retryCount,
+                similarity: duplicationCheck.similarity,
+                reasoning: duplicationCheck.reasoning,
+              },
+              { status: 409 } // 409 Conflict
+            );
+          }
+        } else {
+          // 通过去重检测
+          finalRule = formattedRule;
+          break;
+        }
+      } else {
+        // 没有现有规则,无需检测
+        finalRule = formattedRule;
+        break;
+      }
+    }
+
+    if (!finalRule) {
+      throw new Error('未能生成有效规则');
+    }
+
+    return NextResponse.json({
+      rule: finalRule,
+      retries: retryCount, // 返回重试次数,供前端参考
+    });
   } catch (error: any) {
     console.error('Error generating single rule:', error);
     return NextResponse.json(
