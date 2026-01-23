@@ -14,8 +14,8 @@ import { WorldRule } from '@/types';
  * 语义去重配置
  */
 export const SEMANTIC_DEDUPLICATION_CONFIG = {
-  SIMILARITY_THRESHOLD: 85, // 语义相似度阈值(0-100)
-  MAX_RETRIES: 3, // 最大重试次数
+  SIMILARITY_THRESHOLD: 70, // 语义相似度阈值(0-100)
+  MAX_RETRIES: 5, // 最大重试次数
   SAME_LAW_ONLY: true, // 仅比对同一法则的规则
   ENABLE_REASONING_LOG: true, // 记录相似度判断理由
 };
