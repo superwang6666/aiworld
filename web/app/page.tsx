@@ -325,8 +325,8 @@ export default function Home() {
 
       // 如果是确认规则(从未确认变为确认),触发自动存档和生成新规则
       if (!wasConfirmed && willBeConfirmed) {
-        // 使用 requestAnimationFrame 确保 DOM 更新完成
-        requestAnimationFrame(async () => {
+        // 使用 setTimeout 代替 requestAnimationFrame 以避免 DOM 同步问题
+        setTimeout(async () => {
           try {
             console.log('🔄 开始自动存档和生成新规则...');
 
@@ -344,7 +344,7 @@ export default function Home() {
             setIsTogglingRule(false);
             console.log('🔓 规则切换锁已释放');
           }
-        });
+        }, 0);
       } else {
         // 如果不触发自动存档，立即释放锁
         setIsTogglingRule(false);

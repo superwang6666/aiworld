@@ -191,11 +191,25 @@ export async function POST(request: NextRequest) {
       }
 
       // Fix common AI JSON issues
-      // 1. Replace smart quotes with regular quotes
+      // 1. Replace smart quotes with regular quotes first
       cleanedContent = cleanedContent.replace(/[""]/g, '"');
       cleanedContent = cleanedContent.replace(/['']/g, "'");
 
-      // 2. Remove trailing commas before } or ]
+      // 2. Fix single quotes used as string delimiters (invalid in JSON)
+      // This regex handles single-quoted strings more carefully
+      // Match patterns like: 'key': 'value' or "key": 'value'
+      cleanedContent = cleanedContent.replace(/:\s*'([^']*)'/g, (_match, content) => {
+        // Value after colon - replace single quotes with double quotes
+        return `: "${content.replace(/"/g, '\\"')}"`;
+      });
+
+      // Match single-quoted property names: 'key':
+      cleanedContent = cleanedContent.replace(/'([^']+)':/g, (_match, content) => {
+        // Property name - replace single quotes with double quotes
+        return `"${content}":`;
+      });
+
+      // 3. Remove trailing commas before } or ]
       cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
 
       // First try: parse as-is
