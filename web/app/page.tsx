@@ -5,15 +5,35 @@ import { Sparkles, Download, Loader2, FlaskConical, Archive } from 'lucide-react
 import { WorldRule, ValidationResult, DEACAnalysis, LawWeight, RuleTag } from '@/types';
 import RuleCard from '@/components/RuleCard';
 import ArchiveManager from '@/components/ArchiveManager';
+import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
+import PremiumBackground from '@/components/PremiumBackground';
 import { initializeTagWeights } from '@/lib/tags/tag-manager';
 import ValidationReport from '@/components/ValidationReport';
 import GameAnalysisStep from '@/components/GameAnalysisStep';
-import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
+import GameAnalysisResult from '@/components/GameAnalysisResult';
+import GameRecommendView from '@/components/GameRecommendView';
+import HomePageResponsive from '@/components/imports/HomePage-responsive';
 
-type WorkflowStep = 'gameAnalysis' | 'premise' | 'validation' | 'artStyle' | 'rules';
+type WorkflowStep = 'homepage' | 'gameAnalysis' | 'gameRecommend' | 'gameAnalysisResult' | 'premise' | 'validation' | 'artStyle' | 'rules';
+
+interface GameData {
+  gameName: string;
+  description: string;
+  worldDirection: string;
+  tags: string[];
+}
+
+// Callback handlers for homepage navigation
+interface HomePageCallbacks {
+  onRecommendMode: (description: string) => void;
+  onDirectBuild: (description: string) => void;
+}
 
 export default function Home() {
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>('gameAnalysis');
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>('homepage');
+  const [worldDescription, setWorldDescription] = useState(''); // 主页输入的世界描述
+  const [selectedGamesForAnalysis, setSelectedGamesForAnalysis] = useState<any[]>([]); // 游戏推荐时选中的游戏
+  const [useGameRecommend, setUseGameRecommend] = useState(false); // 是否使用游戏推荐模式
   const [corePremise, setCorePremise] = useState('');
   const [premiseSuggestion, setPremiseSuggestion] = useState<string | null>(null); // 游戏分析建议
   const [artStyle, setArtStyle] = useState('');
@@ -759,7 +779,7 @@ export default function Home() {
   };
 
   const handleResetWorkflow = () => {
-    setCurrentStep('premise');
+    setCurrentStep('homepage');
     setCorePremise('');
     setArtStyle('');
     setValidationResult(null);
@@ -770,9 +790,44 @@ export default function Home() {
   const confirmedCount = (rules || []).filter((r) => r.confirmed).length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5]">
-      {/* Header */}
-      <header className="border-b border-[#00ff88]/20 bg-[#0f0f0f]">
+    <PremiumBackground>
+      {/* 首页或工作流视图 */}
+      {currentStep === 'homepage' ? (
+        <HomePageResponsive
+          onRecommendMode={(description) => {
+            setWorldDescription(description);
+            setUseGameRecommend(true);
+            setCurrentStep('gameRecommend');
+          }}
+          onDirectBuild={(description) => {
+            setWorldDescription(description);
+            setCorePremise(description);
+            setUseGameRecommend(false);
+            setCurrentStep('premise');
+          }}
+        />
+      ) : currentStep === 'gameRecommend' ? (
+        <GameRecommendView
+          worldDescription={worldDescription}
+          onGameSelect={(selectedGames) => {
+            setSelectedGamesForAnalysis(selectedGames);
+            setCurrentStep('gameAnalysisResult');
+          }}
+          onBack={() => setCurrentStep('homepage')}
+        />
+      ) : currentStep === 'gameAnalysisResult' ? (
+        <GameAnalysisResult
+          selectedGames={selectedGamesForAnalysis}
+          onComplete={(premiseSummary) => {
+            setCorePremise(premiseSummary);
+            setCurrentStep('premise');
+          }}
+          onBack={() => setCurrentStep('gameRecommend')}
+        />
+      ) : (
+      <div className="min-h-screen flex flex-col relative z-10">
+        {/* Header */}
+        <header className="border-b border-[#00ff88]/20 bg-[#0f0f0f]/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-pulse-glow"></div>
@@ -1185,7 +1240,6 @@ export default function Home() {
           </div>
         )}
       </main>
-
       {/* Archive Manager Modal */}
       {showArchiveManager && (
         <ArchiveManager
@@ -1200,6 +1254,8 @@ export default function Home() {
           World-Building Engine v2.0 | Core Anomaly Validation System | Seven Laws Framework
         </div>
       </footer>
-    </div>
+      </div>
+      )}
+    </PremiumBackground>
   );
 }

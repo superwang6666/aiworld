@@ -25,8 +25,8 @@ async function testSmartMatching() {
     console.log(`${idx + 1}. ${expert.name} (${expert.domain})`);
     console.log(`   ID: ${expert.id}`);
     console.log(`   版本: ${expert.version}`);
-    if (expert.merged_from && expert.merged_from.length > 0) {
-      console.log(`   🔀 合并自: ${expert.merged_from.join(', ')}`);
+    if ((expert as any).merged_from && (expert as any).merged_from.length > 0) {
+      console.log(`   🔀 合并自: ${(expert as any).merged_from.join(', ')}`);
     }
     console.log('');
   });
