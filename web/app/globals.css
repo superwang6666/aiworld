@@ -235,3 +235,17 @@ html {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+/* Reverse spin animation for loading */
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 1s linear infinite;
+}
