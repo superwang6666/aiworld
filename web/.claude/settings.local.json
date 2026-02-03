@@ -19,7 +19,8 @@
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
       "Bash(timeout 15 tail:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

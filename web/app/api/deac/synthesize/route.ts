@@ -1,6 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import OpenAI from 'openai';
-import { ExpertResponse, LawWeight } from '@/types';
+
+import type { ExpertResponse} from '@/types';
+
 import {
   synthesizeWithWeights,
   detectDisagreements,
@@ -154,7 +158,7 @@ ${r.warnings?.length ? `警告: ${r.warnings.join('; ')}` : ''}
         } else {
           throw new Error('无法从响应中提取有效的 JSON 对象');
         }
-      } catch (retryError) {
+      } catch (_retryError) {
         // 如果仍然失败，返回一个默认结构
         console.error('JSON 修复失败，使用默认结构');
         synthesis = {

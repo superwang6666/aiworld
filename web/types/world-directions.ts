@@ -1,4 +1,4 @@
-import { Law } from './index';
+import type { Law } from './index';
 
 /**
  * 世界方向类型定义

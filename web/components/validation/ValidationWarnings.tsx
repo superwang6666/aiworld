@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { AlertTriangle } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface ValidationWarningsProps {
   warnings: string[];

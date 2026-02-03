@@ -1,6 +1,7 @@
-import { ExpertConfig } from '@/types';
 import { promises as fs } from 'fs';
 import path from 'path';
+
+import type { ExpertConfig } from '@/types';
 
 const SPECIAL_EXPERTS_DIR = path.join(process.cwd(), 'lib', 'experts', 'special');
 
@@ -56,7 +57,7 @@ export async function findCachedExpertsByDomain(keywords: string[]): Promise<Exp
     });
 
     return matches;
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }

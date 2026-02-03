@@ -1,9 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import OpenAI from 'openai';
-import { Law, WorldRule } from '@/types';
+
+import type { Law, WorldRule } from '@/types';
+
+import { LAWS } from '@/config/law-names';
+
 import { checkRuleSemanticDuplication, SEMANTIC_DEDUPLICATION_CONFIG } from '@/lib/rules/semantic-matcher';
 import { generateTagsForRule } from '@/lib/tags/tag-generator';
-import { LAWS } from '@/config/law-names';
 
 export async function POST(request: NextRequest) {
   try {

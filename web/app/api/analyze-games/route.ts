@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import OpenAI from 'openai';
 
 const ANALYSIS_PROMPT = `你是游戏设计与世界观构建专家。你的任务是分析多个游戏，提取它们的核心元素和异同点，为世界观构建提供参考。

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { DEACAnalysis } from '@/types';
+
 import { Brain, Sparkles, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+
+import type { DEACAnalysis } from '@/types';
 
 interface ExpertInsightsPanelProps {
   analysis: DEACAnalysis | null;

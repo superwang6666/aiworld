@@ -1,7 +1,9 @@
 'use client';
 
+import type { ReactNode} from 'react';
+import { useEffect, useState } from 'react';
+
 import { motion } from 'motion/react';
-import { ReactNode, useEffect, useState } from 'react';
 
 interface PremiumBackgroundProps {
   children: ReactNode;
@@ -55,6 +57,7 @@ export default function PremiumBackground({ children }: PremiumBackgroundProps) 
   });
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

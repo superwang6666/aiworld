@@ -1,4 +1,5 @@
-import { RuleTag } from '@/types';
+import type { RuleTag } from '@/types';
+
 import { PREDEFINED_TAGS } from '@/config/predefined-tags';
 
 /**

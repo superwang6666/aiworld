@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ArchiveMetadata } from '@/types';
+
 import { Loader2, Archive, Trash2, Download, X } from 'lucide-react';
+
+import type { ArchiveMetadata } from '@/types';
 
 interface ArchiveManagerProps {
   onLoadArchive: (archiveId: string) => void;

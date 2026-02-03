@@ -14,7 +14,7 @@ export default function CircularProgress({
   strokeWidth = 14
 }: CircularProgressProps) {
   const radius = (size / 2) - (strokeWidth / 2);
-  const circumference = 2 * Math.PI * radius;
+  const _circumference = 2 * Math.PI * radius;
 
   // 根据分数计算颜色
   const getScoreColor = (score: number) => {

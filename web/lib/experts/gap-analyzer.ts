@@ -1,4 +1,4 @@
-import { ExpertConfig, GapAnalysis, ValidationResult, Law } from '@/types';
+import type { ExpertConfig, GapAnalysis, ValidationResult, Law } from '@/types';
 
 interface GapAnalysisInput {
   heterogeneity_point: string;

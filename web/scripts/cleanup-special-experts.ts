@@ -8,16 +8,18 @@
  * 4. 删除旧文件
  */
 
-import { analyzeAndMergeDuplicates, mergeExperts } from '../lib/experts/expert-matcher';
-import { loadAllSpecialExperts } from '../lib/experts/loader';
-import { cacheSpecialExpert } from '../lib/deac/cache-manager';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { ExpertConfig } from '../types';
+
+import { cacheSpecialExpert } from '../lib/deac/cache-manager';
+import { analyzeAndMergeDuplicates, mergeExperts } from '../lib/experts/expert-matcher';
+import { loadAllSpecialExperts } from '../lib/experts/loader';
+
+import type { ExpertConfig } from '../types';
 
 const SPECIAL_EXPERTS_DIR = path.join(process.cwd(), 'lib', 'experts', 'special');
 
-async function cleanupDuplicates() {
+async function _cleanupDuplicates() {
   console.log('='.repeat(60));
   console.log('特殊专家整理工具');
   console.log('='.repeat(60));
@@ -105,7 +107,7 @@ async function cleanupDuplicates() {
     try {
       await fs.unlink(filePath);
       console.log(`🗑️  已删除: ${expertId}.json`);
-    } catch (error) {
+    } catch (_error) {
       console.error(`   ❌ 删除失败: ${expertId}.json`);
     }
   }

@@ -1,9 +1,11 @@
 'use client';
 
-import { WorldRule, Law, RuleTag } from '@/types';
 import { Check, X, Trash2, AlertTriangle, Sparkles } from 'lucide-react';
-import { getPredefinedTagById } from '@/config/predefined-tags';
+
+import type { WorldRule, Law, RuleTag } from '@/types';
+
 import { LAW_NAME_MAP } from '@/config/law-names';
+import { getPredefinedTagById } from '@/config/predefined-tags';
 
 interface RuleCardProps {
   rule: WorldRule;

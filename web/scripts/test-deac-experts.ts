@@ -8,7 +8,8 @@
  */
 
 import { loadCoreExperts } from '../lib/experts/loader';
-import { ExpertConfig, Law } from '../types';
+
+import type { ExpertConfig, Law } from '../types';
 
 // 测试场景定义
 interface TestScenario {

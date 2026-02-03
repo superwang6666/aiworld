@@ -1,7 +1,8 @@
-import { WorldArchive, ArchiveMetadata } from '@/types';
+import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { randomUUID } from 'crypto';
+
+import type { WorldArchive, ArchiveMetadata } from '@/types';
 
 /**
  * 世界存档管理器

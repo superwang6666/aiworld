@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { Loader2, Search, Menu } from 'lucide-react';
-import { GameInfo } from '@/types';
+
+import type { GameInfo } from '@/types';
 
 interface GameAnalysis {
   individualAnalyses: Array<{

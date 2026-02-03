@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { Lightbulb } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface ValidationRecommendationsProps {
   recommendations: string[];

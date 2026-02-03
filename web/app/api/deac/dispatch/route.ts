@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { dispatchExperts } from '@/lib/experts/orchestrator';
-import { generateSpecialExpert } from '@/lib/experts/prompt-architect';
-import { loadCoreExperts } from '@/lib/experts/loader';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
 import { analyzeGaps } from '@/lib/experts/gap-analyzer';
+import { loadCoreExperts } from '@/lib/experts/loader';
+import { dispatchExperts } from '@/lib/experts/orchestrator';
+import { generateSpecialExpert } from '@/lib/experts/prompt-architect';
 
 /**
  * POST /api/deac/dispatch

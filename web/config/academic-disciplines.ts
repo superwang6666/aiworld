@@ -1,4 +1,4 @@
-import { AcademicDiscipline, Law } from '@/types';
+import type { AcademicDiscipline, Law } from '@/types';
 
 /**
  * 二级专业类学科目录

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, ChevronDown, Search, Menu, Play } from 'lucide-react';
+
+import { Loader2, Search, Menu } from 'lucide-react';
 import { motion } from 'motion/react';
-import { GameInfo } from '@/types';
+
+import type { GameInfo } from '@/types';
 
 interface GameRecommendViewProps {
   worldDescription: string;
@@ -21,7 +23,7 @@ export default function GameRecommendView({
   const [isSearching, setIsSearching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [_hoveredCard, setHoveredCard] = useState<number | null>(null);
 
   useEffect(() => {
     setMounted(true);

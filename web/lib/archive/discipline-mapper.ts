@@ -1,4 +1,5 @@
-import { WorldRule, AcademicDiscipline, DisciplineCoverage } from '@/types';
+import type { WorldRule, AcademicDiscipline, DisciplineCoverage } from '@/types';
+
 import { ACADEMIC_DISCIPLINES } from '@/config/academic-disciplines';
 
 /**

@@ -22,10 +22,11 @@ export default function HomePageResponsive({ onRecommendMode, onDirectBuild }: H
   const [worldDescription, setWorldDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [useRecommendMode, setUseRecommendMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [_mounted, setMounted] = useState(false);
 
   // 确保只在客户端挂载后才渲染交互元素
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -135,7 +136,7 @@ export default function HomePageResponsive({ onRecommendMode, onDirectBuild }: H
             <div className="flex items-center gap-2 flex-1">
               <span className="text-[14px]">💡</span>
               <p className="text-[#c1c5cc] text-[13px] sm:text-[14px] line-clamp-1">
-                全新好玩功能到了！点击左上方"导出动画"立即体验，制服神奇有一身吗~
+                全新好玩功能到了！点击左上方&ldquo;导出动画&rdquo;立即体验，制服神奇有一身吗~
               </p>
             </div>
             <button

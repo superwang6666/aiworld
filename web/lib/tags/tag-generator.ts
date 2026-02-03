@@ -1,6 +1,8 @@
-import { WorldRule, RuleTag } from '@/types';
-import { PREDEFINED_TAGS, getAllPredefinedTagIds } from '@/config/predefined-tags';
 import OpenAI from 'openai';
+
+import type { WorldRule, RuleTag } from '@/types';
+
+import { PREDEFINED_TAGS } from '@/config/predefined-tags';
 
 /**
  * LLM标签生成器

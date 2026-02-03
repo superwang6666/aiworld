@@ -1,6 +1,7 @@
-import { ExpertConfig } from '@/types';
 import { promises as fs } from 'fs';
 import path from 'path';
+
+import type { ExpertConfig } from '@/types';
 
 const CORE_EXPERTS_DIR = path.join(process.cwd(), 'lib', 'experts', 'core');
 const SPECIAL_EXPERTS_DIR = path.join(process.cwd(), 'lib', 'experts', 'special');
@@ -35,7 +36,7 @@ export async function loadSpecialExpert(expertId: string): Promise<ExpertConfig 
     const filePath = path.join(SPECIAL_EXPERTS_DIR, `${expertId}.json`);
     const content = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(content) as ExpertConfig;
-  } catch (error) {
+  } catch (_error) {
     return null; // 未找到
   }
 }
@@ -56,7 +57,7 @@ export async function loadAllSpecialExperts(): Promise<ExpertConfig[]> {
     );
 
     return experts;
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }

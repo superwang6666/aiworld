@@ -1,5 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { WorldArchive } from '@/types';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
+import type { WorldArchive } from '@/types';
+
 import { saveArchive } from '@/lib/archive/archive-manager';
 
 /**

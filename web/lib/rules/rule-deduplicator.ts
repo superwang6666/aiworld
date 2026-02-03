@@ -11,7 +11,7 @@
  * 保留此文件仅作为参考,未来可能删除
  */
 
-import { WorldRule } from '@/types';
+import type { WorldRule } from '@/types';
 
 /**
  * 规则去重配置

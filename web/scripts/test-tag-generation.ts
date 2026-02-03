@@ -4,9 +4,10 @@
  * 用法: npx tsx scripts/test-tag-generation.ts
  */
 
-import { WorldRule } from '../types';
 import { generateTagsForRules } from '../lib/tags/tag-generator';
 import { initializeTagWeights } from '../lib/tags/tag-manager';
+
+import type { WorldRule } from '../types';
 
 const testRules: WorldRule[] = [
   {

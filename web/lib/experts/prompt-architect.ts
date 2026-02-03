@@ -1,7 +1,10 @@
 import OpenAI from 'openai';
-import { ExpertConfig, ValidationResult } from '@/types';
-import { smartMatchExpert } from './expert-matcher';
+
+import type { ExpertConfig, ValidationResult } from '@/types';
+
 import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
+
+import { smartMatchExpert } from './expert-matcher';
 
 interface SpecialExpertRequest {
   domain: string;

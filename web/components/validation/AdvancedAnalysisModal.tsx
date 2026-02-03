@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+
 import { X } from 'lucide-react';
-import { LawWeight, DEACAnalysis } from '@/types';
-import LawWeightsPanel from './LawWeightsPanel';
+import { motion, AnimatePresence } from 'motion/react';
+
+import type { LawWeight, DEACAnalysis } from '@/types';
+
 import ExpertInsightsPanel from '../ExpertInsightsPanel';
+
+import LawWeightsPanel from './LawWeightsPanel';
 
 interface AdvancedAnalysisModalProps {
   isOpen: boolean;

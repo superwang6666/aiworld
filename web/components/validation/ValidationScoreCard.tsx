@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
+
 import CircularProgress from './animations/CircularProgress';
 import CountUpAnimation from './animations/CountUpAnimation';
 

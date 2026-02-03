@@ -1,4 +1,4 @@
-import { ValidationResult, LawWeight, Law } from '@/types';
+import type { ValidationResult, LawWeight, Law } from '@/types';
 
 /**
  * 法则权重计算器

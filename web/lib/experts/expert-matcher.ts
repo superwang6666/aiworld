@@ -8,9 +8,12 @@
  */
 
 import OpenAI from 'openai';
-import { ExpertConfig } from '@/types';
-import { loadAllSpecialExperts } from './loader';
+
+import type { ExpertConfig } from '@/types';
+
 import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
+
+import { loadAllSpecialExperts } from './loader';
 
 interface MatchResult {
   action: 'reuse' | 'update' | 'create';

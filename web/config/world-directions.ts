@@ -1,4 +1,4 @@
-import { WorldDirection, DirectionLawMapping } from '@/types/world-directions';
+import type { WorldDirection, DirectionLawMapping } from '@/types/world-directions';
 
 /**
  * 基础方向配置

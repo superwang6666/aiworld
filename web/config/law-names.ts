@@ -3,7 +3,7 @@
  * 统一管理所有法则的中文显示名称和颜色配置
  */
 
-import { Law } from '@/types';
+import type { Law } from '@/types';
 
 /**
  * 法则定义（包含名称和描述）

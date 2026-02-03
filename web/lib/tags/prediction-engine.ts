@@ -1,4 +1,4 @@
-import { WorldRule, RuleTag } from '@/types';
+import type { WorldRule, RuleTag } from '@/types';
 
 /**
  * 预测删除引擎

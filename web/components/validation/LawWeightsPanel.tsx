@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'motion/react';
-import { LawWeight } from '@/types';
-import { LAW_NAME_MAP, LAW_SIMPLE_COLORS } from '@/config/law-names';
+
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { motion } from 'motion/react';
+
+import type { LawWeight } from '@/types';
+
+import { LAW_NAME_MAP, LAW_SIMPLE_COLORS } from '@/config/law-names';
 
 interface LawWeightsPanelProps {
   lawWeights: LawWeight[];

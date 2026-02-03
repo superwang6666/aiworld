@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
-import { ExpertConfig, ExpertResponse, GapAnalysis, DEACContext, Law } from '@/types';
+
+import type { ExpertConfig, ExpertResponse, GapAnalysis, DEACContext, Law } from '@/types';
 
 interface DispatchInput {
   experts: ExpertConfig[];
@@ -17,7 +18,7 @@ interface DispatchResult {
  * 激活相关专家并收集他们的响应
  */
 export async function dispatchExperts(input: DispatchInput): Promise<DispatchResult> {
-  const { experts, heterogeneity_point, gap_analysis, context } = input;
+  const { experts, heterogeneity_point, gap_analysis: _gap_analysis, context } = input;
 
   // 根据法则覆盖确定要激活哪些专家
   const impactedLaws = context.validation_result?.lawImpacts?.map(li => li.law) || [];

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import OpenAI from 'openai';
 
 const RECOMMENDATION_PROMPT = `你是游戏设计专家.你的任务是根据用户描述的核心异质点，推荐具有相似概念,机制或世界观设定的代表作游戏.

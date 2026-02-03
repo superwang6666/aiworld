@@ -1,5 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import OpenAI from 'openai';
+
 import { calculateLawWeights } from '@/lib/laws/weight-calculator';
 
 // 辅助函数:获取基础 URL

@@ -1,4 +1,4 @@
-import { RuleTag } from '@/types';
+import type { RuleTag } from '@/types';
 
 /**
  * 预定义核心标签列表

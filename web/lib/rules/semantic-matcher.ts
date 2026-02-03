@@ -8,7 +8,8 @@
  */
 
 import OpenAI from 'openai';
-import { WorldRule } from '@/types';
+
+import type { WorldRule } from '@/types';
 
 /**
  * 语义去重配置

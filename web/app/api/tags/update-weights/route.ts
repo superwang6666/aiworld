@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { RuleTag } from '@/types';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import {
   updateTagWeightsOnDeletion,
   updateTagWeightsOnConfirm,

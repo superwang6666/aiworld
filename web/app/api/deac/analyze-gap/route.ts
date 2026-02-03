@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import { analyzeGaps } from '@/lib/experts/gap-analyzer';
 import { loadCoreExperts } from '@/lib/experts/loader';
 

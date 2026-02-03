@@ -1,4 +1,5 @@
-import { DEACContext, DEACAnalysis } from '@/types';
+import type { DEACContext, DEACAnalysis } from '@/types';
+
 import { analyzeGaps } from '@/lib/experts/gap-analyzer';
 import { loadCoreExperts } from '@/lib/experts/loader';
 

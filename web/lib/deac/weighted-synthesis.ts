@@ -1,4 +1,4 @@
-import { ExpertResponse, LawWeight, Law, ExpertConfig } from '@/types';
+import type { ExpertResponse, LawWeight, Law, ExpertConfig } from '@/types';
 
 /**
  * 加权预测结果

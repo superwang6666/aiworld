@@ -1,39 +1,30 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
+
 import { Sparkles, Download, Loader2, FlaskConical, Archive } from 'lucide-react';
-import { WorldRule, ValidationResult, DEACAnalysis, LawWeight, RuleTag } from '@/types';
-import RuleCard from '@/components/RuleCard';
-import ArchiveManager from '@/components/ArchiveManager';
-import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
-import PremiumBackground from '@/components/PremiumBackground';
-import { initializeTagWeights } from '@/lib/tags/tag-manager';
+
+import type { WorldRule, ValidationResult, DEACAnalysis, LawWeight, RuleTag } from '@/types';
+
 import { LAW_NAMES } from '@/config/law-names';
-import ValidationPagePremium from '@/components/validation/ValidationPagePremium';
+
+import { initializeTagWeights } from '@/lib/tags/tag-manager';
+
+import ArchiveManager from '@/components/ArchiveManager';
 import GameAnalysisResult from '@/components/GameAnalysisResult';
 import GameRecommendView from '@/components/GameRecommendView';
 import HomePageResponsive from '@/components/imports/HomePage-responsive';
+import PremiumBackground from '@/components/PremiumBackground';
+import RuleCard from '@/components/RuleCard';
+import ValidationPagePremium from '@/components/validation/ValidationPagePremium';
 
 type WorkflowStep = 'homepage' | 'gameRecommend' | 'gameAnalysisResult' | 'premise' | 'validation' | 'artStyle' | 'rules';
-
-interface GameData {
-  gameName: string;
-  description: string;
-  worldDirection: string;
-  tags: string[];
-}
-
-// Callback handlers for homepage navigation
-interface HomePageCallbacks {
-  onRecommendMode: (description: string) => void;
-  onDirectBuild: (description: string) => void;
-}
 
 export default function Home() {
   const [currentStep, setCurrentStep] = useState<WorkflowStep>('homepage');
   const [worldDescription, setWorldDescription] = useState(''); // 主页输入的世界描述
   const [selectedGamesForAnalysis, setSelectedGamesForAnalysis] = useState<any[]>([]); // 游戏推荐时选中的游戏
-  const [useGameRecommend, setUseGameRecommend] = useState(false); // 是否使用游戏推荐模式
+  const [_useGameRecommend, _setUseGameRecommend] = useState(false); // 是否使用游戏推荐模式
   const [corePremise, setCorePremise] = useState('');
   const [premiseSuggestion, setPremiseSuggestion] = useState<string | null>(null); // 游戏分析建议
   const [artStyle, setArtStyle] = useState('');
@@ -750,7 +741,7 @@ export default function Home() {
         corePremise,
         artStyle,
         validation: validationResult,
-        rules: confirmedRules.map(({ id, confirmed, ...rule }) => rule),
+        rules: confirmedRules.map(({ id: _id, confirmed: _confirmed, ...rule }) => rule),
       },
       null,
       2
@@ -795,13 +786,13 @@ export default function Home() {
         <HomePageResponsive
           onRecommendMode={(description) => {
             setWorldDescription(description);
-            setUseGameRecommend(true);
+            _setUseGameRecommend(true);
             setCurrentStep('gameRecommend');
           }}
           onDirectBuild={(description) => {
             setWorldDescription(description);
             setCorePremise(description);
-            setUseGameRecommend(false);
+            _setUseGameRecommend(false);
             setCurrentStep('premise');
           }}
         />

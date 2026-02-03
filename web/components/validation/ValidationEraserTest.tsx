@@ -1,8 +1,9 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { FlaskConical } from 'lucide-react';
-import { EraserTest } from '@/types';
+import { motion } from 'motion/react';
+
+import type { EraserTest } from '@/types';
 
 interface ValidationEraserTestProps {
   eraserTest: EraserTest;

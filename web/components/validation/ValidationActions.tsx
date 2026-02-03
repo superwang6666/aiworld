@@ -1,7 +1,7 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { ChevronDown, Check, X } from 'lucide-react';
+import { motion } from 'motion/react';
 
 interface ValidationActionsProps {
   onAccept: () => void;

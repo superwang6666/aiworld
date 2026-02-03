@@ -1,10 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'motion/react';
+
 import { Star } from 'lucide-react';
-import { LawImpact } from '@/types';
+import { motion } from 'motion/react';
+
+import type { LawImpact } from '@/types';
+
 import { LAW_NAME_MAP, LAW_COLORS } from '@/config/law-names';
+
 import ValidationDirectionEvaluation from './ValidationDirectionEvaluation';
 
 interface ValidationDominoEffectProps {

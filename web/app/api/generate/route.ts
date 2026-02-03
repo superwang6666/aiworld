@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest} from 'next/server';
+import { NextResponse } from 'next/server';
+
 import OpenAI from 'openai';
-import { LawWeight, Law, ExpertResponse } from '@/types';
-import { validateRuleDistribution } from '@/lib/laws/weight-calculator';
+
+import type { LawWeight, Law, ExpertResponse } from '@/types';
+
 import { LAWS } from '@/config/law-names';
+
+import { validateRuleDistribution } from '@/lib/laws/weight-calculator';
 
 // 基础提示词（不包含权重信息时使用）
 const BASE_EXPERT_COUNCIL_PROMPT = `You are the 'Expert Council of World Builders'.

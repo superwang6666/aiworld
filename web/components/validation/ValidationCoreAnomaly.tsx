@@ -1,8 +1,10 @@
 'use client';
 
-import { motion } from 'motion/react';
 import { Zap } from 'lucide-react';
-import { Law } from '@/types';
+import { motion } from 'motion/react';
+
+import type { Law } from '@/types';
+
 import { LAW_NAME_MAP } from '@/config/law-names';
 
 interface ValidationCoreAnomalyProps {

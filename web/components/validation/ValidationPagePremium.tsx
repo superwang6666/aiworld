@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { ValidationResult, LawWeight, DEACAnalysis, LawImpact } from '@/types';
-import ValidationScoreCard from './ValidationScoreCard';
+
+import type { ValidationResult, LawWeight, DEACAnalysis, LawImpact } from '@/types';
+
+import AdvancedAnalysisModal from './AdvancedAnalysisModal';
+import ValidationActions from './ValidationActions';
 import ValidationCoreAnomaly from './ValidationCoreAnomaly';
 import ValidationDominoEffect from './ValidationDominoEffect';
 import ValidationEraserTest from './ValidationEraserTest';
-import ValidationWarnings from './ValidationWarnings';
 import ValidationRecommendations from './ValidationRecommendations';
-import ValidationActions from './ValidationActions';
-import AdvancedAnalysisModal from './AdvancedAnalysisModal';
+import ValidationScoreCard from './ValidationScoreCard';
+import ValidationWarnings from './ValidationWarnings';
 
 interface ValidationPagePremiumProps {
   result: ValidationResult;
