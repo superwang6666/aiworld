@@ -109,7 +109,8 @@ ${r.warnings?.length ? `警告: ${r.warnings.join('; ')}` : ''}
 4. 提供整体风险评估
 
 重要: 必须返回严格有效的 JSON 格式，不要包含任何额外的文本或解释。
-所有字符串值中的引号必须正确转义。结构如下:
+所有字符串值必须使用标准英文双引号(")，不要使用中文引号('')或其他特殊引号。
+字符串内的引号必须正确转义为 \"。结构如下:
 {
   "consensus": "专家共识的详细描述",
   "disagreements": [{"topic": "分歧主题", "perspectives": [{"expert": "专家名", "view": "观点"}]}],
@@ -146,6 +147,10 @@ ${r.warnings?.length ? `警告: ${r.warnings.join('; ')}` : ''}
       try {
         // 移除可能的 BOM 或其他不可见字符
         content = content.replace(/^\uFEFF/, '');
+
+        // 替换中文引号为英文引号
+        content = content.replace(/'/g, "'").replace(/'/g, "'");
+        content = content.replace(/"/g, '"').replace(/"/g, '"');
 
         // 尝试找到 JSON 对象的开始和结束
         const jsonStart = content.indexOf('{');
