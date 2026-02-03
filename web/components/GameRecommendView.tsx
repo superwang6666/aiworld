@@ -3,17 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, ChevronDown, Search, Menu, Play } from 'lucide-react';
 import { motion } from 'motion/react';
-
-interface GameInfo {
-  id: number;
-  name: string;
-  genres: string[];
-  released: string;
-  recommendationReason?: string;
-  rating?: number;
-  metacritic?: number | null;
-  background_image?: string;
-}
+import { GameInfo } from '@/types';
 
 interface GameRecommendViewProps {
   worldDescription: string;

@@ -3,16 +3,7 @@ import OpenAI from 'openai';
 import { Law, WorldRule } from '@/types';
 import { checkRuleSemanticDuplication, SEMANTIC_DEDUPLICATION_CONFIG } from '@/lib/rules/semantic-matcher';
 import { generateTagsForRule } from '@/lib/tags/tag-generator';
-
-const LAWS = [
-  { name: 'Space', description: 'Geography/Physics' },
-  { name: 'Survival', description: 'Biology/Needs' },
-  { name: 'Cognition', description: 'Language/Belief' },
-  { name: 'Scarcity', description: 'Economy/Conflict' },
-  { name: 'Time', description: 'History/Erosion' },
-  { name: 'Power', description: 'Politics/Order' },
-  { name: 'Metaphysics', description: 'The Anomaly' },
-];
+import { LAWS } from '@/config/law-names';
 
 export async function POST(request: NextRequest) {
   try {

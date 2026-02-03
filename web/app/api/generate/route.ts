@@ -2,16 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { LawWeight, Law, ExpertResponse } from '@/types';
 import { validateRuleDistribution } from '@/lib/laws/weight-calculator';
-
-const LAWS = [
-  { name: 'Space', description: 'Geography/Physics' },
-  { name: 'Survival', description: 'Biology/Needs' },
-  { name: 'Cognition', description: 'Language/Belief' },
-  { name: 'Scarcity', description: 'Economy/Conflict' },
-  { name: 'Time', description: 'History/Erosion' },
-  { name: 'Power', description: 'Politics/Order' },
-  { name: 'Metaphysics', description: 'The Anomaly' },
-];
+import { LAWS } from '@/config/law-names';
 
 // 基础提示词（不包含权重信息时使用）
 const BASE_EXPERT_COUNCIL_PROMPT = `You are the 'Expert Council of World Builders'.

@@ -6,6 +6,24 @@
 import { Law } from '@/types';
 
 /**
+ * 法则定义（包含名称和描述）
+ */
+export const LAWS = [
+  { name: 'Space', description: 'Geography/Physics' },
+  { name: 'Survival', description: 'Biology/Needs' },
+  { name: 'Cognition', description: 'Language/Belief' },
+  { name: 'Scarcity', description: 'Economy/Conflict' },
+  { name: 'Time', description: 'History/Erosion' },
+  { name: 'Power', description: 'Politics/Order' },
+  { name: 'Metaphysics', description: 'The Anomaly' },
+] as const;
+
+/**
+ * 法则名称数组（仅名称）
+ */
+export const LAW_NAMES = LAWS.map(law => law.name);
+
+/**
  * 法则名称映射（英文 -> 中文）
  */
 export const LAW_NAME_MAP: Record<Law, string> = {

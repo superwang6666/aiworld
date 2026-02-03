@@ -8,13 +8,13 @@ import ArchiveManager from '@/components/ArchiveManager';
 import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
 import PremiumBackground from '@/components/PremiumBackground';
 import { initializeTagWeights } from '@/lib/tags/tag-manager';
+import { LAW_NAMES } from '@/config/law-names';
 import ValidationPagePremium from '@/components/validation/ValidationPagePremium';
-import GameAnalysisStep from '@/components/GameAnalysisStep';
 import GameAnalysisResult from '@/components/GameAnalysisResult';
 import GameRecommendView from '@/components/GameRecommendView';
 import HomePageResponsive from '@/components/imports/HomePage-responsive';
 
-type WorkflowStep = 'homepage' | 'gameAnalysis' | 'gameRecommend' | 'gameAnalysisResult' | 'premise' | 'validation' | 'artStyle' | 'rules';
+type WorkflowStep = 'homepage' | 'gameRecommend' | 'gameAnalysisResult' | 'premise' | 'validation' | 'artStyle' | 'rules';
 
 interface GameData {
   gameName: string;
@@ -532,8 +532,7 @@ export default function Home() {
 
   // 生成随机法则的新规则(带去重检测)
   const generateRandomRule = async () => {
-    const LAWS = ['Space', 'Survival', 'Cognition', 'Scarcity', 'Time', 'Power', 'Metaphysics'];
-    const randomLaw = LAWS[Math.floor(Math.random() * LAWS.length)];
+    const randomLaw = LAW_NAMES[Math.floor(Math.random() * LAW_NAMES.length)];
 
     try {
       console.log(`生成随机法则 ${randomLaw} 的新规则...`);
@@ -851,15 +850,6 @@ export default function Home() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold ${
-                currentStep === 'gameAnalysis' ? 'bg-[#00ff88] text-black' :
-                ['premise', 'validation', 'artStyle', 'rules'].includes(currentStep) ? 'bg-green-500/20 text-green-400 border border-green-500' :
-                'bg-gray-700 text-gray-400'
-              }`}>0</div>
-              <span className="text-sm font-mono text-gray-400">Game Analysis</span>
-            </div>
-            <div className="flex-1 h-px bg-gray-800 mx-4"></div>
-            <div className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold ${
                 currentStep === 'premise' ? 'bg-[#00ff88] text-black' :
                 ['validation', 'artStyle', 'rules'].includes(currentStep) ? 'bg-green-500/20 text-green-400 border border-green-500' :
                 'bg-gray-700 text-gray-400'
@@ -881,32 +871,18 @@ export default function Home() {
                 currentStep === 'artStyle' ? 'bg-[#00ff88] text-black' :
                 currentStep === 'rules' ? 'bg-green-500/20 text-green-400 border border-green-500' :
                 'bg-gray-700 text-gray-400'
-              }`}>3</div>
+              }`}>2</div>
               <span className="text-sm font-mono text-gray-400">Art Style</span>
             </div>
             <div className="flex-1 h-px bg-gray-800 mx-4"></div>
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-bold ${
                 currentStep === 'rules' ? 'bg-[#00ff88] text-black' : 'bg-gray-700 text-gray-400'
-              }`}>4</div>
+              }`}>3</div>
               <span className="text-sm font-mono text-gray-400">Rules</span>
             </div>
           </div>
         </div>
-
-        {/* Step 0: Game Analysis */}
-        {currentStep === 'gameAnalysis' && (
-          <GameAnalysisStep
-            onComplete={(summary) => {
-              // 将总结存储为建议，而不是直接填入
-              setPremiseSuggestion(summary);
-              setCurrentStep('premise');
-            }}
-            onSkip={() => {
-              setCurrentStep('premise');
-            }}
-          />
-        )}
 
         {/* Step 1: Core Premise Input */}
         {currentStep === 'premise' && (

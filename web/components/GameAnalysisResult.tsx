@@ -2,13 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2, Search, Menu } from 'lucide-react';
-
-interface GameInfo {
-  id: number;
-  name: string;
-  genres: string[];
-  released: string;
-}
+import { GameInfo } from '@/types';
 
 interface GameAnalysis {
   individualAnalyses: Array<{

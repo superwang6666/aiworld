@@ -18,7 +18,8 @@
       "Bash(findstr:*)",
       "Bash(ls:*)",
       "Bash(npx tsc:*)",
-      "Bash(timeout 15 tail:*)"
+      "Bash(timeout 15 tail:*)",
+      "Bash(find:*)"
     ]
   }
 }
