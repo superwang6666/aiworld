@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import type { LawWeight, DEACAnalysis } from '@/types';
 
-import ExpertInsightsPanel from '../ExpertInsightsPanel';
-
+import SynthesisConsensus from './advanced-analysis/SynthesisConsensus';
+import SynthesisInsights from './advanced-analysis/SynthesisInsights';
+import SynthesisRiskAssessment from './advanced-analysis/SynthesisRiskAssessment';
+import { adaptDEACAnalysis } from './advanced-analysis/utils/dataAdapters';
+import ExpertInsightsPanel from './ExpertInsightsPanel';
 import LawWeightsPanel from './LawWeightsPanel';
 
 interface AdvancedAnalysisModalProps {
@@ -24,7 +25,7 @@ export default function AdvancedAnalysisModal({
   lawWeights,
   deacAnalysis
 }: AdvancedAnalysisModalProps) {
-  const [activeTab, setActiveTab] = useState<'weights' | 'experts'>('weights');
+  const adaptedData = adaptDEACAnalysis(deacAnalysis);
 
   if (!isOpen) return null;
 
@@ -48,7 +49,7 @@ export default function AdvancedAnalysisModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-4 sm:inset-8 md:inset-12 lg:inset-16 bg-gradient-to-br from-[rgba(20,20,28,0.98)] to-[rgba(30,30,40,0.98)] rounded-2xl border border-[rgba(100,100,115,0.4)] backdrop-blur-xl z-50 overflow-hidden flex flex-col"
+            className="fixed inset-x-[10%] inset-y-8 sm:inset-x-[12%] sm:inset-y-12 md:inset-x-[15%] md:inset-y-16 lg:inset-x-[18%] lg:inset-y-20 xl:inset-x-[20%] xl:inset-y-24 bg-gradient-to-br from-[rgba(20,20,28,0.98)] to-[rgba(30,30,40,0.98)] rounded-2xl border border-[rgba(100,100,115,0.4)] backdrop-blur-xl z-50 overflow-hidden flex flex-col"
           >
             {/* 头部 */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(100,100,115,0.3)]">
@@ -63,73 +64,41 @@ export default function AdvancedAnalysisModal({
               </button>
             </div>
 
-            {/* 标签页 */}
-            <div className="flex items-center gap-2 px-6 py-3 border-b border-[rgba(100,100,115,0.3)]">
-              <button
-                onClick={() => setActiveTab('weights')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  activeTab === 'weights'
-                    ? 'bg-[rgba(57,255,20,0.15)] text-[#39ff14] border border-[rgba(57,255,20,0.3)]'
-                    : 'bg-[rgba(60,60,70,0.4)] text-[#c1c5cc] border border-[rgba(100,100,110,0.2)] hover:bg-[rgba(70,70,80,0.6)]'
-                }`}
-              >
-                法则权重分析
-              </button>
-              <button
-                onClick={() => setActiveTab('experts')}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  activeTab === 'experts'
-                    ? 'bg-[rgba(57,255,20,0.15)] text-[#39ff14] border border-[rgba(57,255,20,0.3)]'
-                    : 'bg-[rgba(60,60,70,0.4)] text-[#c1c5cc] border border-[rgba(100,100,110,0.2)] hover:bg-[rgba(70,70,80,0.6)]'
-                }`}
-              >
-                专家委员会洞察
-              </button>
-            </div>
-
-            {/* 内容区域 */}
+            {/* 内容区域 - 整合所有内容 */}
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <AnimatePresence mode="wait">
-                {activeTab === 'weights' ? (
+              <div className="space-y-8">
+                {/* 法则权重分析 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <LawWeightsPanel lawWeights={lawWeights} />
+                </motion.div>
+
+                {/* 专家委员会洞察 */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  <ExpertInsightsPanel analysis={deacAnalysis} />
+                </motion.div>
+
+                {/* 综合分析 */}
+                {adaptedData && (
                   <motion.div
-                    key="weights"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="space-y-4"
                   >
-                    <LawWeightsPanel lawWeights={lawWeights} />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="experts"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {deacAnalysis ? (
-                      <div className="space-y-4">
-                        <div className="mb-6">
-                          <h3 className="text-2xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent mb-2">
-                            专家委员会洞察
-                          </h3>
-                          <p className="text-[#7a7a88] text-sm">
-                            {deacAnalysis.activated_experts.length} 位专家的分析和建议
-                          </p>
-                        </div>
-                        <ExpertInsightsPanel analysis={deacAnalysis} />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-64">
-                        <p className="text-[#7a7a88] text-sm">
-                          专家分析尚未完成，请稍候...
-                        </p>
-                      </div>
-                    )}
+                    <SynthesisConsensus consensus={adaptedData.synthesis.consensus} />
+                    <SynthesisInsights insights={adaptedData.synthesis.insights} />
+                    <SynthesisRiskAssessment riskAssessment={adaptedData.synthesis.riskAssessment} />
                   </motion.div>
                 )}
-              </AnimatePresence>
+              </div>
             </div>
           </motion.div>
         </>
