@@ -9,13 +9,13 @@ import { Law } from '@/types';
  * 法则名称映射（英文 -> 中文）
  */
 export const LAW_NAME_MAP: Record<Law, string> = {
-  Space: 'Space',
-  Survival: 'Survival',
-  Cognition: 'Cognition',
-  Scarcity: 'Scarcity',
-  Time: 'Time',
-  Power: 'Power',
-  Metaphysics: 'Metaphysics',
+  Space: '空间法则',
+  Survival: '生存法则',
+  Cognition: '认知法则',
+  Scarcity: '稀缺法则',
+  Time: '时间法则',
+  Power: '权力法则',
+  Metaphysics: '形而上学法则',
 };
 
 /**
