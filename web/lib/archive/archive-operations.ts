@@ -1,7 +1,5 @@
 import type { WorldRule, ValidationResult, LawWeight, DEACAnalysis, RuleTag, WorldArchive } from '@/types';
 
-import { initializeTagWeights } from '@/lib/tags/tag-manager';
-
 /**
  * 存档状态接口
  */

@@ -62,8 +62,8 @@ export async function toggleRule(
   ruleId: string,
   rules: WorldRule[],
   tagWeights: Record<string, RuleTag>,
-  corePremise: string,
-  artStyle: string
+  _corePremise: string,
+  _artStyle: string
 ): Promise<ToggleRuleResult> {
   const rule = rules.find(r => r.id === ruleId);
   if (!rule) {
