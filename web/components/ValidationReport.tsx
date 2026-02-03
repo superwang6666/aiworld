@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ValidationResult, LawImpact } from '@/types';
 import { CheckCircle2, XCircle, AlertTriangle, Lightbulb, Zap, FlaskConical, Loader2, Star } from 'lucide-react';
+import { LAW_NAME_MAP } from '@/config/law-names';
 
 interface ValidationReportProps {
   result: ValidationResult;
@@ -199,7 +200,7 @@ export default function ValidationReport({ result, onAccept, onReject }: Validat
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="font-bold text-sm font-mono">
-                  {lawImpact.law.toUpperCase()}
+                  {LAW_NAME_MAP[lawImpact.law]}
                 </div>
                 {lawImpact.uniquenessScore !== undefined && (
                   <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold font-mono ${

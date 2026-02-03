@@ -3,6 +3,7 @@
 import { WorldRule, Law, RuleTag } from '@/types';
 import { Check, X, Trash2, AlertTriangle, Sparkles } from 'lucide-react';
 import { getPredefinedTagById } from '@/config/predefined-tags';
+import { LAW_NAME_MAP } from '@/config/law-names';
 
 interface RuleCardProps {
   rule: WorldRule;
@@ -85,7 +86,7 @@ export default function RuleCard({
           {/* 法则 + 标签 */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2 py-1 text-xs font-bold uppercase border rounded bg-black/20">
-              {rule.law}
+              {LAW_NAME_MAP[rule.law]}
             </span>
 
             {/* 标签列表 */}

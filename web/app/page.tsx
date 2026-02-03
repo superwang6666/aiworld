@@ -8,7 +8,7 @@ import ArchiveManager from '@/components/ArchiveManager';
 import ExpertInsightsPanel from '@/components/ExpertInsightsPanel';
 import PremiumBackground from '@/components/PremiumBackground';
 import { initializeTagWeights } from '@/lib/tags/tag-manager';
-import ValidationReport from '@/components/ValidationReport';
+import ValidationPagePremium from '@/components/validation/ValidationPagePremium';
 import GameAnalysisStep from '@/components/GameAnalysisStep';
 import GameAnalysisResult from '@/components/GameAnalysisResult';
 import GameRecommendView from '@/components/GameRecommendView';
@@ -980,71 +980,16 @@ export default function Home() {
 
         {/* Step 2: Validation Results */}
         {currentStep === 'validation' && validationResult && (
-          <>
-            <ValidationReport
-              result={validationResult}
-              onAccept={handleAcceptValidation}
-              onReject={handleRejectValidation}
-            />
-
-            {/* 法则权重显示 */}
-            {lawWeights && lawWeights.length > 0 && (
-              <div className="mb-6 border border-[#00ff88]/20 rounded-lg p-6 bg-[#0f0f0f]">
-                <h3 className="text-lg font-mono font-bold text-[#00ff88] mb-4">
-                  ⚖️ 法则权重分析
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">
-                  根据核心设定的影响，系统计算了7个法则的权重。权重越高的法则将生成更多规则。
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {lawWeights.map((lw) => (
-                    <div
-                      key={lw.law}
-                      className={`border rounded p-3 ${
-                        lw.impactLevel === 'critical'
-                          ? 'border-red-500/50 bg-red-500/5'
-                          : lw.impactLevel === 'major'
-                          ? 'border-yellow-500/50 bg-yellow-500/5'
-                          : lw.impactLevel === 'minor'
-                          ? 'border-blue-500/50 bg-blue-500/5'
-                          : 'border-gray-600/50 bg-gray-600/5'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-mono font-bold text-sm">{lw.law}</span>
-                        <span className="text-xs font-mono text-gray-400">
-                          {(lw.weight * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-800 rounded-full h-2 mb-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            lw.impactLevel === 'critical'
-                              ? 'bg-red-500'
-                              : lw.impactLevel === 'major'
-                              ? 'bg-yellow-500'
-                              : lw.impactLevel === 'minor'
-                              ? 'bg-blue-500'
-                              : 'bg-gray-500'
-                          }`}
-                          style={{ width: `${lw.weight * 100}%` }}
-                        ></div>
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {lw.rulesCount} 条规则
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <ExpertInsightsPanel
-              analysis={deacAnalysis}
-              isLoading={deacLoading}
-            />
-          </>
+          <ValidationPagePremium
+            result={validationResult}
+            lawWeights={lawWeights}
+            deacAnalysis={deacAnalysis}
+            onAccept={handleAcceptValidation}
+            onReject={handleRejectValidation}
+          />
         )}
+
+        {/* 旧的法则权重和专家洞察显示已集成到ValidationPagePremium中 */}
 
         {/* Step 3: Art Style Input */}
         {currentStep === 'artStyle' && (
