@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
-import type { LawWeight } from '@/types';
+import type { LawWeight } from "@/types";
 
-import LawWeightCard from './advanced-analysis/LawWeightCard';
-import { adaptLawWeights } from './advanced-analysis/utils/dataAdapters';
+import LawWeightCard from "./advanced-analysis/LawWeightCard";
+import { adaptLawWeights } from "./advanced-analysis/utils/dataAdapters";
 
 interface LawWeightsPanelProps {
   lawWeights: LawWeight[];
@@ -27,11 +27,7 @@ export default function LawWeightsPanel({ lawWeights }: LawWeightsPanelProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {adaptedData.map((data, index) => (
-            <LawWeightCard
-              key={data.name}
-              {...data}
-              index={index}
-            />
+            <LawWeightCard key={data.name} {...data} index={index} />
           ))}
         </div>
       </motion.div>

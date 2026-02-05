@@ -1,7 +1,7 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import OpenAI from 'openai';
+import { getOpenAIClient } from "@/lib/utils/openai-client";
 
 const ANALYSIS_PROMPT = `你是游戏设计与世界观构建专家。你的任务是分析多个游戏，提取它们的核心元素和异同点，为世界观构建提供参考。
 
@@ -62,86 +62,76 @@ export async function POST(request: NextRequest) {
 
     if (!games || !Array.isArray(games) || games.length === 0) {
       return NextResponse.json(
-        { error: 'Games array required' },
-        { status: 400 }
+        { error: "Games array required" },
+        { status: 400 },
       );
     }
 
-    // 配置OpenAI/DeepSeek客户端
-    const deepSeekKey = process.env.DEEPSEEK_API_KEY;
-    const openAiKey = process.env.OPENAI_API_KEY;
-    const apiKey = deepSeekKey || openAiKey;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API Key not configured. Please set DEEPSEEK_API_KEY or OPENAI_API_KEY in .env file' },
-        { status: 500 }
-      );
-    }
-
-    const baseURL = deepSeekKey ? 'https://api.deepseek.com' : undefined;
-    const openai = new OpenAI({ apiKey, baseURL });
-
-    // 构建用户提示
-    const gamesDescription = games.map((game: any) =>
-      `**${game.name}** (${game.released})\n` +
-      `- 评分: Metacritic ${game.metacritic || 'N/A'}, RAWG ${game.rating}/5\n` +
-      `- 类型: ${game.genres.join(', ')}\n` +
-      `- 平台: ${game.platforms.slice(0, 3).join(', ')}\n` +
-      `- 描述: ${game.description.substring(0, 300)}...`
-    ).join('\n\n');
+    const { openai, model } = getOpenAIClient();
+    const gamesDescription = games
+      .map(
+        (game: {
+          name: string;
+          released: string;
+          metacritic: number | null;
+          rating: number;
+          genres: string[];
+          platforms: string[];
+          description: string;
+        }) =>
+          `**${game.name}** (${game.released})\n` +
+          `- 评分: Metacritic ${game.metacritic || "N/A"}, RAWG ${game.rating}/5\n` +
+          `- 类型: ${game.genres.join(", ")}\n` +
+          `- 平台: ${game.platforms.slice(0, 3).join(", ")}\n` +
+          `- 描述: ${game.description.substring(0, 300)}...`,
+      )
+      .join("\n\n");
 
     const userPrompt = `请分析以下游戏:\n\n${gamesDescription}`;
-
-    const model = deepSeekKey ? 'deepseek-chat' : 'gpt-4o-mini';
 
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: ANALYSIS_PROMPT },
-        { role: 'user', content: userPrompt },
+        { role: "system", content: ANALYSIS_PROMPT },
+        { role: "user", content: userPrompt },
       ],
       temperature: 0.7,
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
     const responseContent = completion.choices[0]?.message?.content;
     if (!responseContent) {
-      throw new Error('No response from AI service');
+      throw new Error("No response from AI service");
     }
 
-    // JSON解析（复用validate-premise的健壮解析逻辑）
     let analysisResult;
     try {
       let cleanedContent = responseContent.trim();
 
-      // 清理markdown代码块
-      const jsonMatch = cleanedContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      const jsonMatch = cleanedContent.match(
+        /```(?:json)?\s*(\{[\s\S]*\})\s*```/,
+      );
       if (jsonMatch) {
         cleanedContent = jsonMatch[1].trim();
       }
 
-      // 修复智能引号
       cleanedContent = cleanedContent.replace(/[""]/g, '"');
       cleanedContent = cleanedContent.replace(/['']/g, "'");
-
-      // 移除尾随逗号
-      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
+      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, "$1");
 
       analysisResult = JSON.parse(cleanedContent);
-    } catch (parseError: any) {
-      console.error('Raw AI response:', responseContent);
-      console.error('Parse error:', parseError.message);
-      throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+    } catch (parseError) {
+      const errorMessage =
+        parseError instanceof Error
+          ? parseError.message
+          : "Unknown parse error";
+      throw new Error(`Failed to parse AI response as JSON: ${errorMessage}`);
     }
 
     return NextResponse.json(analysisResult);
-
-  } catch (error: any) {
-    console.error('Game analysis error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to analyze games' },
-      { status: 500 }
-    );
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to analyze games";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

@@ -1,17 +1,26 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Brain, Sparkles, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Brain,
+  Sparkles,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
-import type { DEACAnalysis } from '@/types';
+import type { DEACAnalysis } from "@/types";
 
 interface ExpertInsightsPanelProps {
   analysis: DEACAnalysis | null;
   isLoading?: boolean;
 }
 
-export default function ExpertInsightsPanel({ analysis, isLoading }: ExpertInsightsPanelProps) {
+export default function ExpertInsightsPanel({
+  analysis,
+  isLoading,
+}: ExpertInsightsPanelProps) {
   const [expanded, setExpanded] = useState(false);
 
   if (isLoading) {
@@ -51,14 +60,15 @@ export default function ExpertInsightsPanel({ analysis, isLoading }: ExpertInsig
           {/* 专家响应列表 */}
           <div className="space-y-3">
             {analysis.expert_responses.map((response, idx) => (
-              <div key={idx} className="border-l-2 border-purple-500/50 pl-3 py-2">
+              <div
+                key={idx}
+                className="border-l-2 border-purple-500/50 pl-3 py-2"
+              >
                 <div className="flex items-start justify-between">
                   <div className="text-xs font-bold text-purple-300 font-mono">
                     {response.expert_name}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {response.domain}
-                  </div>
+                  <div className="text-xs text-gray-500">{response.domain}</div>
                 </div>
                 <p className="text-xs text-gray-400 mt-2 line-clamp-3">
                   {response.analysis}
@@ -87,51 +97,62 @@ export default function ExpertInsightsPanel({ analysis, isLoading }: ExpertInsig
           {/* 综合洞察 */}
           {analysis.synthesis && (
             <div className="border-t border-purple-500/30 pt-3 mt-3">
-              <div className="text-xs font-bold text-purple-200 mb-2">综合分析</div>
+              <div className="text-xs font-bold text-purple-200 mb-2">
+                综合分析
+              </div>
 
               {/* 共识 */}
               {analysis.synthesis.consensus && (
                 <div className="mb-3">
                   <div className="text-xs text-gray-500 mb-1">专家共识:</div>
-                  <p className="text-xs text-gray-300">{analysis.synthesis.consensus}</p>
+                  <p className="text-xs text-gray-300">
+                    {analysis.synthesis.consensus}
+                  </p>
                 </div>
               )}
 
               {/* 涌现洞察 */}
-              {analysis.synthesis.emergent_insights && analysis.synthesis.emergent_insights.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-xs text-gray-500 mb-1">涌现洞察:</div>
-                  <ul className="text-xs text-blue-300 space-y-1">
-                    {analysis.synthesis.emergent_insights.map((insight, idx) => (
-                      <li key={idx}>• {insight}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {analysis.synthesis.emergent_insights &&
+                analysis.synthesis.emergent_insights.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-xs text-gray-500 mb-1">涌现洞察:</div>
+                    <ul className="text-xs text-blue-300 space-y-1">
+                      {analysis.synthesis.emergent_insights.map(
+                        (insight, idx) => (
+                          <li key={idx}>• {insight}</li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                )}
 
               {/* 风险评估 */}
               {analysis.synthesis.risk_assessment && (
                 <div>
                   <div className="text-xs text-gray-500 mb-1">风险评估:</div>
-                  <p className="text-xs text-orange-300">{analysis.synthesis.risk_assessment}</p>
+                  <p className="text-xs text-orange-300">
+                    {analysis.synthesis.risk_assessment}
+                  </p>
                 </div>
               )}
             </div>
           )}
 
           {/* 特殊专家生成提示 */}
-          {analysis.special_experts_generated && analysis.special_experts_generated.length > 0 && (
-            <div className="border-t border-purple-500/30 pt-3 mt-3">
-              <div className="text-xs text-cyan-400">
-                ✨ 为此异质点生成了 {analysis.special_experts_generated.length} 位特殊专家:
-                {analysis.special_experts_generated.map((expert, idx) => (
-                  <span key={idx} className="ml-2 text-cyan-300">
-                    {expert.name}
-                  </span>
-                ))}
+          {analysis.special_experts_generated &&
+            analysis.special_experts_generated.length > 0 && (
+              <div className="border-t border-purple-500/30 pt-3 mt-3">
+                <div className="text-xs text-cyan-400">
+                  ✨ 为此异质点生成了{" "}
+                  {analysis.special_experts_generated.length} 位特殊专家:
+                  {analysis.special_experts_generated.map((expert, idx) => (
+                    <span key={idx} className="ml-2 text-cyan-300">
+                      {expert.name}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       )}
     </div>

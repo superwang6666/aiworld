@@ -1,10 +1,9 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { auth } from './auth-config';
+import { auth } from "./auth-config";
 
-import type { SessionUser } from '@/types/auth';
-
+import type { SessionUser } from "@/types/auth";
 
 /**
  * 认证中间件 - 保护需要登录的 API 路由
@@ -13,14 +12,14 @@ import type { SessionUser } from '@/types/auth';
  * @returns 用户信息或 401 错误响应
  */
 export async function requireAuth(
-  _request: NextRequest
+  _request: NextRequest,
 ): Promise<SessionUser | NextResponse> {
   const session = await auth();
 
   if (!session?.user) {
     return NextResponse.json(
-      { error: '未授权访问，请先登录' },
-      { status: 401 }
+      { error: "未授权访问，请先登录" },
+      { status: 401 },
     );
   }
 
@@ -44,7 +43,7 @@ export async function getOptionalUser(): Promise<SessionUser | null> {
  * @returns 用户信息或错误响应
  */
 export async function requireVerifiedEmail(
-  _request: NextRequest
+  _request: NextRequest,
 ): Promise<SessionUser | NextResponse> {
   const userOrResponse = await requireAuth(_request);
 
@@ -56,10 +55,7 @@ export async function requireVerifiedEmail(
   const user = userOrResponse;
 
   if (!user.email_verified) {
-    return NextResponse.json(
-      { error: '请先验证您的邮箱' },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "请先验证您的邮箱" }, { status: 403 });
   }
 
   return user;

@@ -1,20 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
-import type { DEACAnalysis } from '@/types';
+import type { DEACAnalysis } from "@/types";
 
-import ExpertCard from './advanced-analysis/ExpertCard';
-import { adaptDEACAnalysis } from './advanced-analysis/utils/dataAdapters';
+import ExpertCard from "./advanced-analysis/ExpertCard";
+import { adaptDEACAnalysis } from "./advanced-analysis/utils/dataAdapters";
 
 interface ExpertInsightsPanelProps {
   analysis: DEACAnalysis | null;
 }
 
-export default function ExpertInsightsPanel({ analysis }: ExpertInsightsPanelProps) {
-  const [expandedExperts, setExpandedExperts] = useState<Set<number>>(new Set());
+export default function ExpertInsightsPanel({
+  analysis,
+}: ExpertInsightsPanelProps) {
+  const [expandedExperts, setExpandedExperts] = useState<Set<number>>(
+    new Set(),
+  );
 
   if (!analysis) {
     return (

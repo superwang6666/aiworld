@@ -1,8 +1,8 @@
-import { Download, Archive } from 'lucide-react';
+import { Download, Archive } from "lucide-react";
 
-import type { WorldRule, RuleTag } from '@/types';
+import type { WorldRule, RuleTag } from "@/types";
 
-import RuleCard from '@/components/RuleCard';
+import RuleCard from "@/components/RuleCard";
 
 interface RulesDisplayProps {
   rules: WorldRule[];
@@ -29,7 +29,7 @@ export default function RulesDisplay({
   onSaveArchive,
   onShowArchiveManager,
   onExport,
-  onReset
+  onReset,
 }: RulesDisplayProps) {
   return (
     <div className="space-y-6 animate-fade-in">
@@ -71,7 +71,9 @@ export default function RulesDisplay({
       {/* 存档保存区域 */}
       {rules.length > 0 && (
         <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-purple-300 font-mono mb-4">Save World Archive</h3>
+          <h3 className="text-lg font-bold text-purple-300 font-mono mb-4">
+            Save World Archive
+          </h3>
           <div className="flex gap-3">
             <input
               type="text"

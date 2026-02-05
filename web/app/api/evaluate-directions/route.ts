@@ -1,9 +1,9 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import OpenAI from 'openai';
+import { EVALUATION_CONFIG } from "@/config/evaluation-rules";
 
-import { EVALUATION_CONFIG } from '@/config/evaluation-rules';
+import { getOpenAIClient } from "@/lib/utils/openai-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,29 +11,12 @@ export async function POST(request: NextRequest) {
 
     if (!lawImpacts || !Array.isArray(lawImpacts)) {
       return NextResponse.json(
-        { error: 'lawImpacts array is required' },
-        { status: 400 }
+        { error: "lawImpacts array is required" },
+        { status: 400 },
       );
     }
 
-    // Read environment variables
-    const deepSeekKey = process.env.DEEPSEEK_API_KEY;
-    const openAiKey = process.env.OPENAI_API_KEY;
-    const apiKey = deepSeekKey || openAiKey;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API Key not configured. Please set DEEPSEEK_API_KEY or OPENAI_API_KEY in .env file' },
-        { status: 500 }
-      );
-    }
-
-    // Configure OpenAI client
-    const baseURL = deepSeekKey ? 'https://api.deepseek.com' : undefined;
-    const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: baseURL,
-    });
+    const { openai, model } = getOpenAIClient();
 
     const userPrompt = `Law Impacts to Evaluate:
 ${JSON.stringify(lawImpacts, null, 2)}
@@ -42,64 +25,65 @@ Please evaluate each direction against the criteria defined in the system prompt
 
 IMPORTANT: Return your response in valid JSON format following the structure specified in the system prompt.`;
 
-    // Use appropriate model
-    const model = deepSeekKey ? 'deepseek-chat' : 'gpt-4o-mini';
-
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: EVALUATION_CONFIG.systemPrompt,
         },
         {
-          role: 'user',
+          role: "user",
           content: userPrompt,
         },
       ],
       temperature: 0.7,
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
     const responseContent = completion.choices[0]?.message?.content;
     if (!responseContent) {
-      throw new Error('No response from AI service');
+      throw new Error("No response from AI service");
     }
 
-    // Parse the JSON response
     let evaluationResult;
     try {
       let cleanedContent = responseContent.trim();
 
-      // Remove markdown code blocks if present
-      const jsonMatch = cleanedContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      const jsonMatch = cleanedContent.match(
+        /```(?:json)?\s*(\{[\s\S]*\})\s*```/,
+      );
       if (jsonMatch) {
         cleanedContent = jsonMatch[1].trim();
       }
 
-      // Fix common AI JSON issues
       cleanedContent = cleanedContent.replace(/[""]/g, '"');
       cleanedContent = cleanedContent.replace(/['']/g, "'");
-      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
+      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, "$1");
 
       evaluationResult = JSON.parse(cleanedContent);
-    } catch (parseError: any) {
-      console.error('Raw AI response:', responseContent);
-      console.error('Parse error:', parseError.message);
-      throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+    } catch (parseError) {
+      const errorMessage =
+        parseError instanceof Error
+          ? parseError.message
+          : "Unknown parse error";
+      throw new Error(`Failed to parse AI response as JSON: ${errorMessage}`);
     }
 
     // Validate the response structure
-    if (!evaluationResult.evaluatedImpacts || !Array.isArray(evaluationResult.evaluatedImpacts)) {
-      throw new Error('Invalid response format: evaluatedImpacts array missing');
+    if (
+      !evaluationResult.evaluatedImpacts ||
+      !Array.isArray(evaluationResult.evaluatedImpacts)
+    ) {
+      throw new Error(
+        "Invalid response format: evaluatedImpacts array missing",
+      );
     }
 
     return NextResponse.json(evaluationResult);
-  } catch (error: any) {
-    console.error('Error evaluating directions:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to evaluate directions' },
-      { status: 500 }
-    );
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to evaluate directions";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

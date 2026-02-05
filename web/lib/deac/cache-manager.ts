@@ -1,9 +1,16 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from "fs";
+import path from "path";
 
-import type { ExpertConfig } from '@/types';
+import type { ExpertConfig } from "@/types";
 
-const SPECIAL_EXPERTS_DIR = path.join(process.cwd(), 'lib', 'experts', 'special');
+import { logger } from "@/lib/utils/logger";
+
+const SPECIAL_EXPERTS_DIR = path.join(
+  process.cwd(),
+  "lib",
+  "experts",
+  "special",
+);
 
 /**
  * 缓存生成的特殊专家以供将来重用
@@ -14,11 +21,14 @@ export async function cacheSpecialExpert(expert: ExpertConfig): Promise<void> {
     await fs.mkdir(SPECIAL_EXPERTS_DIR, { recursive: true });
 
     const filePath = path.join(SPECIAL_EXPERTS_DIR, `${expert.id}.json`);
-    await fs.writeFile(filePath, JSON.stringify(expert, null, 2), 'utf-8');
+    await fs.writeFile(filePath, JSON.stringify(expert, null, 2), "utf-8");
 
-    console.log(`已缓存特殊专家: ${expert.id}`);
+    logger.info("Cached special expert", { expertId: expert.id });
   } catch (error) {
-    console.error('缓存特殊专家时出错:', error);
+    logger.error("Failed to cache special expert", {
+      expertId: expert.id,
+      error,
+    });
   }
 }
 
@@ -38,22 +48,27 @@ export async function hasCachedExpert(expertId: string): Promise<boolean> {
 /**
  * 按领域关键词搜索已缓存的特殊专家
  */
-export async function findCachedExpertsByDomain(keywords: string[]): Promise<ExpertConfig[]> {
+export async function findCachedExpertsByDomain(
+  keywords: string[],
+): Promise<ExpertConfig[]> {
   try {
     const files = await fs.readdir(SPECIAL_EXPERTS_DIR);
-    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
 
     const experts = await Promise.all(
       jsonFiles.map(async (file) => {
-        const content = await fs.readFile(path.join(SPECIAL_EXPERTS_DIR, file), 'utf-8');
+        const content = await fs.readFile(
+          path.join(SPECIAL_EXPERTS_DIR, file),
+          "utf-8",
+        );
         return JSON.parse(content) as ExpertConfig;
-      })
+      }),
     );
 
     // 按领域关键词过滤
-    const matches = experts.filter(expert => {
+    const matches = experts.filter((expert) => {
       const domainLower = expert.domain.toLowerCase();
-      return keywords.some(kw => domainLower.includes(kw.toLowerCase()));
+      return keywords.some((kw) => domainLower.includes(kw.toLowerCase()));
     });
 
     return matches;

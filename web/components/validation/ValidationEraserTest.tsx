@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { FlaskConical } from 'lucide-react';
-import { motion } from 'motion/react';
+import { FlaskConical } from "lucide-react";
+import { motion } from "motion/react";
 
-import type { EraserTest } from '@/types';
+import type { EraserTest } from "@/types";
 
 interface ValidationEraserTestProps {
   eraserTest: EraserTest;
 }
 
-export default function ValidationEraserTest({ eraserTest }: ValidationEraserTestProps) {
-  const isStructural = eraserTest.verdict === 'structural';
+export default function ValidationEraserTest({
+  eraserTest,
+}: ValidationEraserTestProps) {
+  const isStructural = eraserTest.verdict === "structural";
 
   return (
     <motion.div
@@ -23,8 +25,9 @@ export default function ValidationEraserTest({ eraserTest }: ValidationEraserTes
         <div
           className="w-1 h-8 rounded-full"
           style={{
-            background: 'linear-gradient(180deg, #39ff14 0%, rgba(57, 255, 20, 0.3) 100%)',
-            boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+            background:
+              "linear-gradient(180deg, #39ff14 0%, rgba(57, 255, 20, 0.3) 100%)",
+            boxShadow: "0 0 10px rgba(57, 255, 20, 0.5)",
           }}
         />
         <h2 className="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent">
@@ -36,7 +39,7 @@ export default function ValidationEraserTest({ eraserTest }: ValidationEraserTes
         <div className="flex items-start gap-3 mb-4">
           <FlaskConical
             className="w-6 h-6 text-[#39ff14] flex-shrink-0"
-            style={{ filter: 'drop-shadow(0 0 8px rgba(57, 255, 20, 0.6))' }}
+            style={{ filter: "drop-shadow(0 0 8px rgba(57, 255, 20, 0.6))" }}
           />
           <div className="flex-1">
             <h3 className="text-[#ebebf0] text-xl leading-snug font-semibold mb-1">
@@ -92,29 +95,29 @@ export default function ValidationEraserTest({ eraserTest }: ValidationEraserTes
           <div
             className={`inline-flex items-center gap-3 px-6 py-3 rounded-xl border ${
               isStructural
-                ? 'bg-[rgba(57,255,20,0.1)] border-[rgba(57,255,20,0.3)]'
-                : 'bg-[rgba(255,160,100,0.1)] border-[rgba(255,160,100,0.3)]'
+                ? "bg-[rgba(57,255,20,0.1)] border-[rgba(57,255,20,0.3)]"
+                : "bg-[rgba(255,160,100,0.1)] border-[rgba(255,160,100,0.3)]"
             }`}
           >
             <div
               className="w-3 h-3 rounded-full"
               style={{
-                background: isStructural ? '#39ff14' : 'rgba(255,160,100,0.9)',
+                background: isStructural ? "#39ff14" : "rgba(255,160,100,0.9)",
                 boxShadow: isStructural
-                  ? '0 0 10px rgba(57, 255, 20, 0.8)'
-                  : '0 0 10px rgba(255,160,100,0.6)',
+                  ? "0 0 10px rgba(57, 255, 20, 0.8)"
+                  : "0 0 10px rgba(255,160,100,0.6)",
               }}
             />
             <span
               className="text-lg font-bold"
               style={{
-                color: isStructural ? '#39ff14' : 'rgba(255,160,100,0.9)',
+                color: isStructural ? "#39ff14" : "rgba(255,160,100,0.9)",
                 textShadow: isStructural
-                  ? '0 0 10px rgba(57, 255, 20, 0.5)'
-                  : '0 0 10px rgba(255,160,100,0.4)',
+                  ? "0 0 10px rgba(57, 255, 20, 0.5)"
+                  : "0 0 10px rgba(255,160,100,0.4)",
               }}
             >
-              {isStructural ? 'STRUCTURAL' : 'DECORATIVE'}
+              {isStructural ? "STRUCTURAL" : "DECORATIVE"}
             </span>
           </div>
         </div>

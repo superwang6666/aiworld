@@ -1,8 +1,8 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { deleteArchive, loadArchive } from '@/lib/archive/archive-manager';
-import { requireAuth } from '@/lib/auth/middleware';
+import { deleteArchive, loadArchive } from "@/lib/archive/archive-manager";
+import { requireAuth } from "@/lib/auth/middleware";
 
 /**
  * DELETE /api/archive/delete?id={archiveId}
@@ -28,24 +28,27 @@ export async function DELETE(req: NextRequest) {
     const user = userOrResponse;
 
     const { searchParams } = new URL(req.url);
-    const archiveId = searchParams.get('id');
+    const archiveId = searchParams.get("id");
 
     if (!archiveId) {
-      return NextResponse.json({ error: 'Missing archive id' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing archive id" },
+        { status: 400 },
+      );
     }
 
     // 加载存档以检查所有权
     const archive = await loadArchive(archiveId);
 
     if (!archive) {
-      return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
+      return NextResponse.json({ error: "Archive not found" }, { status: 404 });
     }
 
     // 权限检查：只能删除自己的存档
     if (archive.user_id && archive.user_id !== user.id) {
       return NextResponse.json(
-        { error: 'Access denied: You can only delete your own archives' },
-        { status: 403 }
+        { error: "Access denied: You can only delete your own archives" },
+        { status: 403 },
       );
     }
 
@@ -53,21 +56,24 @@ export async function DELETE(req: NextRequest) {
     const success = await deleteArchive(archiveId);
 
     if (!success) {
-      return NextResponse.json({ error: 'Failed to delete archive' }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to delete archive" },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json({
       success: true,
-      message: '存档删除成功',
+      message: "存档删除成功",
     });
   } catch (error) {
-    console.error('删除存档API错误:', error);
+    // Error handled silently
     return NextResponse.json(
       {
-        error: '存档删除失败',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "存档删除失败",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

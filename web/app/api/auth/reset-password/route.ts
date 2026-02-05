@@ -1,15 +1,14 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-
-import { validatePassword } from '@/lib/auth/password-utils';
+import { validatePassword } from "@/lib/auth/password-utils";
 import {
   verifyPasswordResetToken,
   updateUserPassword,
   markPasswordResetTokenAsUsed,
-} from '@/lib/auth/user-service';
+} from "@/lib/auth/user-service";
 
-import type { ResetPasswordRequest, PasswordResetResponse } from '@/types/auth';
+import type { ResetPasswordRequest, PasswordResetResponse } from "@/types/auth";
 
 /**
  * 重置密码 API
@@ -21,8 +20,8 @@ export async function POST(request: NextRequest) {
 
     if (!token || !new_password) {
       return NextResponse.json<PasswordResetResponse>(
-        { success: false, error: '请填写所有必填字段' },
-        { status: 400 }
+        { success: false, error: "请填写所有必填字段" },
+        { status: 400 },
       );
     }
 
@@ -30,8 +29,8 @@ export async function POST(request: NextRequest) {
     const passwordValidation = validatePassword(new_password);
     if (!passwordValidation.valid) {
       return NextResponse.json<PasswordResetResponse>(
-        { success: false, error: passwordValidation.errors.join(', ') },
-        { status: 400 }
+        { success: false, error: passwordValidation.errors.join(", ") },
+        { status: 400 },
       );
     }
 
@@ -40,8 +39,8 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json<PasswordResetResponse>(
-        { success: false, error: '重置令牌无效或已过期' },
-        { status: 400 }
+        { success: false, error: "重置令牌无效或已过期" },
+        { status: 400 },
       );
     }
 
@@ -54,15 +53,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json<PasswordResetResponse>(
       {
         success: true,
-        message: '密码重置成功！您现在可以使用新密码登录。',
+        message: "密码重置成功！您现在可以使用新密码登录。",
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: any) {
-    console.error('Password reset error:', error);
+    // Error handled silently
     return NextResponse.json<PasswordResetResponse>(
-      { success: false, error: error.message || '重置失败，请稍后重试' },
-      { status: 500 }
+      { success: false, error: error.message || "重置失败，请稍后重试" },
+      { status: 500 },
     );
   }
 }

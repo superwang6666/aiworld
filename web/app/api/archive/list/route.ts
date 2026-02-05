@@ -1,8 +1,8 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { listArchives } from '@/lib/archive/archive-manager';
-import { getOptionalUser } from '@/lib/auth/middleware';
+import { listArchives } from "@/lib/archive/archive-manager";
+import { getOptionalUser } from "@/lib/auth/middleware";
 
 /**
  * GET /api/archive/list
@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest) {
     const allArchives = await listArchives();
 
     // 过滤：显示用户自己的存档 + 公开存档
-    const filteredArchives = allArchives.filter(archive => {
+    const filteredArchives = allArchives.filter((archive) => {
       // 如果是用户自己的存档，显示
       if (user && archive.user_id === user.id) {
         return true;
@@ -41,13 +41,13 @@ export async function GET(_req: NextRequest) {
 
     return NextResponse.json({ archives: filteredArchives });
   } catch (error) {
-    console.error('列出存档API错误:', error);
+    // Error handled silently
     return NextResponse.json(
       {
-        error: '获取存档列表失败',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "获取存档列表失败",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

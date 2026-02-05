@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
-import { Lightbulb } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Lightbulb } from "lucide-react";
+import { motion } from "motion/react";
 
 interface ValidationRecommendationsProps {
   recommendations: string[];
 }
 
-export default function ValidationRecommendations({ recommendations }: ValidationRecommendationsProps) {
+export default function ValidationRecommendations({
+  recommendations,
+}: ValidationRecommendationsProps) {
   if (!recommendations || recommendations.length === 0) return null;
 
   return (
@@ -21,7 +23,7 @@ export default function ValidationRecommendations({ recommendations }: Validatio
         <div className="flex items-center gap-3 mb-4">
           <Lightbulb
             className="w-6 h-6 text-[#8ec5ff] flex-shrink-0"
-            style={{ filter: 'drop-shadow(0 0 6px rgba(142, 197, 255, 0.4))' }}
+            style={{ filter: "drop-shadow(0 0 6px rgba(142, 197, 255, 0.4))" }}
           />
           <h3 className="text-[#8ec5ff] text-lg sm:text-xl font-bold">
             Recommendations

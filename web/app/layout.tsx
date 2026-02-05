@@ -18,7 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "World-Building Engine",
-  description: "Generate logical, consistent world rules using the Seven Laws of World Building",
+  description:
+    "Generate logical, consistent world rules using the Seven Laws of World Building",
 };
 
 export default function RootLayout({
@@ -31,9 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );

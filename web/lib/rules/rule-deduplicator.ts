@@ -11,7 +11,9 @@
  * 保留此文件仅作为参考,未来可能删除
  */
 
-import type { WorldRule } from '@/types';
+import type { WorldRule } from "@/types";
+
+import { logger } from "@/lib/utils/logger";
 
 /**
  * 规则去重配置
@@ -42,7 +44,10 @@ export interface DuplicationCheckResult {
  * @param tagsB 规则B的标签数组
  * @returns Jaccard 相似度 (0-1)
  */
-export function calculateJaccardSimilarity(tagsA: string[], tagsB: string[]): number {
+export function calculateJaccardSimilarity(
+  tagsA: string[],
+  tagsB: string[],
+): number {
   // 处理空标签情况
   if (tagsA.length === 0 && tagsB.length === 0) {
     return 0; // 两个都没有标签,视为不同(避免误判)
@@ -75,11 +80,13 @@ export function calculateJaccardSimilarity(tagsA: string[], tagsB: string[]): nu
 export function checkRuleDuplication(
   newRule: WorldRule,
   existingRules: WorldRule[],
-  threshold: number = DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD
+  threshold: number = DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD,
 ): DuplicationCheckResult {
   // 如果新规则没有标签,无法检测,直接通过
   if (!newRule.tags || newRule.tags.length === 0) {
-    console.warn('新规则没有标签,跳过去重检测:', newRule.id);
+    logger.warn("New rule has no tags, skipping deduplication check", {
+      ruleId: newRule.id,
+    });
     return { isDuplicate: false };
   }
 
@@ -106,7 +113,10 @@ export function checkRuleDuplication(
     }
 
     // 计算 Jaccard 相似度
-    const similarity = calculateJaccardSimilarity(newRule.tags, existingRule.tags);
+    const similarity = calculateJaccardSimilarity(
+      newRule.tags,
+      existingRule.tags,
+    );
 
     // 更新最大相似度
     if (similarity > maxSimilarity) {
@@ -116,11 +126,11 @@ export function checkRuleDuplication(
 
     // 提前退出策略: 如果找到重复规则,立即返回
     if (similarity >= threshold) {
-      console.log(
-        `检测到重复规则 (相似度: ${(similarity * 100).toFixed(1)}%):`,
-        `\n新规则: ${newRule.rule.substring(0, 50)}...`,
-        `\n相似规则: ${existingRule.rule.substring(0, 50)}...`
-      );
+      logger.info("Duplicate rule detected", {
+        similarity: (similarity * 100).toFixed(1),
+        newRule: newRule.rule.substring(0, 50),
+        similarRule: existingRule.rule.substring(0, 50),
+      });
 
       return {
         isDuplicate: true,
@@ -132,9 +142,10 @@ export function checkRuleDuplication(
 
   // 没有找到重复规则
   if (maxSimilarity > 0) {
-    console.log(
-      `规则通过去重检测,最高相似度: ${(maxSimilarity * 100).toFixed(1)}% (阈值: ${(threshold * 100).toFixed(0)}%)`
-    );
+    logger.info("Rule passed deduplication check", {
+      maxSimilarity: (maxSimilarity * 100).toFixed(1),
+      threshold: (threshold * 100).toFixed(0),
+    });
   }
 
   return {
@@ -153,9 +164,13 @@ export function checkRuleDuplication(
  */
 export function batchCheckDuplication(
   rules: WorldRule[],
-  threshold: number = DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD
+  threshold: number = DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD,
 ): Array<{ ruleA: WorldRule; ruleB: WorldRule; similarity: number }> {
-  const duplicates: Array<{ ruleA: WorldRule; ruleB: WorldRule; similarity: number }> = [];
+  const duplicates: Array<{
+    ruleA: WorldRule;
+    ruleB: WorldRule;
+    similarity: number;
+  }> = [];
 
   // 两两比对
   for (let i = 0; i < rules.length; i++) {

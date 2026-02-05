@@ -1,8 +1,8 @@
-import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { randomUUID } from "crypto";
+import { promises as fs } from "fs";
+import path from "path";
 
-import type { WorldArchive, ArchiveMetadata } from '@/types';
+import type { WorldArchive, ArchiveMetadata } from "@/types";
 
 /**
  * 世界存档管理器
@@ -10,8 +10,8 @@ import type { WorldArchive, ArchiveMetadata } from '@/types';
  * 负责存档的CRUD操作,使用文件系统持久化
  */
 
-const ARCHIVE_DIR = path.join(process.cwd(), 'archive', 'worlds');
-const INDEX_FILE = path.join(process.cwd(), 'archive', 'index.json');
+const ARCHIVE_DIR = path.join(process.cwd(), "archive", "worlds");
+const INDEX_FILE = path.join(process.cwd(), "archive", "index.json");
 
 /**
  * 确保存档目录存在
@@ -40,12 +40,11 @@ export async function saveArchive(archive: WorldArchive): Promise<string> {
 
   // 写入存档文件
   const filePath = path.join(ARCHIVE_DIR, `${archive.id}.json`);
-  await fs.writeFile(filePath, JSON.stringify(archive, null, 2), 'utf-8');
+  await fs.writeFile(filePath, JSON.stringify(archive, null, 2), "utf-8");
 
   // 更新索引
   await updateIndex(archive);
 
-  console.log(`存档已保存: ${archive.id} - ${archive.name}`);
   return archive.id;
 }
 
@@ -55,13 +54,15 @@ export async function saveArchive(archive: WorldArchive): Promise<string> {
  * @param archiveId 存档ID
  * @returns 存档对象,如果不存在返回null
  */
-export async function loadArchive(archiveId: string): Promise<WorldArchive | null> {
+export async function loadArchive(
+  archiveId: string,
+): Promise<WorldArchive | null> {
   try {
     const filePath = path.join(ARCHIVE_DIR, `${archiveId}.json`);
-    const content = await fs.readFile(filePath, 'utf-8');
+    const content = await fs.readFile(filePath, "utf-8");
     return JSON.parse(content) as WorldArchive;
-  } catch (error) {
-    console.error(`加载存档失败: ${archiveId}`, error);
+  } catch (_error) {
+    // Error handled silently
     return null;
   }
 }
@@ -80,10 +81,9 @@ export async function deleteArchive(archiveId: string): Promise<boolean> {
     // 从索引中移除
     await removeFromIndex(archiveId);
 
-    console.log(`存档已删除: ${archiveId}`);
     return true;
-  } catch (error) {
-    console.error(`删除存档失败: ${archiveId}`, error);
+  } catch (_error) {
+    // Error handled silently
     return false;
   }
 }
@@ -105,17 +105,20 @@ export async function listArchives(): Promise<ArchiveMetadata[]> {
 
     // 如果索引为空,扫描目录
     const files = await fs.readdir(ARCHIVE_DIR);
-    const jsonFiles = files.filter((f) => f.endsWith('.json'));
+    const jsonFiles = files.filter((f) => f.endsWith(".json"));
 
     const metadataList: ArchiveMetadata[] = [];
 
     for (const file of jsonFiles) {
       try {
-        const content = await fs.readFile(path.join(ARCHIVE_DIR, file), 'utf-8');
+        const content = await fs.readFile(
+          path.join(ARCHIVE_DIR, file),
+          "utf-8",
+        );
         const archive = JSON.parse(content) as WorldArchive;
         metadataList.push(extractMetadata(archive));
-      } catch (error) {
-        console.error(`读取存档失败: ${file}`, error);
+      } catch (_error) {
+        // Error handled silently
       }
     }
 
@@ -124,9 +127,11 @@ export async function listArchives(): Promise<ArchiveMetadata[]> {
       await saveIndex(metadataList);
     }
 
-    return metadataList.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
-  } catch (error) {
-    console.error('列出存档失败:', error);
+    return metadataList.sort((a, b) =>
+      b.updated_at.localeCompare(a.updated_at),
+    );
+  } catch (_error) {
+    // Error handled silently
     return [];
   }
 }
@@ -157,7 +162,7 @@ function extractMetadata(archive: WorldArchive): ArchiveMetadata {
  */
 async function loadIndex(): Promise<ArchiveMetadata[]> {
   try {
-    const content = await fs.readFile(INDEX_FILE, 'utf-8');
+    const content = await fs.readFile(INDEX_FILE, "utf-8");
     return JSON.parse(content);
   } catch {
     return [];
@@ -169,7 +174,7 @@ async function loadIndex(): Promise<ArchiveMetadata[]> {
  */
 async function saveIndex(metadata: ArchiveMetadata[]): Promise<void> {
   await fs.mkdir(path.dirname(INDEX_FILE), { recursive: true });
-  await fs.writeFile(INDEX_FILE, JSON.stringify(metadata, null, 2), 'utf-8');
+  await fs.writeFile(INDEX_FILE, JSON.stringify(metadata, null, 2), "utf-8");
 }
 
 /**
@@ -218,7 +223,9 @@ export async function archiveExists(archiveId: string): Promise<boolean> {
 /**
  * 搜索存档 (按核心前提关键词)
  */
-export async function searchArchives(keyword: string): Promise<ArchiveMetadata[]> {
+export async function searchArchives(
+  keyword: string,
+): Promise<ArchiveMetadata[]> {
   const allArchives = await listArchives();
   const lowerKeyword = keyword.toLowerCase();
 

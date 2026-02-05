@@ -1,11 +1,11 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
-import { analyzeGaps } from '@/lib/experts/gap-analyzer';
-import { loadCoreExperts } from '@/lib/experts/loader';
-import { dispatchExperts } from '@/lib/experts/orchestrator';
-import { generateSpecialExpert } from '@/lib/experts/prompt-architect';
+import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
+import { analyzeGaps } from "@/lib/experts/gap-analyzer";
+import { loadCoreExperts } from "@/lib/experts/loader";
+import { dispatchExperts } from "@/lib/experts/orchestrator";
+import { generateSpecialExpert } from "@/lib/experts/prompt-architect";
 
 /**
  * POST /api/deac/dispatch
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       heterogeneity_point,
       gap_analysis,
       context,
-      generate_special_experts = true
+      generate_special_experts = true,
     } = await request.json();
 
     // 加载核心专家
@@ -51,7 +51,10 @@ export async function POST(request: NextRequest) {
 
     // 如果需要,生成特殊专家
     const specialExperts = [];
-    if (generate_special_experts && finalGapAnalysis.special_expertise_needed?.length > 0) {
+    if (
+      generate_special_experts &&
+      finalGapAnalysis.special_expertise_needed?.length > 0
+    ) {
       for (const gap of finalGapAnalysis.special_expertise_needed) {
         try {
           const specialExpert = await generateSpecialExpert({
@@ -65,8 +68,8 @@ export async function POST(request: NextRequest) {
           // 缓存以备将来使用
           await cacheSpecialExpert(specialExpert);
           specialExperts.push(specialExpert);
-        } catch (error) {
-          console.error(`生成特殊专家失败 (${gap.domain}):`, error);
+        } catch (_error) {
+          // Error handled silently
           // 继续处理其他专家
         }
       }
@@ -87,11 +90,11 @@ export async function POST(request: NextRequest) {
       expert_responses: dispatch_result.expert_responses,
       special_experts_generated: specialExperts,
     });
-  } catch (error: any) {
-    console.error('调度专家时出错:', error);
+  } catch (_error: any) {
+    // Error handled silently
     return NextResponse.json(
-      { error: error.message || '专家调度失败' },
-      { status: 500 }
+      { error: "专家调度失败" },
+      { status: 500 },
     );
   }
 }

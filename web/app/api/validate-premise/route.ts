@@ -1,16 +1,18 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import OpenAI from 'openai';
-
-import { calculateLawWeights } from '@/lib/laws/weight-calculator';
+import { calculateLawWeights } from "@/lib/laws/weight-calculator";
+import {
+  getOpenAIClient,
+  cleanAIJsonResponse,
+} from "@/lib/utils/openai-client";
 
 // 辅助函数:获取基础 URL
 function getBaseUrl(): string {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     return window.location.origin;
   }
-  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:8000';
+  return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
 }
 
 const VALIDATION_PROMPT = `You are an expert World-Building Validator specializing in the "Core Anomaly Verification" methodology.
@@ -79,105 +81,69 @@ IMPORTANT RULES:
 3. verdict must be exactly "structural" or "decorative" (lowercase, double quotes)
 4. Be brutally honest. A weak premise should score low. Don't inflate scores out of politeness.`;
 
-
 export async function POST(request: NextRequest) {
   try {
     const { corePremise } = await request.json();
 
     if (!corePremise || corePremise.trim().length === 0) {
       return NextResponse.json(
-        { error: 'Core Premise is required' },
-        { status: 400 }
+        { error: "Core Premise is required" },
+        { status: 400 },
       );
     }
 
-    // Read environment variables
-    const deepSeekKey = process.env.DEEPSEEK_API_KEY;
-    const openAiKey = process.env.OPENAI_API_KEY;
-    const apiKey = deepSeekKey || openAiKey;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'API Key not configured. Please set DEEPSEEK_API_KEY or OPENAI_API_KEY in .env file' },
-        { status: 500 }
-      );
-    }
-
-    // Configure OpenAI client
-    const baseURL = deepSeekKey ? 'https://api.deepseek.com' : undefined;
-    const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: baseURL,
-    });
+    // Get configured OpenAI client
+    const { openai, model } = getOpenAIClient();
 
     const userPrompt = `Core Premise to validate:\n\n${corePremise}`;
-
-    // Use appropriate model
-    const model = deepSeekKey ? 'deepseek-chat' : 'gpt-4o-mini';
 
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: VALIDATION_PROMPT,
         },
         {
-          role: 'user',
+          role: "user",
           content: userPrompt,
         },
       ],
       temperature: 0.7,
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
     const responseContent = completion.choices[0]?.message?.content;
     if (!responseContent) {
-      throw new Error('No response from AI service');
+      throw new Error("No response from AI service");
     }
 
     // Parse the JSON response with robust error handling
     let validationResult;
     try {
       // Clean the response content first
-      let cleanedContent = responseContent.trim();
+      const cleanedContent = cleanAIJsonResponse(responseContent);
 
-      // Remove markdown code blocks if present
-      const jsonMatch = cleanedContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-      if (jsonMatch) {
-        cleanedContent = jsonMatch[1].trim();
-      }
-
-      // Fix common AI JSON issues
-      // 1. Replace smart quotes with regular quotes
-      cleanedContent = cleanedContent.replace(/[""]/g, '"');
-      cleanedContent = cleanedContent.replace(/['']/g, "'");
-
-      // 2. Remove trailing commas before } or ]
-      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
-
-      // First try: parse as-is
-      try {
-        validationResult = JSON.parse(cleanedContent);
-      } catch (firstError: any) {
-        // Log the specific error location for debugging
-        console.error('JSON parse error at:', firstError.message);
-        console.error('Problem area:', cleanedContent.substring(Math.max(0, (firstError as any).position - 50), Math.min(cleanedContent.length, (firstError as any).position + 50)));
-        throw firstError;
-      }
-    } catch (parseError: any) {
-      console.error('Raw AI response:', responseContent);
-      console.error('Parse error:', parseError.message);
-      throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+      validationResult = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      const errorMessage =
+        parseError instanceof Error ? parseError.message : "Unknown error";
+      throw new Error(`Failed to parse AI response as JSON: ${errorMessage}`);
     }
 
     // Validate the response structure
-    if (!validationResult.lawImpacts || !Array.isArray(validationResult.lawImpacts)) {
-      throw new Error('Invalid response format: lawImpacts array missing');
+    if (
+      !validationResult.lawImpacts ||
+      !Array.isArray(validationResult.lawImpacts)
+    ) {
+      throw new Error("Invalid response format: lawImpacts array missing");
     }
 
-    if (!validationResult.eraserTest || typeof validationResult.eraserTest !== 'object') {
-      throw new Error('Invalid response format: eraserTest object missing');
+    if (
+      !validationResult.eraserTest ||
+      typeof validationResult.eraserTest !== "object"
+    ) {
+      throw new Error("Invalid response format: eraserTest object missing");
     }
 
     // 计算法则权重
@@ -186,35 +152,35 @@ export async function POST(request: NextRequest) {
     // 触发 DEAC 分析(非阻塞后台服务)
     // 不等待 - 让它在后台运行
     fetch(`${getBaseUrl()}/api/deac/dispatch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         heterogeneity_point: corePremise,
         gap_analysis: null, // 将由 dispatch 端点内部计算
         context: {
           core_premise: corePremise,
           validation_result: validationResult,
-          current_step: 'validation',
+          current_step: "validation",
           user_preferences: {
             enable_special_generation: true,
             max_experts: 5,
-          }
+          },
         },
         generate_special_experts: true,
-      })
+      }),
     })
-      .then(() => console.log('DEAC 分析已触发'))
-      .catch(err => console.error('DEAC 触发错误:', err));
+      .then(() => {})
+      .catch((_err) => {});
 
     return NextResponse.json({
       ...validationResult,
       lawWeights, // 添加法则权重到返回结果
     });
-  } catch (error: any) {
-    console.error('Error validating premise:', error);
+  } catch (_error: any) {
+    // Error handled silently
     return NextResponse.json(
-      { error: error.message || 'Failed to validate premise' },
-      { status: 500 }
+      { error: "Failed to validate premise" },
+      { status: 500 },
     );
   }
 }

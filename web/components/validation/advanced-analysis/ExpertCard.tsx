@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { AlertTriangle, Lightbulb } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AlertTriangle, Lightbulb } from "lucide-react";
+import { motion } from "motion/react";
 
-import type { ExpertCardData } from './utils/dataAdapters';
+import type { ExpertCardData } from "./utils/dataAdapters";
 
 interface ExpertCardProps {
   expert: ExpertCardData;
@@ -16,7 +16,7 @@ export default function ExpertCard({
   expert,
   index,
   isExpanded,
-  onToggle
+  onToggle,
 }: ExpertCardProps) {
   const IconComponent = expert.icon;
 
@@ -39,9 +39,12 @@ export default function ExpertCard({
               style={{ color: expert.iconColor }}
               strokeWidth={1.5}
             />
-            <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#39ff14] rounded-full flex items-center justify-center" style={{
-              boxShadow: '0 0 8px rgba(57, 255, 20, 0.6)'
-            }}>
+            <div
+              className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#39ff14] rounded-full flex items-center justify-center"
+              style={{
+                boxShadow: "0 0 8px rgba(57, 255, 20, 0.6)",
+              }}
+            >
               <svg
                 className="w-2.5 h-2.5 text-[#0f0f14]"
                 fill="none"
@@ -96,12 +99,16 @@ export default function ExpertCard({
             </div>
             <p
               className="text-[#c1c5cc] text-sm leading-loose"
-              style={!isExpanded ? {
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden'
-              } : undefined}
+              style={
+                !isExpanded
+                  ? {
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }
+                  : undefined
+              }
             >
               {expert.opinion}
             </p>
@@ -109,9 +116,7 @@ export default function ExpertCard({
               onClick={onToggle}
               className="mt-4 flex items-center gap-2 text-[#39ff14] text-xs font-medium hover:text-[#50ff30] transition-all duration-300 group/btn"
             >
-              <span>
-                {isExpanded ? "收起内容" : "展开全文"}
-              </span>
+              <span>{isExpanded ? "收起内容" : "展开全文"}</span>
               <svg
                 className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""} group-hover/btn:translate-y-0.5`}
                 fill="none"
@@ -134,7 +139,10 @@ export default function ExpertCard({
           {/* 警告 */}
           <div className="relative group/warning bg-gradient-to-br from-[rgba(180,80,60,0.12)] to-[rgba(150,60,40,0.08)] rounded-xl p-5 border border-[rgba(180,80,60,0.35)] hover:border-[rgba(180,80,60,0.5)] transition-all duration-300">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5 group-hover/warning:scale-110 transition-transform duration-300" strokeWidth={2} />
+              <AlertTriangle
+                className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5 group-hover/warning:scale-110 transition-transform duration-300"
+                strokeWidth={2}
+              />
               <div className="flex-1">
                 <p className="text-red-300 text-xs font-bold tracking-widest uppercase mb-2">
                   风险警告
@@ -149,7 +157,10 @@ export default function ExpertCard({
           {/* 建议 */}
           <div className="relative group/suggestion bg-gradient-to-br from-[rgba(57,255,20,0.12)] to-[rgba(57,255,20,0.06)] rounded-xl p-5 border border-[rgba(57,255,20,0.35)] hover:border-[rgba(57,255,20,0.5)] transition-all duration-300">
             <div className="flex items-start gap-3">
-              <Lightbulb className="w-5 h-5 text-[#39ff14] flex-shrink-0 mt-0.5 group-hover/suggestion:scale-110 transition-transform duration-300" strokeWidth={2} />
+              <Lightbulb
+                className="w-5 h-5 text-[#39ff14] flex-shrink-0 mt-0.5 group-hover/suggestion:scale-110 transition-transform duration-300"
+                strokeWidth={2}
+              />
               <div className="flex-1">
                 <p className="text-[#39ff14] text-xs font-bold tracking-widest uppercase mb-2">
                   行动建议

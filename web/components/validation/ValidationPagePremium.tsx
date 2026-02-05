@@ -1,29 +1,36 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import type { ValidationResult, LawWeight, DEACAnalysis, LawImpact } from '@/types';
+import type {
+  ValidationResult,
+  LawWeight,
+  DEACAnalysis,
+  LawImpact,
+} from "@/types";
 
-import CommonHeader from '@/components/common/CommonHeader';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { logger } from "@/lib/utils/logger";
 
-import AdvancedAnalysisModal from './AdvancedAnalysisModal';
-import ValidationActions from './ValidationActions';
-import ValidationCoreAnomaly from './ValidationCoreAnomaly';
-import ValidationDominoEffect from './ValidationDominoEffect';
-import ValidationEraserTest from './ValidationEraserTest';
-import ValidationRecommendations from './ValidationRecommendations';
-import ValidationScoreCard from './ValidationScoreCard';
-import ValidationWarnings from './ValidationWarnings';
+import CommonHeader from "@/components/common/CommonHeader";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+
+import AdvancedAnalysisModal from "./AdvancedAnalysisModal";
+import ValidationActions from "./ValidationActions";
+import ValidationCoreAnomaly from "./ValidationCoreAnomaly";
+import ValidationDominoEffect from "./ValidationDominoEffect";
+import ValidationEraserTest from "./ValidationEraserTest";
+import ValidationRecommendations from "./ValidationRecommendations";
+import ValidationScoreCard from "./ValidationScoreCard";
+import ValidationWarnings from "./ValidationWarnings";
 
 interface ValidationPagePremiumProps {
   result: ValidationResult;
   lawWeights: LawWeight[];
   deacAnalysis: DEACAnalysis | null;
   deacLoading: boolean;
-  generationMode: 'fast' | 'deep';
+  generationMode: "fast" | "deep";
   isGeneratingRules?: boolean;
-  onGenerationModeChange: (mode: 'fast' | 'deep') => void;
+  onGenerationModeChange: (mode: "fast" | "deep") => void;
   onAccept: () => void;
   onReject: () => void;
 }
@@ -37,25 +44,30 @@ export default function ValidationPagePremium({
   isGeneratingRules = false,
   onGenerationModeChange,
   onAccept,
-  onReject
+  onReject,
 }: ValidationPagePremiumProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [evaluatedImpacts, setEvaluatedImpacts] = useState<LawImpact[]>(result.lawImpacts);
+  const [evaluatedImpacts, setEvaluatedImpacts] = useState<LawImpact[]>(
+    result.lawImpacts,
+  );
   const [hasEvaluated, setHasEvaluated] = useState(false);
 
   // 找出权重最高的法则作为核心法则
-  const coreLaw = lawWeights.length > 0
-    ? lawWeights.reduce((max, current) => current.weight > max.weight ? current : max).law
-    : undefined;
+  const coreLaw =
+    lawWeights.length > 0
+      ? lawWeights.reduce((max, current) =>
+          current.weight > max.weight ? current : max,
+        ).law
+      : undefined;
 
   const handleEvaluateDirections = async () => {
     setIsEvaluating(true);
     try {
-      const response = await fetch('/api/evaluate-directions', {
-        method: 'POST',
+      const response = await fetch("/api/evaluate-directions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           lawImpacts: result.lawImpacts,
@@ -63,14 +75,14 @@ export default function ValidationPagePremium({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to evaluate directions');
+        throw new Error("Failed to evaluate directions");
       }
 
       const data = await response.json();
       setEvaluatedImpacts(data.evaluatedImpacts);
       setHasEvaluated(true);
     } catch (error) {
-      console.error('Error evaluating directions:', error);
+      logger.error("Failed to evaluate directions", { error });
     } finally {
       setIsEvaluating(false);
     }
@@ -119,8 +131,10 @@ export default function ValidationPagePremium({
                     type="radio"
                     name="generationMode"
                     value="fast"
-                    checked={generationMode === 'fast'}
-                    onChange={(e) => onGenerationModeChange(e.target.value as 'fast' | 'deep')}
+                    checked={generationMode === "fast"}
+                    onChange={(e) =>
+                      onGenerationModeChange(e.target.value as "fast" | "deep")
+                    }
                     className="mt-1 w-4 h-4 text-[#00ff88] border-gray-700 focus:ring-[#00ff88]/30"
                   />
                   <div className="flex-1">
@@ -138,8 +152,10 @@ export default function ValidationPagePremium({
                     type="radio"
                     name="generationMode"
                     value="deep"
-                    checked={generationMode === 'deep'}
-                    onChange={(e) => onGenerationModeChange(e.target.value as 'fast' | 'deep')}
+                    checked={generationMode === "deep"}
+                    onChange={(e) =>
+                      onGenerationModeChange(e.target.value as "fast" | "deep")
+                    }
                     className="mt-1 w-4 h-4 text-[#00ff88] border-gray-700 focus:ring-[#00ff88]/30"
                   />
                   <div className="flex-1">
@@ -147,9 +163,13 @@ export default function ValidationPagePremium({
                       <span className="font-bold">深度模式</span>
                       <span className="ml-2 text-xs">
                         {deacLoading ? (
-                          <span className="text-yellow-400">(专家分析中...)</span>
+                          <span className="text-yellow-400">
+                            (专家分析中...)
+                          </span>
                         ) : deacAnalysis && deacAnalysis.expert_responses ? (
-                          <span className="text-green-400">✓ {deacAnalysis.expert_responses.length} 个专家就绪</span>
+                          <span className="text-green-400">
+                            ✓ {deacAnalysis.expert_responses.length} 个专家就绪
+                          </span>
                         ) : null}
                       </span>
                     </div>
@@ -199,8 +219,16 @@ export default function ValidationPagePremium({
       {/* 生成规则加载遮罩层 */}
       {isGeneratingRules && (
         <LoadingSpinner
-          title={generationMode === 'deep' ? '正在深度生成世界规则...' : '正在生成世界规则...'}
-          subtitle={generationMode === 'deep' ? '整合专家洞察，构建深度规则体系' : '基于法则权重，快速生成规则'}
+          title={
+            generationMode === "deep"
+              ? "正在深度生成世界规则..."
+              : "正在生成世界规则..."
+          }
+          subtitle={
+            generationMode === "deep"
+              ? "整合专家洞察，构建深度规则体系"
+              : "基于法则权重，快速生成规则"
+          }
           fullScreen
         />
       )}

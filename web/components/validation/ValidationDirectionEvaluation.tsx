@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ChevronDown } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ChevronDown } from "lucide-react";
+import { motion } from "motion/react";
 
 interface ValidationDirectionEvaluationProps {
   onEvaluate: () => void;
@@ -10,7 +10,7 @@ interface ValidationDirectionEvaluationProps {
 
 export default function ValidationDirectionEvaluation({
   onEvaluate,
-  isEvaluating = false
+  isEvaluating = false,
 }: ValidationDirectionEvaluationProps) {
   return (
     <motion.div
@@ -37,7 +37,7 @@ export default function ValidationDirectionEvaluation({
           className="w-full sm:w-auto h-[48px] rounded-xl px-6 bg-gradient-to-br from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] transition-all duration-300 flex items-center justify-center gap-2 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span className="text-[#e8e8ec] font-bold text-[14px]">
-            {isEvaluating ? '评估中...' : '评估方向'}
+            {isEvaluating ? "评估中..." : "评估方向"}
           </span>
           <ChevronDown className="w-4 h-4 text-[#e8e8ec] transform -rotate-90" />
         </button>

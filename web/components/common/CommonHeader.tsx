@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import UserMenu from '@/components/auth/UserMenu';
+import UserMenu from "@/components/auth/UserMenu";
 
 /**
  * 公共标题栏组件 - 所有页面统一使用
@@ -11,7 +11,9 @@ export default function CommonHeader() {
       {/* Logo区域 */}
       <div className="flex items-center gap-2">
         <div className="bg-gradient-to-r from-[#8a8a95] to-[#6a6a75] rounded-[18px] px-4 py-2">
-          <p className="font-bold leading-[24px] text-[13px] text-white">WORLD</p>
+          <p className="font-bold leading-[24px] text-[13px] text-white">
+            WORLD
+          </p>
         </div>
         <div className="bg-[#2a2a35] rounded-[18px] px-3 py-1">
           <p className="text-[#c1c5cc] text-[12px]">BETA</p>

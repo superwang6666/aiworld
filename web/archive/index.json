@@ -37,5 +37,18 @@
       "社会信仰崇拜'太阳神'作为温暖和狩猎能量的来源，每日黎明举行梳理毛发的集体仪式，以强化社群纽带和领地归属感。",
       "成年礼要求年轻猫独自在夜间狩猎一只小型虚拟数据生物，成功者获得气味标记作为社会身份凭证，失败者需接受社群监督直至完成。"
     ]
+  },
+  {
+    "id": "913e5c93-fb20-4176-b674-55a98bd3c436",
+    "name": "World-2026/2/5",
+    "core_premise": "In a world where humans have vanished or retreated, players embody an animal navigating a transformed environment, using innate senses and abilities to uncover secrets and survive, blending atmospheric exploration with themes of decay, connection, and post-human society.",
+    "created_at": "2026-02-05T14:01:17.713Z",
+    "updated_at": "2026-02-05T14:01:17.734Z",
+    "rules_count": 21,
+    "preview_rules": [
+      "Animals communicate through a multi-modal language system integrating bioluminescent signals (visual), ultrasonic chirps (auditory), and pheromone trails (olfactory), with each species having distinct dialects based on their ecological niche.",
+      "Rituals such as the 'Scent Convergence' (where animals gather at decaying human structures to exchange pheromone-based memories) and 'Echo Mapping' (using resonant sounds to navigate ruins) form the core of cultural practices, reinforcing themes of connection and decay.",
+      "Belief systems are centered on 'The Great Withdrawal'—a mythologized event where humans vanished—interpreted through species-specific lenses: predators view it as a purification, prey as a liberation, and scavengers as an opportunity, shaping inter-species conflicts and alliances."
+    ]
   }
 ]

@@ -1,4 +1,4 @@
-import type { WorldRule, ValidationResult } from '@/types';
+import type { WorldRule, ValidationResult } from "@/types";
 
 /**
  * 导出元数据接口
@@ -14,11 +14,12 @@ export interface ExportMetadata {
  */
 export function exportRulesToMarkdown(
   rules: WorldRule[],
-  metadata: ExportMetadata
+  metadata: ExportMetadata,
 ): string {
   const { corePremise, artStyle, validationResult } = metadata;
 
-  const markdown = `# World Rules\n\n` +
+  const markdown =
+    `# World Rules\n\n` +
     `**Core Premise:** ${corePremise}\n` +
     `**Art Style:** ${artStyle}\n\n` +
     `## Validation Summary\n\n` +
@@ -32,9 +33,9 @@ export function exportRulesToMarkdown(
           `### ${index + 1}. ${rule.rule}\n\n` +
           `**Law:** ${rule.law}\n\n` +
           `**Expert Logic:** ${rule.expert_logic}\n\n` +
-          `---\n\n`
+          `---\n\n`,
       )
-      .join('');
+      .join("");
 
   return markdown;
 }
@@ -44,7 +45,7 @@ export function exportRulesToMarkdown(
  */
 export function exportRulesToJSON(
   rules: WorldRule[],
-  metadata: ExportMetadata
+  metadata: ExportMetadata,
 ): string {
   const { corePremise, artStyle, validationResult } = metadata;
 
@@ -56,7 +57,7 @@ export function exportRulesToJSON(
       rules: rules.map(({ id: _id, confirmed: _confirmed, ...rule }) => rule),
     },
     null,
-    2
+    2,
   );
 
   return json;
@@ -65,22 +66,19 @@ export function exportRulesToJSON(
 /**
  * 下载导出文件
  */
-export function downloadExportFiles(
-  markdown: string,
-  json: string
-): void {
+export function downloadExportFiles(markdown: string, json: string): void {
   // Create download for Markdown
-  const markdownBlob = new Blob([markdown], { type: 'text/markdown' });
+  const markdownBlob = new Blob([markdown], { type: "text/markdown" });
   const markdownUrl = URL.createObjectURL(markdownBlob);
-  const markdownLink = document.createElement('a');
+  const markdownLink = document.createElement("a");
   markdownLink.href = markdownUrl;
   markdownLink.download = `world-rules-${Date.now()}.md`;
   markdownLink.click();
 
   // Create download for JSON
-  const jsonBlob = new Blob([json], { type: 'application/json' });
+  const jsonBlob = new Blob([json], { type: "application/json" });
   const jsonUrl = URL.createObjectURL(jsonBlob);
-  const jsonLink = document.createElement('a');
+  const jsonLink = document.createElement("a");
   jsonLink.href = jsonUrl;
   jsonLink.download = `world-rules-${Date.now()}.json`;
   jsonLink.click();
@@ -97,12 +95,14 @@ export function exportConfirmedRules(
   rules: WorldRule[],
   corePremise: string,
   artStyle: string,
-  validationResult: ValidationResult | null
+  validationResult: ValidationResult | null,
 ): void {
   const confirmedRules = rules.filter((rule) => rule.confirmed);
 
   if (confirmedRules.length === 0) {
-    alert('No rules confirmed. Please confirm at least one rule before exporting.');
+    alert(
+      "No rules confirmed. Please confirm at least one rule before exporting.",
+    );
     return;
   }
 

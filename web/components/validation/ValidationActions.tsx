@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { ChevronDown, Check, X } from 'lucide-react';
-import { motion } from 'motion/react';
+import { ChevronDown, Check, X } from "lucide-react";
+import { motion } from "motion/react";
 
 interface ValidationActionsProps {
   onAccept: () => void;
@@ -12,7 +12,7 @@ interface ValidationActionsProps {
 export default function ValidationActions({
   onAccept,
   onReject,
-  onAdvancedAnalysis
+  onAdvancedAnalysis,
 }: ValidationActionsProps) {
   return (
     <motion.div
@@ -48,15 +48,15 @@ export default function ValidationActions({
         onClick={onAccept}
         className="w-full sm:w-auto h-[48px] rounded-xl px-8 bg-gradient-to-br from-[rgba(57,255,20,0.8)] to-[rgba(40,200,15,0.8)] hover:from-[rgba(57,255,20,0.95)] hover:to-[rgba(40,200,15,0.95)] border border-[rgba(57,255,20,0.5)] hover:border-[rgba(57,255,20,0.7)] transition-all duration-300 flex items-center justify-center gap-2"
         style={{
-          boxShadow: '0 0 20px rgba(57, 255, 20, 0.3)',
+          boxShadow: "0 0 20px rgba(57, 255, 20, 0.3)",
         }}
       >
         <Check className="w-5 h-5 text-[#0f0f14]" />
         <span
           className="font-bold text-[14px] sm:text-[15px]"
           style={{
-            color: '#0f0f14',
-            textShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+            color: "#0f0f14",
+            textShadow: "0 0 10px rgba(57, 255, 20, 0.5)",
           }}
         >
           接受验证

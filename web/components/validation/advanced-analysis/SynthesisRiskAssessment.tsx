@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { AlertTriangle, Shield, TrendingDown, Brain } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AlertTriangle, Shield, TrendingDown, Brain } from "lucide-react";
+import { motion } from "motion/react";
 
-import type { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from "lucide-react";
 
 interface SynthesisRiskAssessmentProps {
   riskAssessment: string;
@@ -24,41 +24,45 @@ const RISK_COLORS: string[] = [
   "#f59e0b", // amber-500
 ];
 
-export default function SynthesisRiskAssessment({ riskAssessment }: SynthesisRiskAssessmentProps) {
+export default function SynthesisRiskAssessment({
+  riskAssessment,
+}: SynthesisRiskAssessmentProps) {
   // 解析风险评估字符串，提取多个风险点
   const parseRiskAssessment = (text: string): RiskItem[] => {
     // 尝试通过数字序号解析（1. 2. 或 1) 2) 或 ① ②）
     const patterns = [
       /\d+[.、)）]\s*(.+?)(?=\d+[.、)）]|$)/g,
       /[①②③④⑤⑥⑦⑧⑨⑩]\s*(.+?)(?=[①②③④⑤⑥⑦⑧⑨⑩]|$)/g,
-      /[-•]\s*(.+?)(?=[-•]|$)/g
+      /[-•]\s*(.+?)(?=[-•]|$)/g,
     ];
 
     for (const pattern of patterns) {
       const matches = Array.from(text.matchAll(pattern));
       if (matches.length > 1) {
         return matches
-          .map(m => ({ text: m[1].trim() }))
-          .filter(item => item.text.length > 0);
+          .map((m) => ({ text: m[1].trim() }))
+          .filter((item) => item.text.length > 0);
       }
     }
 
     // 尝试按换行符分割
-    const lines = text.split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 10 && !line.match(/^风险评估[:：]/));
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 10 && !line.match(/^风险评估[:：]/));
 
     if (lines.length > 1) {
-      return lines.map(line => ({ text: line }));
+      return lines.map((line) => ({ text: line }));
     }
 
     // 尝试按句号分割
-    const sentences = text.split(/[。；;]/)
-      .map(s => s.trim())
-      .filter(s => s.length > 10);
+    const sentences = text
+      .split(/[。；;]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 10);
 
     if (sentences.length > 1) {
-      return sentences.map(s => ({ text: s }));
+      return sentences.map((s) => ({ text: s }));
     }
 
     // 如果还是无法解析，返回整个文本作为单个风险项
@@ -80,10 +84,32 @@ export default function SynthesisRiskAssessment({ riskAssessment }: SynthesisRis
       <div className="relative z-10">
         <div className="flex items-start gap-3 mb-4">
           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-red-400/20 to-red-400/5 flex items-center justify-center border border-red-400/30 group-hover:scale-110 transition-transform duration-300">
-            <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24">
-              <path d="M12 2L2 22H22L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 9V13" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-              <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="currentColor" strokeWidth="1.5" />
+            <svg
+              className="w-5 h-5 text-red-400"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 2L2 22H22L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 9V13"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="12"
+                cy="17"
+                r="0.5"
+                fill="currentColor"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
             </svg>
           </div>
           <div className="flex-1">
@@ -91,7 +117,9 @@ export default function SynthesisRiskAssessment({ riskAssessment }: SynthesisRis
               <span>风险评估</span>
               <div className="h-px flex-1 bg-gradient-to-r from-red-400/40 to-transparent" />
             </h3>
-            <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">Risk Assessment</p>
+            <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">
+              Risk Assessment
+            </p>
           </div>
         </div>
 

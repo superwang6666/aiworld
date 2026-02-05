@@ -1,8 +1,8 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { loadArchive } from '@/lib/archive/archive-manager';
-import { getOptionalUser } from '@/lib/auth/middleware';
+import { loadArchive } from "@/lib/archive/archive-manager";
+import { getOptionalUser } from "@/lib/auth/middleware";
 
 /**
  * GET /api/archive/load?id={archiveId}
@@ -23,16 +23,19 @@ export async function GET(req: NextRequest) {
     const user = await getOptionalUser();
 
     const { searchParams } = new URL(req.url);
-    const archiveId = searchParams.get('id');
+    const archiveId = searchParams.get("id");
 
     if (!archiveId) {
-      return NextResponse.json({ error: 'Missing archive id' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing archive id" },
+        { status: 400 },
+      );
     }
 
     const archive = await loadArchive(archiveId);
 
     if (!archive) {
-      return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
+      return NextResponse.json({ error: "Archive not found" }, { status: 404 });
     }
 
     // 权限检查
@@ -42,20 +45,23 @@ export async function GET(req: NextRequest) {
 
     if (!isOwner && !isPublic && !isLegacy) {
       return NextResponse.json(
-        { error: 'Access denied: You do not have permission to access this archive' },
-        { status: 403 }
+        {
+          error:
+            "Access denied: You do not have permission to access this archive",
+        },
+        { status: 403 },
       );
     }
 
     return NextResponse.json({ archive });
   } catch (error) {
-    console.error('加载存档API错误:', error);
+    // Error handled silently
     return NextResponse.json(
       {
-        error: '存档加载失败',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "存档加载失败",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

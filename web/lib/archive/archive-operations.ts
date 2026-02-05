@@ -1,4 +1,13 @@
-import type { WorldRule, ValidationResult, LawWeight, DEACAnalysis, RuleTag, WorldArchive } from '@/types';
+import type {
+  WorldRule,
+  ValidationResult,
+  LawWeight,
+  DEACAnalysis,
+  RuleTag,
+  WorldArchive,
+} from "@/types";
+
+import { logger } from "@/lib/utils/logger";
 
 /**
  * 存档状态接口
@@ -33,12 +42,15 @@ export interface RestoredState {
  * 准备存档数据
  */
 export function prepareArchiveData(state: ArchiveState): WorldArchive {
-  const activeRulesCount = state.rules.filter(r => !r.rejected).length;
-  const confirmedRulesCount = state.rules.filter(r => r.confirmed).length;
+  const activeRulesCount = state.rules.filter((r) => !r.rejected).length;
+  const confirmedRulesCount = state.rules.filter((r) => r.confirmed).length;
 
   // 转换标签权重为快照格式
-  const tagWeightSnapshot: Record<string, { weight: number; usage: number; deletions: number }> = {};
-  Object.keys(state.tagWeights).forEach(tagId => {
+  const tagWeightSnapshot: Record<
+    string,
+    { weight: number; usage: number; deletions: number }
+  > = {};
+  Object.keys(state.tagWeights).forEach((tagId) => {
     const tag = state.tagWeights[tagId];
     tagWeightSnapshot[tagId] = {
       weight: tag.weight,
@@ -74,10 +86,12 @@ export function prepareArchiveData(state: ArchiveState): WorldArchive {
  */
 export async function autoSaveArchive(
   state: ArchiveState,
-  rulesToSave?: WorldRule[]
+  rulesToSave?: WorldRule[],
 ): Promise<string> {
   // 如果没有存档名称，使用默认名称
-  const saveName = state.archiveName.trim() || `World-${new Date().toLocaleDateString('zh-CN')}`;
+  const saveName =
+    state.archiveName.trim() ||
+    `World-${new Date().toLocaleDateString("zh-CN")}`;
 
   const archiveState = rulesToSave
     ? { ...state, rules: rulesToSave, archiveName: saveName }
@@ -85,20 +99,19 @@ export async function autoSaveArchive(
 
   const archive = prepareArchiveData(archiveState);
 
-  const response = await fetch('/api/archive/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const response = await fetch("/api/archive/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ archive }),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to auto-save archive');
+    throw new Error("Failed to auto-save archive");
   }
 
   const data = await response.json();
-  console.log('✓ 存档已自动保存:', state.currentArchiveId ? '(覆盖更新)' : '(新建存档)');
 
-  return data.archive_id || '';
+  return data.archive_id || "";
 }
 
 /**
@@ -106,12 +119,13 @@ export async function autoSaveArchive(
  */
 export async function saveArchiveManual(
   archiveName: string,
-  state: ArchiveState
+  state: ArchiveState,
 ): Promise<{ success: boolean; archiveId?: string; error?: string }> {
   if (!archiveName.trim() || state.rules.length === 0) {
     return {
       success: false,
-      error: 'Please provide an archive name and ensure you have generated rules.',
+      error:
+        "Please provide an archive name and ensure you have generated rules.",
     };
   }
 
@@ -119,9 +133,9 @@ export async function saveArchiveManual(
   const archive = prepareArchiveData(archiveState);
 
   try {
-    const response = await fetch('/api/archive/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/archive/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ archive }),
     });
 
@@ -139,10 +153,10 @@ export async function saveArchiveManual(
       };
     }
   } catch (err) {
-    console.error('Failed to save archive:', err);
+    logger.error("Failed to save archive", { error: err });
     return {
       success: false,
-      error: 'Failed to save archive. Please try again.',
+      error: "Failed to save archive. Please try again.",
     };
   }
 }
@@ -151,7 +165,7 @@ export async function saveArchiveManual(
  * 加载存档数据
  */
 export async function loadArchiveData(
-  archiveId: string
+  archiveId: string,
 ): Promise<WorldArchive | null> {
   try {
     const response = await fetch(`/api/archive/load?id=${archiveId}`);
@@ -161,10 +175,10 @@ export async function loadArchiveData(
       return data.archive;
     } else {
       const data = await response.json();
-      throw new Error(data.error || 'Failed to load archive');
+      throw new Error(data.error || "Failed to load archive");
     }
   } catch (err) {
-    console.error('Failed to load archive:', err);
+    logger.error("Failed to load archive", { archiveId, error: err });
     throw err;
   }
 }
@@ -174,17 +188,18 @@ export async function loadArchiveData(
  */
 export function restoreArchiveState(
   archive: WorldArchive,
-  baseTagWeights: Record<string, RuleTag>
+  baseTagWeights: Record<string, RuleTag>,
 ): RestoredState {
-  console.log('加载存档:', archive.name, {
-    rules: archive.rules?.length,
-    tagWeights: Object.keys(archive.tag_weights || {}).length
+  logger.info("Loading archive", {
+    name: archive.name,
+    rulesCount: archive.rules?.length,
+    tagWeightsCount: Object.keys(archive.tag_weights || {}).length,
   });
 
   // 恢复标签权重（从快照格式转换回 RuleTag 格式）
   const restoredTagWeights: Record<string, RuleTag> = {};
 
-  Object.keys(archive.tag_weights || {}).forEach(tagId => {
+  Object.keys(archive.tag_weights || {}).forEach((tagId) => {
     const snapshot = archive.tag_weights[tagId];
     const baseTag = baseTagWeights[tagId];
 
@@ -200,18 +215,18 @@ export function restoreArchiveState(
       restoredTagWeights[tagId] = {
         id: tagId,
         name: tagId, // 临时使用 ID 作为名称
-        category: 'mechanism',
+        category: "mechanism",
         weight: snapshot.weight,
         usage_count: snapshot.usage,
         deletion_count: snapshot.deletions,
-        source: 'llm',
+        source: "llm",
       };
     }
   });
 
   return {
     corePremise: archive.core_premise,
-    artStyle: archive.art_style || '',
+    artStyle: archive.art_style || "",
     validationResult: archive.validation_result,
     lawWeights: archive.law_weights || [],
     deacAnalysis: archive.deac_analysis || null,

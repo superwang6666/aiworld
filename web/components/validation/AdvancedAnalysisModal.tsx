@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import { X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
-import type { LawWeight, DEACAnalysis } from '@/types';
+import type { LawWeight, DEACAnalysis } from "@/types";
 
-import SynthesisConsensus from './advanced-analysis/SynthesisConsensus';
-import SynthesisInsights from './advanced-analysis/SynthesisInsights';
-import SynthesisRiskAssessment from './advanced-analysis/SynthesisRiskAssessment';
-import { adaptDEACAnalysis } from './advanced-analysis/utils/dataAdapters';
-import ExpertInsightsPanel from './ExpertInsightsPanel';
-import LawWeightsPanel from './LawWeightsPanel';
+import SynthesisConsensus from "./advanced-analysis/SynthesisConsensus";
+import SynthesisInsights from "./advanced-analysis/SynthesisInsights";
+import SynthesisRiskAssessment from "./advanced-analysis/SynthesisRiskAssessment";
+import { adaptDEACAnalysis } from "./advanced-analysis/utils/dataAdapters";
+import ExpertInsightsPanel from "./ExpertInsightsPanel";
+import LawWeightsPanel from "./LawWeightsPanel";
 
 interface AdvancedAnalysisModalProps {
   isOpen: boolean;
@@ -23,7 +23,7 @@ export default function AdvancedAnalysisModal({
   isOpen,
   onClose,
   lawWeights,
-  deacAnalysis
+  deacAnalysis,
 }: AdvancedAnalysisModalProps) {
   const adaptedData = adaptDEACAnalysis(deacAnalysis);
 
@@ -93,9 +93,15 @@ export default function AdvancedAnalysisModal({
                     transition={{ duration: 0.6, delay: 0.4 }}
                     className="space-y-4"
                   >
-                    <SynthesisConsensus consensus={adaptedData.synthesis.consensus} />
-                    <SynthesisInsights insights={adaptedData.synthesis.insights} />
-                    <SynthesisRiskAssessment riskAssessment={adaptedData.synthesis.riskAssessment} />
+                    <SynthesisConsensus
+                      consensus={adaptedData.synthesis.consensus}
+                    />
+                    <SynthesisInsights
+                      insights={adaptedData.synthesis.insights}
+                    />
+                    <SynthesisRiskAssessment
+                      riskAssessment={adaptedData.synthesis.riskAssessment}
+                    />
                   </motion.div>
                 )}
               </div>

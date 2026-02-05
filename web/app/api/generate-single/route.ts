@@ -1,23 +1,30 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import OpenAI from 'openai';
+import type { Law, WorldRule } from "@/types";
 
-import type { Law, WorldRule } from '@/types';
+import { LAWS } from "@/config/law-names";
 
-import { LAWS } from '@/config/law-names';
-
-import { checkRuleSemanticDuplication, SEMANTIC_DEDUPLICATION_CONFIG } from '@/lib/rules/semantic-matcher';
-import { generateTagsForRule } from '@/lib/tags/tag-generator';
+import {
+  checkRuleSemanticDuplication,
+  SEMANTIC_DEDUPLICATION_CONFIG,
+} from "@/lib/rules/semantic-matcher";
+import { generateTagsForRule } from "@/lib/tags/tag-generator";
+import { getOpenAIClient } from "@/lib/utils/openai-client";
 
 export async function POST(request: NextRequest) {
   try {
-    const { corePremise, artStyle, law, existingRules = [] } = await request.json();
+    const {
+      corePremise,
+      artStyle,
+      law,
+      existingRules = [],
+    } = await request.json();
 
     if (!corePremise || !artStyle || !law) {
       return NextResponse.json(
-        { error: 'Core Premise, Art Style, and Law are required' },
-        { status: 400 }
+        { error: "Core Premise, Art Style, and Law are required" },
+        { status: 400 },
       );
     }
 
@@ -26,32 +33,11 @@ export async function POST(request: NextRequest) {
     if (!validLaw) {
       return NextResponse.json(
         { error: `Invalid law: ${law}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Read environment variables at request time
-    const deepSeekKey = process.env.DEEPSEEK_API_KEY;
-    const openAiKey = process.env.OPENAI_API_KEY;
-    const apiKey = deepSeekKey || openAiKey;
-
-    if (!apiKey) {
-      console.error('Environment variables check:', {
-        DEEPSEEK_API_KEY: deepSeekKey ? 'Set (hidden)' : 'Not set',
-        OPENAI_API_KEY: openAiKey ? 'Set (hidden)' : 'Not set',
-      });
-      return NextResponse.json(
-        { error: 'API Key not configured. Please set DEEPSEEK_API_KEY or OPENAI_API_KEY in .env file' },
-        { status: 500 }
-      );
-    }
-
-    // Configure OpenAI client with DeepSeek or OpenAI
-    const baseURL = deepSeekKey ? 'https://api.deepseek.com' : undefined;
-    const openai = new OpenAI({
-      apiKey: apiKey,
-      baseURL: baseURL,
-    });
+    const { openai, model } = getOpenAIClient();
 
     const systemPrompt = `You are an expert world-builder specializing in the "${validLaw.name}" law (${validLaw.description}).
 
@@ -75,73 +61,69 @@ Do not include any other text or markdown formatting.`;
 
     const userPrompt = `Core Premise: ${corePremise}\nArt Style: ${artStyle}`;
 
-    // Use DeepSeek model if DEEPSEEK_API_KEY is set, otherwise use OpenAI model
-    const model = deepSeekKey ? 'deepseek-chat' : 'gpt-4o-mini';
-
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [
         {
-          role: 'system',
+          role: "system",
           content: systemPrompt,
         },
         {
-          role: 'user',
+          role: "user",
           content: userPrompt,
         },
       ],
       temperature: 0.9,
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
     const responseContent = completion.choices[0]?.message?.content;
     if (!responseContent) {
-      throw new Error('No response from AI service');
+      throw new Error("No response from AI service");
     }
 
-    // Parse the JSON response
     let ruleData;
     try {
       let cleanedContent = responseContent.trim();
 
-      // Remove markdown code blocks if present
-      const jsonMatch = cleanedContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      const jsonMatch = cleanedContent.match(
+        /```(?:json)?\s*(\{[\s\S]*\})\s*```/,
+      );
       if (jsonMatch) {
         cleanedContent = jsonMatch[1].trim();
       }
 
-      // Fix common AI JSON issues
-      // 1. Replace smart quotes with regular quotes first
       cleanedContent = cleanedContent.replace(/[""]/g, '"');
       cleanedContent = cleanedContent.replace(/['']/g, "'");
 
-      // 2. Fix single quotes used as string delimiters (invalid in JSON)
-      // This regex handles single-quoted strings more carefully
-      // Match patterns like: 'key': 'value' or "key": 'value'
-      cleanedContent = cleanedContent.replace(/:\s*'([^']*)'/g, (_match, content) => {
-        // Value after colon - replace single quotes with double quotes
-        return `: "${content.replace(/"/g, '\\"')}"`;
-      });
+      cleanedContent = cleanedContent.replace(
+        /:\s*'([^']*)'/g,
+        (_match, content) => {
+          return `: "${content.replace(/"/g, '\\"')}"`;
+        },
+      );
 
-      // Match single-quoted property names: 'key':
-      cleanedContent = cleanedContent.replace(/'([^']+)':/g, (_match, content) => {
-        // Property name - replace single quotes with double quotes
-        return `"${content}":`;
-      });
+      cleanedContent = cleanedContent.replace(
+        /'([^']+)':/g,
+        (_match, content) => {
+          return `"${content}":`;
+        },
+      );
 
-      // 3. Remove trailing commas before } or ]
-      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
+      cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, "$1");
 
       const parsed = JSON.parse(cleanedContent);
       ruleData = parsed.rule || parsed;
 
-      if (!ruleData || typeof ruleData !== 'object') {
-        throw new Error('Invalid response format: rule object not found');
+      if (!ruleData || typeof ruleData !== "object") {
+        throw new Error("Invalid response format: rule object not found");
       }
-    } catch (parseError: any) {
-      console.error('Raw AI response:', responseContent);
-      console.error('Parse error:', parseError.message);
-      throw new Error(`Failed to parse AI response as JSON: ${parseError.message}`);
+    } catch (parseError) {
+      const errorMessage =
+        parseError instanceof Error
+          ? parseError.message
+          : "Unknown parse error";
+      throw new Error(`Failed to parse AI response as JSON: ${errorMessage}`);
     }
 
     // 重试循环: 最多重试 MAX_RETRIES 次
@@ -153,8 +135,16 @@ Do not include any other text or markdown formatting.`;
       const formattedRule: WorldRule = {
         id: `rule-${Date.now()}-${retryCount}`,
         law: validLaw.name as Law,
-        rule: ruleData.rule || ruleData.Rule || ruleData.description || 'No description provided',
-        expert_logic: ruleData.expert_logic || ruleData.expertLogic || ruleData.expert_reasoning || 'No expert logic provided',
+        rule:
+          ruleData.rule ||
+          ruleData.Rule ||
+          ruleData.description ||
+          "No description provided",
+        expert_logic:
+          ruleData.expert_logic ||
+          ruleData.expertLogic ||
+          ruleData.expert_reasoning ||
+          "No expert logic provided",
         confirmed: false,
         isNew: true,
         tags: [],
@@ -163,108 +153,105 @@ Do not include any other text or markdown formatting.`;
         created_at: new Date().toISOString(),
       };
 
-      // 生成标签
       try {
         const tagResult = await generateTagsForRule(formattedRule);
         formattedRule.tags = tagResult.recommendedTagIds;
-      } catch (tagError) {
-        console.error('标签生成失败,跳过去重检测:', tagError);
-        // 标签生成失败,直接返回规则(无法进行去重检测)
+      } catch (_tagError) {
         return NextResponse.json({ rule: formattedRule });
       }
 
       // 语义去重检测
       if (existingRules.length > 0) {
-        const duplicationCheck = await checkRuleSemanticDuplication(formattedRule, existingRules);
+        const duplicationCheck = await checkRuleSemanticDuplication(
+          formattedRule,
+          existingRules,
+        );
 
         if (duplicationCheck.isDuplicate) {
           retryCount++;
-          console.log(`规则重复 (语义相似度: ${duplicationCheck.similarity}%),重试 ${retryCount}/${SEMANTIC_DEDUPLICATION_CONFIG.MAX_RETRIES}...`);
-          console.log(`相似原因: ${duplicationCheck.reasoning}`);
 
-          // 如果还有重试机会,重新生成规则
           if (retryCount <= SEMANTIC_DEDUPLICATION_CONFIG.MAX_RETRIES) {
-            // 调整温度参数,增加随机性
             const retryCompletion = await openai.chat.completions.create({
               model: model,
               messages: [
                 {
-                  role: 'system',
+                  role: "system",
                   content: systemPrompt,
                 },
                 {
-                  role: 'user',
+                  role: "user",
                   content: userPrompt,
                 },
               ],
-              temperature: 0.9 + retryCount * 0.05, // 逐步提高温度
-              response_format: { type: 'json_object' },
+              temperature: 0.9 + retryCount * 0.05,
+              response_format: { type: "json_object" },
             });
 
-            const retryResponseContent = retryCompletion.choices[0]?.message?.content;
+            const retryResponseContent =
+              retryCompletion.choices[0]?.message?.content;
             if (!retryResponseContent) {
-              throw new Error('重试时AI服务无响应');
+              throw new Error("No response from AI service during retry");
             }
 
-            // 解析重试的响应
             let cleanedContent = retryResponseContent.trim();
-            const jsonMatch = cleanedContent.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+            const jsonMatch = cleanedContent.match(
+              /```(?:json)?\s*(\{[\s\S]*\})\s*```/,
+            );
             if (jsonMatch) {
               cleanedContent = jsonMatch[1].trim();
             }
             cleanedContent = cleanedContent.replace(/[""]/g, '"');
             cleanedContent = cleanedContent.replace(/['']/g, "'");
-            cleanedContent = cleanedContent.replace(/:\s*'([^']*)'/g, (_match, content) => {
-              return `: "${content.replace(/"/g, '\\"')}"`;
-            });
-            cleanedContent = cleanedContent.replace(/'([^']+)':/g, (_match, content) => {
-              return `"${content}":`;
-            });
-            cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
+            cleanedContent = cleanedContent.replace(
+              /:\s*'([^']*)'/g,
+              (_match, content) => {
+                return `: "${content.replace(/"/g, '\\"')}"`;
+              },
+            );
+            cleanedContent = cleanedContent.replace(
+              /'([^']+)':/g,
+              (_match, content) => {
+                return `"${content}":`;
+              },
+            );
+            cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, "$1");
 
             const retryParsed = JSON.parse(cleanedContent);
             ruleData = retryParsed.rule || retryParsed;
 
-            // 继续下一轮循环
             continue;
           } else {
-            // 重试次数用尽
-            console.error('重试次数用尽,仍然重复。返回错误。');
             return NextResponse.json(
               {
-                error: '无法生成不重复的规则,请稍后重试',
+                error: "无法生成不重复的规则,请稍后重试",
                 retries: retryCount,
                 similarity: duplicationCheck.similarity,
                 reasoning: duplicationCheck.reasoning,
               },
-              { status: 409 } // 409 Conflict
+              { status: 409 },
             );
           }
         } else {
-          // 通过去重检测
           finalRule = formattedRule;
           break;
         }
       } else {
-        // 没有现有规则,无需检测
         finalRule = formattedRule;
         break;
       }
     }
 
     if (!finalRule) {
-      throw new Error('未能生成有效规则');
+      throw new Error("未能生成有效规则");
     }
 
     return NextResponse.json({
       rule: finalRule,
-      retries: retryCount, // 返回重试次数,供前端参考
+      retries: retryCount,
     });
-  } catch (error: any) {
-    console.error('Error generating single rule:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate rule' },
-      { status: 500 }
-    );
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to generate rule";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

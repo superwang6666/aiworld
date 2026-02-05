@@ -1,30 +1,37 @@
-'use client';
+"use client";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 interface SynthesisConsensusProps {
   consensus: string;
 }
 
-export default function SynthesisConsensus({ consensus }: SynthesisConsensusProps) {
+export default function SynthesisConsensus({
+  consensus,
+}: SynthesisConsensusProps) {
   // 解析共识字符串，提取列表项
   const parseConsensus = (text: string): string[] => {
     // 尝试通过数字序号解析（1. 2. 或 1) 2) 或 ① ②）
     const patterns = [
       /\d+[.、)）]\s*(.+?)(?=\d+[.、)）]|$)/g,
       /[①②③④⑤⑥⑦⑧⑨⑩]\s*(.+?)(?=[①②③④⑤⑥⑦⑧⑨⑩]|$)/g,
-      /[-•]\s*(.+?)(?=[-•]|$)/g
+      /[-•]\s*(.+?)(?=[-•]|$)/g,
     ];
 
     for (const pattern of patterns) {
       const matches = Array.from(text.matchAll(pattern));
       if (matches.length > 0) {
-        return matches.map(m => m[1].trim()).filter(item => item.length > 0);
+        return matches
+          .map((m) => m[1].trim())
+          .filter((item) => item.length > 0);
       }
     }
 
     // 如果无法解析，尝试按换行符分割
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 10);
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 10);
     if (lines.length > 1) {
       return lines;
     }
@@ -48,8 +55,18 @@ export default function SynthesisConsensus({ consensus }: SynthesisConsensusProp
       <div className="relative z-10">
         <div className="flex items-start gap-3 mb-3">
           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-[rgba(57,255,20,0.2)] to-[rgba(57,255,20,0.05)] flex items-center justify-center border border-[rgba(57,255,20,0.3)] group-hover:scale-110 transition-transform duration-300">
-            <svg className="w-5 h-5 text-[#39ff14]" fill="none" viewBox="0 0 24 24">
-              <path d="M12 2L15 8.5L22 9.5L17 14.5L18 21.5L12 18.5L6 21.5L7 14.5L2 9.5L9 8.5L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              className="w-5 h-5 text-[#39ff14]"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 2L15 8.5L22 9.5L17 14.5L18 21.5L12 18.5L6 21.5L7 14.5L2 9.5L9 8.5L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
               <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
             </svg>
           </div>
@@ -58,7 +75,9 @@ export default function SynthesisConsensus({ consensus }: SynthesisConsensusProp
               <span>专家共识</span>
               <div className="h-px flex-1 bg-gradient-to-r from-[rgba(57,255,20,0.4)] to-transparent" />
             </h3>
-            <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">Cross-Expert Consensus</p>
+            <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">
+              Cross-Expert Consensus
+            </p>
           </div>
         </div>
 
@@ -70,7 +89,9 @@ export default function SynthesisConsensus({ consensus }: SynthesisConsensusProp
             )}
             {consensusItems.map((item, index) => (
               <p key={index} className="flex items-start gap-2">
-                <span className="text-[#39ff14] font-medium flex-shrink-0">{index + 1}）</span>
+                <span className="text-[#39ff14] font-medium flex-shrink-0">
+                  {index + 1}）
+                </span>
                 <span>{item}</span>
               </p>
             ))}

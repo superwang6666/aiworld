@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 interface CircularProgressProps {
-  score: number;        // 0-100
-  size?: number;        // 默认120px
+  score: number; // 0-100
+  size?: number; // 默认120px
   strokeWidth?: number; // 默认14px
 }
 
 export default function CircularProgress({
   score,
   size = 120,
-  strokeWidth = 14
+  strokeWidth = 14,
 }: CircularProgressProps) {
-  const radius = (size / 2) - (strokeWidth / 2);
+  const radius = size / 2 - strokeWidth / 2;
   const _circumference = 2 * Math.PI * radius;
 
   // 根据分数计算颜色
@@ -21,20 +21,20 @@ export default function CircularProgress({
     if (score <= 33) {
       // 红色
       return {
-        start: 'rgba(220, 60, 60, 0.9)',
-        end: 'rgba(255, 100, 80, 0.7)',
+        start: "rgba(220, 60, 60, 0.9)",
+        end: "rgba(255, 100, 80, 0.7)",
       };
     } else if (score <= 66) {
       // 橙色
       return {
-        start: 'rgba(255, 140, 60, 0.9)',
-        end: 'rgba(255, 180, 80, 0.7)',
+        start: "rgba(255, 140, 60, 0.9)",
+        end: "rgba(255, 180, 80, 0.7)",
       };
     } else {
       // 绿色
       return {
-        start: 'rgba(100, 200, 80, 0.9)',
-        end: 'rgba(80, 220, 120, 0.7)',
+        start: "rgba(100, 200, 80, 0.9)",
+        end: "rgba(80, 220, 120, 0.7)",
       };
     }
   };
@@ -67,7 +67,7 @@ export default function CircularProgress({
           strokeLinecap="round"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: score / 100 }}
-          transition={{ duration: 2, ease: 'easeOut' }}
+          transition={{ duration: 2, ease: "easeOut" }}
         />
         <defs>
           <linearGradient

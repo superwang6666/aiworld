@@ -1,46 +1,79 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import type { WorldRule, ValidationResult, DEACAnalysis, LawWeight, RuleTag } from '@/types';
+import type {
+  WorldRule,
+  ValidationResult,
+  DEACAnalysis,
+  LawWeight,
+  RuleTag,
+} from "@/types";
 
-import { autoSaveArchive, saveArchiveManual, loadArchiveData, restoreArchiveState, type ArchiveState } from '@/lib/archive/archive-operations';
-import { exportConfirmedRules } from '@/lib/export/export-handler';
-import { generateRules, generateRulesWithTags } from '@/lib/generation/generation-handler';
-import { toggleRule, deleteRule, updateDeletionScores, generateRandomRule } from '@/lib/rules/rule-manager';
-import { initializeTagWeights } from '@/lib/tags/tag-manager';
-import { validatePremise, triggerDEACAnalysis } from '@/lib/validation/validation-handler';
+import {
+  autoSaveArchive,
+  saveArchiveManual,
+  loadArchiveData,
+  restoreArchiveState,
+  type ArchiveState,
+} from "@/lib/archive/archive-operations";
+import { exportConfirmedRules } from "@/lib/export/export-handler";
+import {
+  generateRules,
+  generateRulesWithTags,
+} from "@/lib/generation/generation-handler";
+import {
+  toggleRule,
+  deleteRule,
+  updateDeletionScores,
+  generateRandomRule,
+} from "@/lib/rules/rule-manager";
+import { initializeTagWeights } from "@/lib/tags/tag-manager";
+import {
+  validatePremise,
+  triggerDEACAnalysis,
+} from "@/lib/validation/validation-handler";
 
 // UI 组件
-import ArchiveManager from '@/components/ArchiveManager';
-import GameAnalysisResult from '@/components/GameAnalysisResult';
-import GameRecommendView from '@/components/GameRecommendView';
-import HomePage from '@/components/HomePage';
-import PremiumBackground from '@/components/PremiumBackground';
-import ValidationPagePremium from '@/components/validation/ValidationPagePremium';
-import RulesDisplay from '@/components/workflow/RulesDisplay';
-import WorkflowFooter from '@/components/workflow/WorkflowFooter';
+import ArchiveManager from "@/components/ArchiveManager";
+import GameAnalysisResult from "@/components/GameAnalysisResult";
+import GameRecommendView from "@/components/GameRecommendView";
+import HomePage from "@/components/HomePage";
+import PremiumBackground from "@/components/PremiumBackground";
+import ValidationPagePremium from "@/components/validation/ValidationPagePremium";
+import RulesDisplay from "@/components/workflow/RulesDisplay";
+import WorkflowFooter from "@/components/workflow/WorkflowFooter";
 
-type WorkflowStep = 'homepage' | 'gameRecommend' | 'gameAnalysisResult' | 'validation' | 'rules';
+type WorkflowStep =
+  | "homepage"
+  | "gameRecommend"
+  | "gameAnalysisResult"
+  | "validation"
+  | "rules";
 
 export default function Home() {
   // 状态定义
-  const [currentStep, setCurrentStep] = useState<WorkflowStep>('homepage');
-  const [worldDescription, setWorldDescription] = useState('');
-  const [selectedGamesForAnalysis, setSelectedGamesForAnalysis] = useState<any[]>([]);
-  const [corePremise, setCorePremise] = useState('');
-  const [artStyle, setArtStyle] = useState('');
-  const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
+  const [currentStep, setCurrentStep] = useState<WorkflowStep>("homepage");
+  const [worldDescription, setWorldDescription] = useState("");
+  const [selectedGamesForAnalysis, setSelectedGamesForAnalysis] = useState<
+    any[]
+  >([]);
+  const [corePremise, setCorePremise] = useState("");
+  const [artStyle, setArtStyle] = useState("");
+  const [validationResult, setValidationResult] =
+    useState<ValidationResult | null>(null);
   const [lawWeights, setLawWeights] = useState<LawWeight[]>([]);
-  const [generationMode, setGenerationMode] = useState<'fast' | 'deep'>('fast');
+  const [generationMode, setGenerationMode] = useState<"fast" | "deep">("fast");
   const [rules, setRules] = useState<WorldRule[]>([]);
   const [deacAnalysis, setDeacAnalysis] = useState<DEACAnalysis | null>(null);
   const [deacLoading, setDeacLoading] = useState(false);
   const [isGeneratingRules, setIsGeneratingRules] = useState(false);
-  const [tagWeights, setTagWeights] = useState<Record<string, RuleTag>>(initializeTagWeights());
+  const [tagWeights, setTagWeights] = useState<Record<string, RuleTag>>(
+    initializeTagWeights(),
+  );
   const [showArchiveManager, setShowArchiveManager] = useState(false);
-  const [archiveName, setArchiveName] = useState('');
-  const [currentArchiveId, setCurrentArchiveId] = useState<string>('');
+  const [archiveName, setArchiveName] = useState("");
+  const [currentArchiveId, setCurrentArchiveId] = useState<string>("");
   const [isTogglingRule, setIsTogglingRule] = useState(false);
 
   // 主界面开始构建
@@ -49,25 +82,26 @@ export default function Home() {
     setArtStyle(selectedArtStyle);
 
     try {
-      const { validationResult: result, lawWeights: weights } = await validatePremise(description.trim());
+      const { validationResult: result, lawWeights: weights } =
+        await validatePremise(description.trim());
       setValidationResult(result);
       setLawWeights(weights);
-      setCurrentStep('validation');
+      setCurrentStep("validation");
 
       // 触发 DEAC 专家分析（异步）
       setDeacLoading(true);
       triggerDEACAnalysis(description.trim(), result, weights)
-        .then(analysis => {
+        .then((analysis) => {
           setDeacAnalysis(analysis);
           setDeacLoading(false);
         })
-        .catch(err => {
-          console.error('DEAC 分析错误:', err);
+        .catch((_err) => {
+          // Error handled silently
           setDeacLoading(false);
         });
     } catch (err: any) {
-      console.error('Validation error:', err);
-      alert(err.message || 'An error occurred while validating premise');
+      // Error handled silently
+      alert(err.message || "An error occurred while validating premise");
     }
   };
 
@@ -88,24 +122,22 @@ export default function Home() {
       // 为规则生成标签
       if (generatedRules.length > 0) {
         try {
-          const { rules: rulesWithTags, updatedWeights } = await generateRulesWithTags(
-            generatedRules,
-            tagWeights
-          );
+          const { rules: rulesWithTags, updatedWeights } =
+            await generateRulesWithTags(generatedRules, tagWeights);
           setRules(rulesWithTags);
           setTagWeights(updatedWeights);
-        } catch (tagError) {
-          console.error('Failed to generate tags:', tagError);
+        } catch (_tagError) {
+          // Error handled silently
           setRules(generatedRules);
         }
       } else {
         setRules(generatedRules);
       }
 
-      setCurrentStep('rules');
+      setCurrentStep("rules");
     } catch (err: any) {
-      console.error('Generation error:', err);
-      alert(err.message || 'An error occurred while generating rules');
+      // Error handled silently
+      alert(err.message || "An error occurred while generating rules");
     } finally {
       setIsGeneratingRules(false);
     }
@@ -113,12 +145,11 @@ export default function Home() {
 
   const handleRejectValidation = () => {
     setValidationResult(null);
-    setCurrentStep('homepage');
+    setCurrentStep("homepage");
   };
 
   const handleToggleRule = async (id: string) => {
     if (isTogglingRule) {
-      console.log('规则切换操作正在进行中，请稍候...');
       return;
     }
 
@@ -130,7 +161,7 @@ export default function Home() {
         rules,
         tagWeights,
         corePremise.trim(),
-        artStyle.trim()
+        artStyle.trim(),
       );
 
       setRules(result.updatedRules);
@@ -139,8 +170,6 @@ export default function Home() {
       if (result.shouldAutoSave && result.shouldGenerateNew) {
         setTimeout(async () => {
           try {
-            console.log('🔄 开始自动存档和生成新规则...');
-
             const archiveState: ArchiveState = {
               archiveName,
               currentArchiveId,
@@ -152,31 +181,31 @@ export default function Home() {
               rules: result.updatedRules,
               tagWeights: result.updatedTagWeights,
             };
-            const newArchiveId = await autoSaveArchive(archiveState, result.updatedRules);
+            const newArchiveId = await autoSaveArchive(
+              archiveState,
+              result.updatedRules,
+            );
             if (newArchiveId && !currentArchiveId) {
               setCurrentArchiveId(newArchiveId);
             }
-            console.log('✓ 自动存档完成');
 
             const newRule = await generateRandomRule(
               corePremise.trim(),
               artStyle.trim(),
-              result.updatedRules.filter(r => !r.rejected)
+              result.updatedRules.filter((r) => !r.rejected),
             );
             setRules((prevRules) => [...prevRules, newRule]);
-            console.log('✓ 新规则生成完成');
-          } catch (err) {
-            console.error('❌ 自动存档或生成新规则失败:', err);
+          } catch (_err) {
+            // Error handled silently
           } finally {
             setIsTogglingRule(false);
-            console.log('🔓 规则切换锁已释放');
           }
         }, 0);
       } else {
         setIsTogglingRule(false);
       }
-    } catch (err) {
-      console.error('❌ 规则切换失败:', err);
+    } catch (_err) {
+      // Error handled silently
       setIsTogglingRule(false);
     }
   };
@@ -188,7 +217,7 @@ export default function Home() {
         rules,
         tagWeights,
         corePremise.trim(),
-        artStyle.trim()
+        artStyle.trim(),
       );
 
       setRules(result.updatedRules);
@@ -198,9 +227,11 @@ export default function Home() {
         setRules((prevRules) => [...prevRules, result.newRule!]);
       }
 
-      setRules((prevRules) => updateDeletionScores(prevRules, result.updatedTagWeights));
-    } catch (err) {
-      console.error('Failed to delete rule:', err);
+      setRules((prevRules) =>
+        updateDeletionScores(prevRules, result.updatedTagWeights),
+      );
+    } catch (_err) {
+      // Error handled silently
     }
   };
 
@@ -224,7 +255,7 @@ export default function Home() {
         setCurrentArchiveId(result.archiveId);
       }
       alert(`Archive "${archiveName}" saved successfully!`);
-      setArchiveName('');
+      setArchiveName("");
     } else {
       alert(`Failed to save archive: ${result.error}`);
     }
@@ -235,11 +266,14 @@ export default function Home() {
       const archive = await loadArchiveData(archiveId);
 
       if (!archive) {
-        alert('存档数据格式错误');
+        alert("存档数据格式错误");
         return;
       }
 
-      const restoredState = restoreArchiveState(archive, initializeTagWeights());
+      const restoredState = restoreArchiveState(
+        archive,
+        initializeTagWeights(),
+      );
 
       setCorePremise(restoredState.corePremise);
       setArtStyle(restoredState.artStyle);
@@ -250,13 +284,13 @@ export default function Home() {
       setTagWeights(restoredState.tagWeights);
       setCurrentArchiveId(archive.id);
       setArchiveName(restoredState.archiveName);
-      setCurrentStep('rules');
+      setCurrentStep("rules");
       setShowArchiveManager(false);
 
       alert(`Archive "${archive.name}" loaded successfully!`);
-    } catch (err) {
-      console.error('Failed to load archive:', err);
-      alert('Failed to load archive. Please try again.');
+    } catch (_err) {
+      // Error handled silently
+      alert("Failed to load archive. Please try again.");
     }
   };
 
@@ -265,9 +299,9 @@ export default function Home() {
   };
 
   const handleResetWorkflow = () => {
-    setCurrentStep('homepage');
-    setCorePremise('');
-    setArtStyle('');
+    setCurrentStep("homepage");
+    setCorePremise("");
+    setArtStyle("");
     setValidationResult(null);
     setRules([]);
   };
@@ -276,55 +310,58 @@ export default function Home() {
 
   return (
     <PremiumBackground>
-      {currentStep === 'homepage' ? (
+      {currentStep === "homepage" ? (
         <HomePage
           onStart={handleStart}
           onRecommendMode={(description, selectedArtStyle) => {
             setWorldDescription(description);
             setArtStyle(selectedArtStyle);
-            setCurrentStep('gameRecommend');
+            setCurrentStep("gameRecommend");
           }}
         />
-      ) : currentStep === 'gameRecommend' ? (
+      ) : currentStep === "gameRecommend" ? (
         <GameRecommendView
           worldDescription={worldDescription}
           onGameSelect={(selectedGames) => {
             setSelectedGamesForAnalysis(selectedGames);
-            setCurrentStep('gameAnalysisResult');
+            setCurrentStep("gameAnalysisResult");
           }}
-          onBack={() => setCurrentStep('homepage')}
+          onBack={() => setCurrentStep("homepage")}
         />
-      ) : currentStep === 'gameAnalysisResult' ? (
+      ) : currentStep === "gameAnalysisResult" ? (
         <GameAnalysisResult
           selectedGames={selectedGamesForAnalysis}
           onComplete={async (premiseSummary) => {
             setCorePremise(premiseSummary);
             // 直接进入验证流程
             try {
-              const { validationResult: result, lawWeights: weights } = await validatePremise(premiseSummary.trim());
+              const { validationResult: result, lawWeights: weights } =
+                await validatePremise(premiseSummary.trim());
               setValidationResult(result);
               setLawWeights(weights);
-              setCurrentStep('validation');
+              setCurrentStep("validation");
 
               // 触发 DEAC 专家分析（异步）
               setDeacLoading(true);
               triggerDEACAnalysis(premiseSummary.trim(), result, weights)
-                .then(analysis => {
+                .then((analysis) => {
                   setDeacAnalysis(analysis);
                   setDeacLoading(false);
                 })
-                .catch(err => {
-                  console.error('DEAC 分析错误:', err);
+                .catch((_err) => {
+                  // Error handled silently
                   setDeacLoading(false);
                 });
             } catch (err: any) {
-              console.error('Validation error:', err);
-              alert(err.message || 'An error occurred while validating premise');
+              // Error handled silently
+              alert(
+                err.message || "An error occurred while validating premise",
+              );
             }
           }}
-          onBack={() => setCurrentStep('gameRecommend')}
+          onBack={() => setCurrentStep("gameRecommend")}
         />
-      ) : currentStep === 'validation' && validationResult ? (
+      ) : currentStep === "validation" && validationResult ? (
         <ValidationPagePremium
           result={validationResult}
           lawWeights={lawWeights}
@@ -336,7 +373,7 @@ export default function Home() {
           onAccept={handleAcceptValidation}
           onReject={handleRejectValidation}
         />
-      ) : currentStep === 'rules' ? (
+      ) : currentStep === "rules" ? (
         <div className="min-h-screen flex flex-col relative z-10">
           <main className="container mx-auto px-4 py-8 max-w-7xl">
             <RulesDisplay

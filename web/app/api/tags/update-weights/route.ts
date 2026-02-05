@@ -1,11 +1,12 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import {
   updateTagWeightsOnDeletion,
   updateTagWeightsOnConfirm,
   mergeNewTags,
-} from '@/lib/tags/tag-manager';
+} from "@/lib/tags/tag-manager";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * POST /api/tags/update-weights
@@ -33,48 +34,53 @@ export async function POST(req: NextRequest) {
     // 验证请求
     if (!action || !tags || !currentWeights) {
       return NextResponse.json(
-        { error: 'Invalid request: action, tags, and currentWeights are required' },
-        { status: 400 }
+        {
+          error:
+            "Invalid request: action, tags, and currentWeights are required",
+        },
+        { status: 400 },
       );
     }
 
-    if (!Array.isArray(tags) || typeof currentWeights !== 'object') {
-      return NextResponse.json({ error: 'Invalid data types' }, { status: 400 });
+    if (!Array.isArray(tags) || typeof currentWeights !== "object") {
+      return NextResponse.json(
+        { error: "Invalid data types" },
+        { status: 400 },
+      );
     }
 
-    if (action !== 'confirm' && action !== 'delete') {
+    if (action !== "confirm" && action !== "delete") {
       return NextResponse.json(
         { error: 'Invalid action: must be "confirm" or "delete"' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // 步骤1: 更新标签权重
     let updatedWeights = { ...currentWeights };
 
-    if (action === 'delete') {
+    if (action === "delete") {
       updatedWeights = updateTagWeightsOnDeletion(tags, updatedWeights);
-      console.log(`标签权重更新 (删除): 影响 ${tags.length} 个标签`);
-    } else if (action === 'confirm') {
+    } else if (action === "confirm") {
       updatedWeights = updateTagWeightsOnConfirm(tags, updatedWeights);
-      console.log(`标签权重更新 (确认): 影响 ${tags.length} 个标签`);
     }
 
     // 步骤2: 如果有新标签,合并进来
     if (newTags && Array.isArray(newTags) && newTags.length > 0) {
       updatedWeights = mergeNewTags(newTags, updatedWeights);
-      console.log(`合并 ${newTags.length} 个新标签`);
     }
 
     return NextResponse.json({ updatedWeights: updatedWeights });
   } catch (error) {
-    console.error('标签权重更新API错误:', error);
+    logger.error("Tag weight update failed", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return NextResponse.json(
       {
-        error: '标签权重更新失败',
-        details: error instanceof Error ? error.message : 'Unknown error',
+        error: "标签权重更新失败",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

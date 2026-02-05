@@ -1,4 +1,4 @@
-import type { WorldRule, RuleTag } from '@/types';
+import type { WorldRule, RuleTag } from "@/types";
 
 /**
  * 预测删除引擎
@@ -23,7 +23,7 @@ export const DELETION_DANGER_THRESHOLD = 0.75; // ≥ 0.75 强烈警告
  */
 export function calculateDeletionScore(
   ruleTags: string[],
-  tagWeights: Record<string, RuleTag>
+  tagWeights: Record<string, RuleTag>,
 ): number {
   // 无标签时返回中性评分
   if (ruleTags.length === 0) return 0.5;
@@ -48,7 +48,7 @@ export function calculateDeletionScore(
  */
 export function calculateDeletionScoresForRules(
   rules: WorldRule[],
-  tagWeights: Record<string, RuleTag>
+  tagWeights: Record<string, RuleTag>,
 ): WorldRule[] {
   return rules.map((rule) => ({
     ...rule,
@@ -65,7 +65,7 @@ export function calculateDeletionScoresForRules(
  */
 export function getHighRiskRules(
   rules: WorldRule[],
-  threshold: number = DELETION_WARNING_THRESHOLD
+  threshold: number = DELETION_WARNING_THRESHOLD,
 ): WorldRule[] {
   return rules
     .filter((rule) => {
@@ -81,15 +81,15 @@ export function getHighRiskRules(
  * @param rule 规则
  * @returns 警告等级: 'none' | 'warning' | 'danger'
  */
-export function getRiskLevel(rule: WorldRule): 'none' | 'warning' | 'danger' {
+export function getRiskLevel(rule: WorldRule): "none" | "warning" | "danger" {
   const score = rule.deletion_score || 0;
 
   if (score >= DELETION_DANGER_THRESHOLD) {
-    return 'danger'; // 强烈警告 (红色)
+    return "danger"; // 强烈警告 (红色)
   } else if (score >= DELETION_WARNING_THRESHOLD) {
-    return 'warning'; // 警告 (黄色)
+    return "warning"; // 警告 (黄色)
   } else {
-    return 'none'; // 无警告
+    return "none"; // 无警告
   }
 }
 
@@ -104,7 +104,7 @@ export function getRiskLevel(rule: WorldRule): 'none' | 'warning' | 'danger' {
 export function generateDeletionSuggestions(
   rules: WorldRule[],
   tagWeights: Record<string, RuleTag>,
-  limit: number = 5
+  limit: number = 5,
 ): Array<{
   rule: WorldRule;
   deletion_score: number;
@@ -127,8 +127,8 @@ export function generateDeletionSuggestions(
 
       const reason =
         lowWeightTags.length > 0
-          ? `包含低评分标签: ${lowWeightTags.join(', ')}`
-          : '基于您的偏好,这条规则可能不符合您的审美';
+          ? `包含低评分标签: ${lowWeightTags.join(", ")}`
+          : "基于您的偏好,这条规则可能不符合您的审美";
 
       return {
         rule: { ...rule, deletion_score: score },
@@ -152,24 +152,24 @@ export function generateDeletionSuggestions(
  */
 export function analyzeTagContributions(
   ruleTags: string[],
-  tagWeights: Record<string, RuleTag>
+  tagWeights: Record<string, RuleTag>,
 ): Array<{
   tagId: string;
   tagName: string;
   weight: number;
-  contribution: 'positive' | 'negative' | 'neutral'; // 对删除评分的影响
+  contribution: "positive" | "negative" | "neutral"; // 对删除评分的影响
 }> {
   return ruleTags.map((tagId) => {
     const tag = tagWeights[tagId];
     const weight = tag?.weight || 0.5;
 
-    let contribution: 'positive' | 'negative' | 'neutral';
+    let contribution: "positive" | "negative" | "neutral";
     if (weight < 0.4) {
-      contribution = 'negative'; // 低权重 = 负面贡献 = 增加删除可能
+      contribution = "negative"; // 低权重 = 负面贡献 = 增加删除可能
     } else if (weight > 0.6) {
-      contribution = 'positive'; // 高权重 = 正面贡献 = 降低删除可能
+      contribution = "positive"; // 高权重 = 正面贡献 = 降低删除可能
     } else {
-      contribution = 'neutral'; // 中性
+      contribution = "neutral"; // 中性
     }
 
     return {
@@ -190,7 +190,7 @@ export function analyzeTagContributions(
  */
 export function generatePredictionReport(
   rules: WorldRule[],
-  tagWeights: Record<string, RuleTag>
+  tagWeights: Record<string, RuleTag>,
 ): {
   total_rules: number;
   active_rules: number;

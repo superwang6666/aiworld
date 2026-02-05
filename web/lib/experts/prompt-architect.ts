@@ -1,10 +1,11 @@
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
-import type { ExpertConfig, ValidationResult } from '@/types';
+import type { ExpertConfig, ValidationResult } from "@/types";
 
-import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
+import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
+import { logger } from "@/lib/utils/logger";
 
-import { smartMatchExpert } from './expert-matcher';
+import { smartMatchExpert } from "./expert-matcher";
 
 interface SpecialExpertRequest {
   domain: string;
@@ -22,21 +23,22 @@ interface SpecialExpertRequest {
  * 2. 如果找到相似的专家则复用或更新
  * 3. 只在必要时创建新专家
  */
-export async function generateSpecialExpert(request: SpecialExpertRequest): Promise<ExpertConfig> {
-  console.log(`\n🔍 正在为领域 "${request.domain}" 智能匹配专家...`);
+export async function generateSpecialExpert(
+  request: SpecialExpertRequest,
+): Promise<ExpertConfig> {
+  logger.info("Smart matching expert for domain", { domain: request.domain });
 
   // 使用智能匹配器
   const matchResult = await smartMatchExpert(request);
 
-  if (matchResult.action === 'reuse') {
-    console.log(`♻️  ${matchResult.reason}`);
+  if (matchResult.action === "reuse") {
+    logger.info("Reusing existing expert", { reason: matchResult.reason });
     return matchResult.expert!;
-  } else if (matchResult.action === 'update') {
-    console.log(`🔄 ${matchResult.reason}`);
+  } else if (matchResult.action === "update") {
+    logger.info("Updating existing expert", { reason: matchResult.reason });
     return matchResult.expert!;
   } else {
-    console.log(`✨ ${matchResult.reason}`);
-    console.log(`正在创建新的特殊专家...`);
+    logger.info("Creating new special expert", { reason: matchResult.reason });
 
     // 创建新专家
     const newExpert = await generateNewSpecialExpert(request);
@@ -44,7 +46,9 @@ export async function generateSpecialExpert(request: SpecialExpertRequest): Prom
     // 缓存新专家
     await cacheSpecialExpert(newExpert);
 
-    console.log(`✅ 已创建并缓存新专家: ${newExpert.name}\n`);
+    logger.info("New expert created and cached", {
+      expertName: newExpert.name,
+    });
     return newExpert;
   }
 }
@@ -52,10 +56,14 @@ export async function generateSpecialExpert(request: SpecialExpertRequest): Prom
 /**
  * 使用 LLM 生成新的特殊专家配置(内部函数)
  */
-async function generateNewSpecialExpert(request: SpecialExpertRequest): Promise<ExpertConfig> {
+async function generateNewSpecialExpert(
+  request: SpecialExpertRequest,
+): Promise<ExpertConfig> {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY ? 'https://api.deepseek.com' : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini';
+  const baseURL = process.env.DEEPSEEK_API_KEY
+    ? "https://api.deepseek.com"
+    : undefined;
+  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
 
   const openai = new OpenAI({ apiKey, baseURL });
 
@@ -66,7 +74,7 @@ async function generateNewSpecialExpert(request: SpecialExpertRequest): Promise<
 **所需专业领域:** ${request.domain}
 **需要原因:** ${request.reason}
 **核心异质点:** ${request.heterogeneity_point}
-**知识领域:** ${request.knowledge_scope.join('、')}
+**知识领域:** ${request.knowledge_scope.join("、")}
 
 **指示:**
 1. 创建一个独特的专家角色,有一个易记的中文名字(如"XXX博士"或"XXX教授")
@@ -99,17 +107,20 @@ async function generateNewSpecialExpert(request: SpecialExpertRequest): Promise<
   const completion = await openai.chat.completions.create({
     model,
     messages: [
-      { role: 'system', content: '你是提示词建筑师代理。仅生成有效的 JSON 格式的专家配置。' },
-      { role: 'user', content: generation_prompt },
+      {
+        role: "system",
+        content: "你是提示词建筑师代理。仅生成有效的 JSON 格式的专家配置。",
+      },
+      { role: "user", content: generation_prompt },
     ],
     temperature: 0.8,
-    response_format: { type: 'json_object' },
+    response_format: { type: "json_object" },
   });
 
-  let content = completion.choices[0]?.message?.content || '{}';
+  let content = completion.choices[0]?.message?.content || "{}";
 
   // 清理可能的 markdown 代码块
-  content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+  content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
   const expertConfig = JSON.parse(content);
   return expertConfig as ExpertConfig;

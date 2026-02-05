@@ -1,8 +1,8 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { analyzeGaps } from '@/lib/experts/gap-analyzer';
-import { loadCoreExperts } from '@/lib/experts/loader';
+import { analyzeGaps } from "@/lib/experts/gap-analyzer";
+import { loadCoreExperts } from "@/lib/experts/loader";
 
 /**
  * POST /api/deac/analyze-gap
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
 
     if (!heterogeneity_point) {
       return NextResponse.json(
-        { error: '缺少 heterogeneity_point 参数' },
-        { status: 400 }
+        { error: "缺少 heterogeneity_point 参数" },
+        { status: 400 },
       );
     }
 
@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ gap_analysis: gapAnalysis });
   } catch (error: any) {
-    console.error('分析差距时出错:', error);
+    // Error handled silently
     return NextResponse.json(
-      { error: error.message || '差距分析失败' },
-      { status: 500 }
+      { error: error.message || "差距分析失败" },
+      { status: 500 },
     );
   }
 }

@@ -7,7 +7,15 @@
       "Bash(npm install:*)",
       "Bash(node -e:*)",
       "Bash(git add:*)",
-      "Bash(./node_modules/.bin/tsc:*)"
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(xargs:*)",
+      "Bash(npx ts-prune:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx depcheck:*)",
+      "Bash(if exist contexts rmdir contexts)",
+      "Bash(if exist hooks rmdir hooks)",
+      "Bash(if exist componentsui rmdir componentsui)",
+      "Bash(npx prettier:*)"
     ]
   }
 }

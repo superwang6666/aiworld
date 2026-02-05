@@ -1,12 +1,20 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { sendVerificationEmail } from '@/lib/auth/email-service';
-import { validateEmail, validatePassword, validateUsername } from '@/lib/auth/password-utils';
-import { createUser, getUserByEmail, createEmailVerificationToken } from '@/lib/auth/user-service';
+import { sendVerificationEmail } from "@/lib/auth/email-service";
+import {
+  validateEmail,
+  validatePassword,
+  validateUsername,
+} from "@/lib/auth/password-utils";
+import {
+  createUser,
+  getUserByEmail,
+  createEmailVerificationToken,
+} from "@/lib/auth/user-service";
+import { logger } from "@/lib/utils/logger";
 
-import type { RegisterRequest, RegisterResponse } from '@/types/auth';
-
+import type { RegisterRequest, RegisterResponse } from "@/types/auth";
 
 /**
  * 用户注册 API
@@ -19,16 +27,16 @@ export async function POST(request: NextRequest) {
     // 验证输入
     if (!email || !password || !username) {
       return NextResponse.json<RegisterResponse>(
-        { success: false, error: '请填写所有必填字段' },
-        { status: 400 }
+        { success: false, error: "请填写所有必填字段" },
+        { status: 400 },
       );
     }
 
     // 验证邮箱格式
     if (!validateEmail(email)) {
       return NextResponse.json<RegisterResponse>(
-        { success: false, error: '邮箱格式不正确' },
-        { status: 400 }
+        { success: false, error: "邮箱格式不正确" },
+        { status: 400 },
       );
     }
 
@@ -37,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (!usernameValidation.valid) {
       return NextResponse.json<RegisterResponse>(
         { success: false, error: usernameValidation.error },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,8 +53,8 @@ export async function POST(request: NextRequest) {
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       return NextResponse.json<RegisterResponse>(
-        { success: false, error: passwordValidation.errors.join(', ') },
-        { status: 400 }
+        { success: false, error: passwordValidation.errors.join(", ") },
+        { status: 400 },
       );
     }
 
@@ -54,8 +62,8 @@ export async function POST(request: NextRequest) {
     const existingUser = await getUserByEmail(email);
     if (existingUser) {
       return NextResponse.json<RegisterResponse>(
-        { success: false, error: '该邮箱已被注册' },
-        { status: 409 }
+        { success: false, error: "该邮箱已被注册" },
+        { status: 409 },
       );
     }
 
@@ -69,23 +77,25 @@ export async function POST(request: NextRequest) {
     try {
       await sendVerificationEmail(email, username, verificationToken.token);
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      // 不阻止注册流程，用户可以稍后重新发送验证邮件
+      logger.warn("Failed to send verification email", {
+        email,
+        error: emailError,
+      });
     }
 
     return NextResponse.json<RegisterResponse>(
       {
         success: true,
         user,
-        message: '注册成功！请查收验证邮件以激活账户。',
+        message: "注册成功！请查收验证邮件以激活账户。",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
-    console.error('Registration error:', error);
+    logger.error("User registration failed", { error: error.message });
     return NextResponse.json<RegisterResponse>(
-      { success: false, error: error.message || '注册失败，请稍后重试' },
-      { status: 500 }
+      { success: false, error: error.message || "注册失败，请稍后重试" },
+      { status: 500 },
     );
   }
 }

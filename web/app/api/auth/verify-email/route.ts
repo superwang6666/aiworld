@@ -1,11 +1,14 @@
-import type { NextRequest} from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-import { sendWelcomeEmail } from '@/lib/auth/email-service';
-import { verifyEmailToken, markEmailAsVerified, getUserById } from '@/lib/auth/user-service';
+import { sendWelcomeEmail } from "@/lib/auth/email-service";
+import {
+  verifyEmailToken,
+  markEmailAsVerified,
+  getUserById,
+} from "@/lib/auth/user-service";
 
-import type { VerifyEmailRequest, VerifyEmailResponse } from '@/types/auth';
-
+import type { VerifyEmailRequest, VerifyEmailResponse } from "@/types/auth";
 
 /**
  * 邮箱验证 API
@@ -17,8 +20,8 @@ export async function POST(request: NextRequest) {
 
     if (!token) {
       return NextResponse.json<VerifyEmailResponse>(
-        { success: false, error: '缺少验证令牌' },
-        { status: 400 }
+        { success: false, error: "缺少验证令牌" },
+        { status: 400 },
       );
     }
 
@@ -27,8 +30,8 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json<VerifyEmailResponse>(
-        { success: false, error: '验证令牌无效或已过期' },
-        { status: 400 }
+        { success: false, error: "验证令牌无效或已过期" },
+        { status: 400 },
       );
     }
 
@@ -42,24 +45,23 @@ export async function POST(request: NextRequest) {
     if (user) {
       try {
         await sendWelcomeEmail(user.email, user.username);
-      } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
-        // 不阻止验证流程
+      } catch (_emailError) {
+        // Error handled silently - welcome email is not critical
       }
     }
 
     return NextResponse.json<VerifyEmailResponse>(
       {
         success: true,
-        message: '邮箱验证成功！您现在可以登录了。',
+        message: "邮箱验证成功！您现在可以登录了。",
       },
-      { status: 200 }
+      { status: 200 },
     );
-  } catch (error: any) {
-    console.error('Email verification error:', error);
+  } catch (_error: any) {
+    // Error handled silently
     return NextResponse.json<VerifyEmailResponse>(
-      { success: false, error: error.message || '验证失败，请稍后重试' },
-      { status: 500 }
+      { success: false, error: "验证失败，请稍后重试" },
+      { status: 500 },
     );
   }
 }

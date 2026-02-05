@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
-import { AlertTriangle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AlertTriangle } from "lucide-react";
+import { motion } from "motion/react";
 
 interface ValidationWarningsProps {
   warnings: string[];
 }
 
-export default function ValidationWarnings({ warnings }: ValidationWarningsProps) {
+export default function ValidationWarnings({
+  warnings,
+}: ValidationWarningsProps) {
   if (!warnings || warnings.length === 0) return null;
 
   return (
@@ -21,7 +23,7 @@ export default function ValidationWarnings({ warnings }: ValidationWarningsProps
         <div className="flex items-center gap-3 mb-4">
           <AlertTriangle
             className="w-6 h-6 text-[#ffb464] flex-shrink-0"
-            style={{ filter: 'drop-shadow(0 0 6px rgba(255, 180, 100, 0.4))' }}
+            style={{ filter: "drop-shadow(0 0 6px rgba(255, 180, 100, 0.4))" }}
           />
           <h3 className="text-[#ffb464] text-lg sm:text-xl font-bold">
             Warnings

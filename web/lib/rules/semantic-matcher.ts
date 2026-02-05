@@ -7,9 +7,11 @@
  * 3. 性能优化:仅比对同一法则的规则
  */
 
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
-import type { WorldRule } from '@/types';
+import type { WorldRule } from "@/types";
+
+import { logger } from "@/lib/utils/logger";
 
 /**
  * 语义去重配置
@@ -38,10 +40,12 @@ function getOpenAIClient(): OpenAI {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    throw new Error('缺少API密钥: DEEPSEEK_API_KEY或OPENAI_API_KEY未设置');
+    throw new Error("缺少API密钥: DEEPSEEK_API_KEY或OPENAI_API_KEY未设置");
   }
 
-  const baseURL = process.env.DEEPSEEK_API_KEY ? 'https://api.deepseek.com' : undefined;
+  const baseURL = process.env.DEEPSEEK_API_KEY
+    ? "https://api.deepseek.com"
+    : undefined;
 
   return new OpenAI({ apiKey, baseURL });
 }
@@ -55,10 +59,10 @@ function getOpenAIClient(): OpenAI {
  */
 async function calculateSemanticSimilarity(
   ruleA: WorldRule,
-  ruleB: WorldRule
+  ruleB: WorldRule,
 ): Promise<{ similarity: number; reasoning: string }> {
   const openai = getOpenAIClient();
-  const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini';
+  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
 
   const prompt = `你是一个世界构建规则分析专家。请分析以下两条规则是否表达了相似或重复的概念。
 
@@ -93,29 +97,35 @@ async function calculateSemanticSimilarity(
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: '你是世界构建规则分析专家。只返回有效的 JSON。' },
-        { role: 'user', content: prompt },
+        {
+          role: "system",
+          content: "你是世界构建规则分析专家。只返回有效的 JSON。",
+        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.3, // 低温度保证一致性
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
-    let content = completion.choices[0]?.message?.content || '{}';
+    let content = completion.choices[0]?.message?.content || "{}";
     // 清理可能的 markdown 包装
-    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    content = content
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
 
     const result = JSON.parse(content);
 
     return {
       similarity: result.similarity || 0,
-      reasoning: result.reasoning || '无法分析',
+      reasoning: result.reasoning || "无法分析",
     };
   } catch (error) {
-    console.error('LLM相似度检测失败:', error);
+    logger.error("LLM similarity detection failed", { error });
     // 降级策略: 返回0相似度,假设不重复
     return {
       similarity: 0,
-      reasoning: 'LLM分析失败,默认为不重复',
+      reasoning: "LLM分析失败,默认为不重复",
     };
   }
 }
@@ -131,7 +141,7 @@ async function calculateSemanticSimilarity(
 export async function checkRuleSemanticDuplication(
   newRule: WorldRule,
   existingRules: WorldRule[],
-  threshold: number = SEMANTIC_DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD
+  threshold: number = SEMANTIC_DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD,
 ): Promise<SemanticDuplicationCheckResult> {
   // 过滤出需要比对的规则
   let rulesToCompare = existingRules;
@@ -152,21 +162,25 @@ export async function checkRuleSemanticDuplication(
   // 记录最相似的规则
   let maxSimilarity = 0;
   let mostSimilarRule: WorldRule | undefined;
-  let mostSimilarReasoning = '';
+  let mostSimilarReasoning = "";
 
   // 遍历每条现有规则,计算语义相似度
   for (const existingRule of rulesToCompare) {
     try {
       const { similarity, reasoning } = await calculateSemanticSimilarity(
         newRule,
-        existingRule
+        existingRule,
       );
 
       // 日志记录(如果启用)
       if (SEMANTIC_DEDUPLICATION_CONFIG.ENABLE_REASONING_LOG) {
-        console.log(`[语义去重] 新规则 vs ${existingRule.id.substring(0, 8)}...`);
-        console.log(`  相似度: ${similarity}% (阈值: ${threshold}%)`);
-        console.log(`  理由: ${reasoning}`);
+        logger.debug("Semantic deduplication check", {
+          newRuleId: newRule.id.substring(0, 8),
+          existingRuleId: existingRule.id.substring(0, 8),
+          similarity,
+          threshold,
+          reasoning,
+        });
       }
 
       // 更新最大相似度
@@ -178,12 +192,12 @@ export async function checkRuleSemanticDuplication(
 
       // 提前退出策略: 如果找到重复规则,立即返回
       if (similarity >= threshold) {
-        console.log(
-          `[语义去重] ❌ 检测到重复规则 (相似度: ${similarity}%):\n` +
-            `  新规则: ${newRule.rule.substring(0, 50)}...\n` +
-            `  相似规则: ${existingRule.rule.substring(0, 50)}...\n` +
-            `  理由: ${reasoning}`
-        );
+        logger.warn("Duplicate rule detected", {
+          similarity,
+          newRule: newRule.rule.substring(0, 50),
+          similarRule: existingRule.rule.substring(0, 50),
+          reasoning,
+        });
 
         return {
           isDuplicate: true,
@@ -193,7 +207,7 @@ export async function checkRuleSemanticDuplication(
         };
       }
     } catch (error) {
-      console.error('LLM相似度检测失败,跳过该规则:', error);
+      logger.error("LLM similarity detection failed, skipping rule", { error });
       // 降级策略: 假设不重复,继续比对下一条
       continue;
     }
@@ -201,9 +215,10 @@ export async function checkRuleSemanticDuplication(
 
   // 没有找到重复规则
   if (maxSimilarity > 0 && SEMANTIC_DEDUPLICATION_CONFIG.ENABLE_REASONING_LOG) {
-    console.log(
-      `[语义去重] ✅ 规则通过检测,最高相似度: ${maxSimilarity}% (阈值: ${threshold}%)`
-    );
+    logger.info("Rule passed deduplication check", {
+      maxSimilarity,
+      threshold,
+    });
   }
 
   return {
@@ -223,9 +238,14 @@ export async function checkRuleSemanticDuplication(
  */
 export async function batchCheckSemanticDuplication(
   rules: WorldRule[],
-  threshold: number = SEMANTIC_DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD
+  threshold: number = SEMANTIC_DEDUPLICATION_CONFIG.SIMILARITY_THRESHOLD,
 ): Promise<
-  Array<{ ruleA: WorldRule; ruleB: WorldRule; similarity: number; reasoning: string }>
+  Array<{
+    ruleA: WorldRule;
+    ruleB: WorldRule;
+    similarity: number;
+    reasoning: string;
+  }>
 > {
   const duplicates: Array<{
     ruleA: WorldRule;
@@ -241,12 +261,18 @@ export async function batchCheckSemanticDuplication(
       const ruleB = rules[j];
 
       // 如果设置了同法则检测,跳过不同法则的规则
-      if (SEMANTIC_DEDUPLICATION_CONFIG.SAME_LAW_ONLY && ruleA.law !== ruleB.law) {
+      if (
+        SEMANTIC_DEDUPLICATION_CONFIG.SAME_LAW_ONLY &&
+        ruleA.law !== ruleB.law
+      ) {
         continue;
       }
 
       try {
-        const { similarity, reasoning } = await calculateSemanticSimilarity(ruleA, ruleB);
+        const { similarity, reasoning } = await calculateSemanticSimilarity(
+          ruleA,
+          ruleB,
+        );
 
         if (similarity >= threshold) {
           duplicates.push({ ruleA, ruleB, similarity, reasoning });
@@ -255,7 +281,11 @@ export async function batchCheckSemanticDuplication(
         // 添加延迟,避免API限流
         await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (error) {
-        console.error(`批量检测失败 (规则 ${i} vs ${j}):`, error);
+        logger.error("Batch detection failed", {
+          ruleIndexI: i,
+          ruleIndexJ: j,
+          error,
+        });
         continue;
       }
     }

@@ -1,14 +1,29 @@
-'use client';
+"use client";
 
-import { Atom, Zap, Brain, Lightbulb, Sparkles, Target, type LucideIcon } from 'lucide-react';
-import { motion } from 'motion/react';
+import {
+  Atom,
+  Zap,
+  Brain,
+  Lightbulb,
+  Sparkles,
+  Target,
+  type LucideIcon,
+} from "lucide-react";
+import { motion } from "motion/react";
 
 interface SynthesisInsightsProps {
   insights: string[];
 }
 
 // 固定图标列表，用于循环分配
-const INSIGHT_ICONS: LucideIcon[] = [Atom, Zap, Brain, Lightbulb, Sparkles, Target];
+const INSIGHT_ICONS: LucideIcon[] = [
+  Atom,
+  Zap,
+  Brain,
+  Lightbulb,
+  Sparkles,
+  Target,
+];
 
 // 对应的颜色列表
 const INSIGHT_COLORS: string[] = [
@@ -20,7 +35,9 @@ const INSIGHT_COLORS: string[] = [
   "#06b6d4", // 循环回到cyan-500
 ];
 
-export default function SynthesisInsights({ insights }: SynthesisInsightsProps) {
+export default function SynthesisInsights({
+  insights,
+}: SynthesisInsightsProps) {
   if (!insights || insights.length === 0) {
     return null;
   }
@@ -38,9 +55,25 @@ export default function SynthesisInsights({ insights }: SynthesisInsightsProps) 
       <div className="relative z-10">
         <div className="flex items-start gap-3 mb-4">
           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/20 to-cyan-400/5 flex items-center justify-center border border-cyan-400/30 group-hover:scale-110 transition-transform duration-300">
-            <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24">
-              <path d="M12 3L13.5 8.5L19 10L14.5 14.5L16 20L12 17L8 20L9.5 14.5L5 10L10.5 8.5L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M12 8V12L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              className="w-5 h-5 text-cyan-400"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 3L13.5 8.5L19 10L14.5 14.5L16 20L12 17L8 20L9.5 14.5L5 10L10.5 8.5L12 3Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12 8V12L14 14"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <div className="flex-1">
@@ -48,7 +81,9 @@ export default function SynthesisInsights({ insights }: SynthesisInsightsProps) 
               <span>涌现洞察</span>
               <div className="h-px flex-1 bg-gradient-to-r from-cyan-400/40 to-transparent" />
             </h3>
-            <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">Emergent Insights</p>
+            <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">
+              Emergent Insights
+            </p>
           </div>
         </div>
 

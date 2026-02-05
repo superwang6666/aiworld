@@ -7,16 +7,17 @@
  * 3. 合并重复专家的知识领域
  */
 
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
-import type { ExpertConfig } from '@/types';
+import type { ExpertConfig } from "@/types";
 
-import { cacheSpecialExpert } from '@/lib/deac/cache-manager';
+import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
+import { logger } from "@/lib/utils/logger";
 
-import { loadAllSpecialExperts } from './loader';
+import { loadAllSpecialExperts } from "./loader";
 
 interface MatchResult {
-  action: 'reuse' | 'update' | 'create';
+  action: "reuse" | "update" | "create";
   expert?: ExpertConfig;
   similarity: number;
   reason: string;
@@ -34,11 +35,13 @@ interface SpecialExpertRequest {
  */
 async function analyzeExpertSimilarity(
   existingExpert: ExpertConfig,
-  newRequest: SpecialExpertRequest
+  newRequest: SpecialExpertRequest,
 ): Promise<{ similarity: number; reason: string }> {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY ? 'https://api.deepseek.com' : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini';
+  const baseURL = process.env.DEEPSEEK_API_KEY
+    ? "https://api.deepseek.com"
+    : undefined;
+  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
 
   const openai = new OpenAI({ apiKey, baseURL });
 
@@ -46,12 +49,12 @@ async function analyzeExpertSimilarity(
 
 **已有专家:**
 - 领域: ${existingExpert.domain}
-- 知识范围: ${existingExpert.knowledge_scope.join('、')}
-- 标签: ${existingExpert.specialization_tags?.join('、') || '无'}
+- 知识范围: ${existingExpert.knowledge_scope.join("、")}
+- 标签: ${existingExpert.specialization_tags?.join("、") || "无"}
 
 **新需求:**
 - 领域: ${newRequest.domain}
-- 知识范围: ${newRequest.knowledge_scope.join('、')}
+- 知识范围: ${newRequest.knowledge_scope.join("、")}
 - 原因: ${newRequest.reason}
 - 异质点: ${newRequest.heterogeneity_point}
 
@@ -74,24 +77,24 @@ async function analyzeExpertSimilarity(
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: '你是专家匹配分析器。只返回有效的 JSON。' },
-        { role: 'user', content: prompt },
+        { role: "system", content: "你是专家匹配分析器。只返回有效的 JSON。" },
+        { role: "user", content: prompt },
       ],
       temperature: 0.3, // 低温度保证一致性
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
-    let content = completion.choices[0]?.message?.content || '{}';
-    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    let content = completion.choices[0]?.message?.content || "{}";
+    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
     const result = JSON.parse(content);
     return {
       similarity: result.similarity || 0,
-      reason: result.reason || '无法分析',
+      reason: result.reason || "无法分析",
     };
   } catch (error) {
-    console.error('分析专家相似度时出错:', error);
-    return { similarity: 0, reason: '分析失败' };
+    logger.error("Failed to analyze expert similarity", { error });
+    return { similarity: 0, reason: "分析失败" };
   }
 }
 
@@ -100,11 +103,13 @@ async function analyzeExpertSimilarity(
  */
 async function updateExpertWithNewKnowledge(
   existingExpert: ExpertConfig,
-  newRequest: SpecialExpertRequest
+  newRequest: SpecialExpertRequest,
 ): Promise<ExpertConfig> {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY ? 'https://api.deepseek.com' : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini';
+  const baseURL = process.env.DEEPSEEK_API_KEY
+    ? "https://api.deepseek.com"
+    : undefined;
+  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
 
   const openai = new OpenAI({ apiKey, baseURL });
 
@@ -115,7 +120,7 @@ ${JSON.stringify(existingExpert, null, 2)}
 
 **新需求:**
 - 领域: ${newRequest.domain}
-- 知识范围: ${newRequest.knowledge_scope.join('、')}
+- 知识范围: ${newRequest.knowledge_scope.join("、")}
 - 原因: ${newRequest.reason}
 - 异质点: ${newRequest.heterogeneity_point}
 
@@ -134,27 +139,31 @@ ${JSON.stringify(existingExpert, null, 2)}
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: '你是专家配置更新助手。只返回有效的 JSON。' },
-        { role: 'user', content: prompt },
+        {
+          role: "system",
+          content: "你是专家配置更新助手。只返回有效的 JSON。",
+        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.7,
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
-    let content = completion.choices[0]?.message?.content || '{}';
-    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    let content = completion.choices[0]?.message?.content || "{}";
+    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
     const updatedExpert = JSON.parse(content);
 
     // 确保关键字段存在
     updatedExpert.updated_at = new Date().toISOString();
     if (!updatedExpert.created_at) {
-      updatedExpert.created_at = existingExpert.created_at || new Date().toISOString();
+      updatedExpert.created_at =
+        existingExpert.created_at || new Date().toISOString();
     }
 
     return updatedExpert as ExpertConfig;
   } catch (error) {
-    console.error('更新专家配置时出错:', error);
+    logger.error("Failed to update expert configuration", { error });
     // 返回原专家配置
     return existingExpert;
   }
@@ -163,53 +172,65 @@ ${JSON.stringify(existingExpert, null, 2)}
 /**
  * 智能匹配专家:复用、更新或创建
  */
-export async function smartMatchExpert(request: SpecialExpertRequest): Promise<MatchResult> {
+export async function smartMatchExpert(
+  request: SpecialExpertRequest,
+): Promise<MatchResult> {
   // 1. 加载所有已缓存的特殊专家
   const cachedExperts = await loadAllSpecialExperts();
 
   if (cachedExperts.length === 0) {
     return {
-      action: 'create',
+      action: "create",
       similarity: 0,
-      reason: '没有已缓存的特殊专家,需要创建新专家',
+      reason: "没有已缓存的特殊专家,需要创建新专家",
     };
   }
 
   // 2. 分析每个已有专家与新需求的相似度
   const matches = await Promise.all(
     cachedExperts.map(async (expert) => {
-      const { similarity, reason } = await analyzeExpertSimilarity(expert, request);
+      const { similarity, reason } = await analyzeExpertSimilarity(
+        expert,
+        request,
+      );
       return { expert, similarity, reason };
-    })
+    }),
   );
 
   // 3. 找到最相似的专家
   matches.sort((a, b) => b.similarity - a.similarity);
   const bestMatch = matches[0];
 
-  console.log(`\n最佳匹配专家: ${bestMatch.expert.name}`);
-  console.log(`相似度: ${bestMatch.similarity}/100`);
-  console.log(`原因: ${bestMatch.reason}\n`);
+  logger.info("Best matching expert found", {
+    expertName: bestMatch.expert.name,
+    similarity: bestMatch.similarity,
+    reason: bestMatch.reason,
+  });
 
   // 4. 根据相似度决定行动
   if (bestMatch.similarity >= 90) {
     // 90-100: 直接复用
     return {
-      action: 'reuse',
+      action: "reuse",
       expert: bestMatch.expert,
       similarity: bestMatch.similarity,
       reason: `已有专家"${bestMatch.expert.name}"完全满足需求,直接复用`,
     };
   } else if (bestMatch.similarity >= 70) {
     // 70-89: 更新已有专家
-    console.log(`正在更新专家 "${bestMatch.expert.name}" 以包含新知识...`);
-    const updatedExpert = await updateExpertWithNewKnowledge(bestMatch.expert, request);
+    logger.info("Updating expert with new knowledge", {
+      expertName: bestMatch.expert.name,
+    });
+    const updatedExpert = await updateExpertWithNewKnowledge(
+      bestMatch.expert,
+      request,
+    );
 
     // 缓存更新后的专家
     await cacheSpecialExpert(updatedExpert);
 
     return {
-      action: 'update',
+      action: "update",
       expert: updatedExpert,
       similarity: bestMatch.similarity,
       reason: `已更新专家"${bestMatch.expert.name}"以包含新知识领域`,
@@ -217,7 +238,7 @@ export async function smartMatchExpert(request: SpecialExpertRequest): Promise<M
   } else {
     // 0-69: 创建新专家
     return {
-      action: 'create',
+      action: "create",
       similarity: bestMatch.similarity,
       reason: `现有专家覆盖不足(最高相似度${bestMatch.similarity}%),需要创建新专家`,
     };
@@ -240,7 +261,7 @@ export async function analyzeAndMergeDuplicates(): Promise<{
   // 按领域分组
   const domainGroups = new Map<string, ExpertConfig[]>();
 
-  cachedExperts.forEach(expert => {
+  cachedExperts.forEach((expert) => {
     const domain = expert.domain;
     if (!domainGroups.has(domain)) {
       domainGroups.set(domain, []);
@@ -260,12 +281,12 @@ export async function analyzeAndMergeDuplicates(): Promise<{
     if (group.experts.length === 2) {
       suggestions.push(
         `建议合并 "${group.domain}" 领域的2个专家: ` +
-        `${group.experts.map(e => e.name).join(' 和 ')}`
+          `${group.experts.map((e) => e.name).join(" 和 ")}`,
       );
     } else {
       suggestions.push(
         `建议合并 "${group.domain}" 领域的${group.experts.length}个专家: ` +
-        `${group.experts.map(e => e.name).join('、')}`
+          `${group.experts.map((e) => e.name).join("、")}`,
       );
     }
   }
@@ -276,9 +297,11 @@ export async function analyzeAndMergeDuplicates(): Promise<{
 /**
  * 合并多个相似专家为一个综合专家
  */
-export async function mergeExperts(experts: ExpertConfig[]): Promise<ExpertConfig> {
+export async function mergeExperts(
+  experts: ExpertConfig[],
+): Promise<ExpertConfig> {
   if (experts.length === 0) {
-    throw new Error('至少需要一个专家才能合并');
+    throw new Error("至少需要一个专家才能合并");
   }
 
   if (experts.length === 1) {
@@ -286,18 +309,24 @@ export async function mergeExperts(experts: ExpertConfig[]): Promise<ExpertConfi
   }
 
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY ? 'https://api.deepseek.com' : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? 'deepseek-chat' : 'gpt-4o-mini';
+  const baseURL = process.env.DEEPSEEK_API_KEY
+    ? "https://api.deepseek.com"
+    : undefined;
+  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
 
   const openai = new OpenAI({ apiKey, baseURL });
 
   const prompt = `你是专家配置合并助手。请将多个相似专家合并为一个综合专家。
 
 **待合并的专家配置:**
-${experts.map((e, i) => `
+${experts
+  .map(
+    (e, i) => `
 专家 ${i + 1}:
 ${JSON.stringify(e, null, 2)}
-`).join('\n')}
+`,
+  )
+  .join("\n")}
 
 **任务:**
 1. 选择最合适的名字(或创建新名字)
@@ -316,26 +345,29 @@ ${JSON.stringify(e, null, 2)}
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: 'system', content: '你是专家配置合并助手。只返回有效的 JSON。' },
-        { role: 'user', content: prompt },
+        {
+          role: "system",
+          content: "你是专家配置合并助手。只返回有效的 JSON。",
+        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.7,
-      response_format: { type: 'json_object' },
+      response_format: { type: "json_object" },
     });
 
-    let content = completion.choices[0]?.message?.content || '{}';
-    content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    let content = completion.choices[0]?.message?.content || "{}";
+    content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
     const mergedExpert = JSON.parse(content);
 
     // 确保关键字段
     mergedExpert.created_at = new Date().toISOString();
-    mergedExpert.created_by = 'expert_merger';
-    mergedExpert.merged_from = experts.map(e => e.id);
+    mergedExpert.created_by = "expert_merger";
+    mergedExpert.merged_from = experts.map((e) => e.id);
 
     return mergedExpert as ExpertConfig;
   } catch (error) {
-    console.error('合并专家配置时出错:', error);
+    logger.error("Failed to merge expert configurations", { error });
     // 返回第一个专家作为备用
     return experts[0];
   }

@@ -1,6 +1,8 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
-import type { Transporter } from 'nodemailer';
+import { logger } from "@/lib/utils/logger";
+
+import type { Transporter } from "nodemailer";
 
 /**
  * 邮件服务配置
@@ -25,7 +27,9 @@ function getEmailConfig(): EmailConfig | null {
   const pass = process.env.SMTP_PASS;
 
   if (!host || !port || !user || !pass) {
-    console.warn('邮件服务未配置，邮件功能将不可用');
+    logger.warn(
+      "Email service not configured, email functionality will be unavailable",
+    );
     return null;
   }
 
@@ -63,21 +67,21 @@ function createTransporter(): Transporter | null {
 export async function sendVerificationEmail(
   email: string,
   username: string,
-  token: string
+  token: string,
 ): Promise<void> {
   const transporter = createTransporter();
 
   if (!transporter) {
-    throw new Error('邮件服务未配置');
+    throw new Error("邮件服务未配置");
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:8000';
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:8000";
   const verificationUrl = `${baseUrl}/auth/verify-email?token=${token}`;
 
   const mailOptions = {
     from: `"AI World" <${process.env.SMTP_USER}>`,
     to: email,
-    subject: '验证您的邮箱 - AI World',
+    subject: "验证您的邮箱 - AI World",
     html: `
       <!DOCTYPE html>
       <html>
@@ -213,21 +217,21 @@ export async function sendVerificationEmail(
 export async function sendPasswordResetEmail(
   email: string,
   username: string,
-  token: string
+  token: string,
 ): Promise<void> {
   const transporter = createTransporter();
 
   if (!transporter) {
-    throw new Error('邮件服务未配置');
+    throw new Error("邮件服务未配置");
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:8000';
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:8000";
   const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`;
 
   const mailOptions = {
     from: `"AI World" <${process.env.SMTP_USER}>`,
     to: email,
-    subject: '重置您的密码 - AI World',
+    subject: "重置您的密码 - AI World",
     html: `
       <!DOCTYPE html>
       <html>
@@ -373,7 +377,7 @@ export async function sendPasswordResetEmail(
  */
 export async function sendWelcomeEmail(
   email: string,
-  username: string
+  username: string,
 ): Promise<void> {
   const transporter = createTransporter();
 
@@ -382,12 +386,12 @@ export async function sendWelcomeEmail(
     return;
   }
 
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:8000';
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:8000";
 
   const mailOptions = {
     from: `"AI World" <${process.env.SMTP_USER}>`,
     to: email,
-    subject: '欢迎来到 AI World！',
+    subject: "欢迎来到 AI World！",
     html: `
       <!DOCTYPE html>
       <html>
@@ -506,7 +510,7 @@ export async function sendWelcomeEmail(
   try {
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('发送欢迎邮件失败:', error);
+    logger.error("Failed to send welcome email", { error });
     // 不抛出错误，因为欢迎邮件是可选的
   }
 }

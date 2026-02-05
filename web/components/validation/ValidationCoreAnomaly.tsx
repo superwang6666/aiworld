@@ -1,20 +1,23 @@
-'use client';
+"use client";
 
-import { Zap } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Zap } from "lucide-react";
+import { motion } from "motion/react";
 
-import type { Law } from '@/types';
+import type { Law } from "@/types";
 
-import { LAW_NAME_MAP } from '@/config/law-names';
+import { LAW_NAME_MAP } from "@/config/law-names";
 
 interface ValidationCoreAnomalyProps {
   coreAnomalyIdentified: string;
   coreLaw?: Law; // 核心法则
 }
 
-export default function ValidationCoreAnomaly({ coreAnomalyIdentified, coreLaw }: ValidationCoreAnomalyProps) {
+export default function ValidationCoreAnomaly({
+  coreAnomalyIdentified,
+  coreLaw,
+}: ValidationCoreAnomalyProps) {
   // 如果没有指定核心法则，默认使用"形而上学"
-  const lawName = coreLaw ? LAW_NAME_MAP[coreLaw] : '形而上学';
+  const lawName = coreLaw ? LAW_NAME_MAP[coreLaw] : "形而上学";
 
   return (
     <motion.div
@@ -27,7 +30,7 @@ export default function ValidationCoreAnomaly({ coreAnomalyIdentified, coreLaw }
         <div className="flex items-start gap-3 mb-4">
           <Zap
             className="w-6 h-6 text-[#39ff14] flex-shrink-0"
-            style={{ filter: 'drop-shadow(0 0 8px rgba(57, 255, 20, 0.6))' }}
+            style={{ filter: "drop-shadow(0 0 8px rgba(57, 255, 20, 0.6))" }}
           />
           <div className="flex-1">
             <h3 className="text-[#ebebf0] text-xl leading-snug font-semibold mb-1">
@@ -45,7 +48,7 @@ export default function ValidationCoreAnomaly({ coreAnomalyIdentified, coreLaw }
             <div
               className="w-1 h-4 rounded-full bg-[#39ff14]"
               style={{
-                boxShadow: '0 0 8px rgba(57, 255, 20, 0.6)',
+                boxShadow: "0 0 8px rgba(57, 255, 20, 0.6)",
               }}
             />
             <h4 className="text-[#e8e8ec] text-base leading-normal font-semibold">

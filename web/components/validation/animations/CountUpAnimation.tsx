@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 interface CountUpAnimationProps {
   target: number;
@@ -13,7 +13,7 @@ interface CountUpAnimationProps {
 export default function CountUpAnimation({
   target,
   duration = 2000,
-  className = ''
+  className = "",
 }: CountUpAnimationProps) {
   const [displayValue, setDisplayValue] = useState(0);
 

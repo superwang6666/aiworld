@@ -1,20 +1,22 @@
-'use client';
+"use client";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
-import CircularProgress from './animations/CircularProgress';
-import CountUpAnimation from './animations/CountUpAnimation';
+import CircularProgress from "./animations/CircularProgress";
+import CountUpAnimation from "./animations/CountUpAnimation";
 
 interface ValidationScoreCardProps {
   score: number; // 0-100
 }
 
-export default function ValidationScoreCard({ score }: ValidationScoreCardProps) {
+export default function ValidationScoreCard({
+  score,
+}: ValidationScoreCardProps) {
   // 根据分数获取标签
   const getScoreLabel = (score: number) => {
-    if (score >= 67) return '独一无二的';
-    if (score >= 34) return '高度独特';
-    return '有趣';
+    if (score >= 67) return "独一无二的";
+    if (score >= 34) return "高度独特";
+    return "有趣";
   };
 
   const scoreLabel = getScoreLabel(score);
@@ -55,15 +57,15 @@ export default function ValidationScoreCard({ score }: ValidationScoreCardProps)
                 <div
                   className="w-2 h-2 rounded-full"
                   style={{
-                    background: '#39ff14',
-                    boxShadow: '0 0 8px rgba(57, 255, 20, 0.8)',
+                    background: "#39ff14",
+                    boxShadow: "0 0 8px rgba(57, 255, 20, 0.8)",
                   }}
                 />
                 <span
                   className="text-sm font-semibold leading-tight"
                   style={{
-                    color: '#39ff14',
-                    textShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+                    color: "#39ff14",
+                    textShadow: "0 0 10px rgba(57, 255, 20, 0.5)",
                   }}
                 >
                   {scoreLabel}

@@ -1,17 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
-import { Loader2, Archive, Trash2, Download, X } from 'lucide-react';
+import { Loader2, Archive, Trash2, Download, X } from "lucide-react";
 
-import type { ArchiveMetadata } from '@/types';
+import type { ArchiveMetadata } from "@/types";
 
 interface ArchiveManagerProps {
   onLoadArchive: (archiveId: string) => void;
   onClose: () => void;
 }
 
-export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManagerProps) {
+export default function ArchiveManager({
+  onLoadArchive,
+  onClose,
+}: ArchiveManagerProps) {
   const [archives, setArchives] = useState<ArchiveMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,24 +28,24 @@ export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManage
   async function loadArchives() {
     try {
       setLoading(true);
-      const response = await fetch('/api/archive/list');
+      const response = await fetch("/api/archive/list");
 
       if (!response.ok) {
-        throw new Error('加载存档列表失败');
+        throw new Error("加载存档列表失败");
       }
 
       const data = await response.json();
       setArchives(data.archives || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '未知错误');
+      setError(err instanceof Error ? err.message : "未知错误");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(archiveId: string) {
-    if (!confirm('确定要删除这个存档吗?此操作无法撤销。')) {
+    if (!confirm("确定要删除这个存档吗?此操作无法撤销。")) {
       return;
     }
 
@@ -50,17 +53,17 @@ export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManage
       setDeletingId(archiveId);
 
       const response = await fetch(`/api/archive/delete?id=${archiveId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('删除存档失败');
+        throw new Error("删除存档失败");
       }
 
       // 重新加载列表
       await loadArchives();
     } catch (err) {
-      alert(err instanceof Error ? err.message : '删除失败');
+      alert(err instanceof Error ? err.message : "删除失败");
     } finally {
       setDeletingId(null);
     }
@@ -73,7 +76,9 @@ export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManage
         <div className="border-b border-gray-800 p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Archive className="w-6 h-6 text-[#00ff88]" />
-            <h2 className="text-2xl font-bold text-[#00ff88] font-mono">世界存档</h2>
+            <h2 className="text-2xl font-bold text-[#00ff88] font-mono">
+              世界存档
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -114,7 +119,9 @@ export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManage
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-2">
-                      <h3 className="text-lg font-bold text-[#00ff88]">{archive.name}</h3>
+                      <h3 className="text-lg font-bold text-[#00ff88]">
+                        {archive.name}
+                      </h3>
 
                       <p className="text-sm text-gray-400 line-clamp-2">
                         {archive.core_premise}
@@ -124,11 +131,17 @@ export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManage
                         <span>{archive.rules_count} 条规则</span>
                         <span>·</span>
                         <span>
-                          创建于 {new Date(archive.created_at).toLocaleDateString('zh-CN')}
+                          创建于{" "}
+                          {new Date(archive.created_at).toLocaleDateString(
+                            "zh-CN",
+                          )}
                         </span>
                         <span>·</span>
                         <span>
-                          更新于 {new Date(archive.updated_at).toLocaleDateString('zh-CN')}
+                          更新于{" "}
+                          {new Date(archive.updated_at).toLocaleDateString(
+                            "zh-CN",
+                          )}
                         </span>
                       </div>
 
@@ -136,7 +149,10 @@ export default function ArchiveManager({ onLoadArchive, onClose }: ArchiveManage
                       {archive.preview_rules.length > 0 && (
                         <div className="mt-3 space-y-1">
                           {archive.preview_rules.map((rule, idx) => (
-                            <p key={idx} className="text-xs text-gray-600 truncate">
+                            <p
+                              key={idx}
+                              className="text-xs text-gray-600 truncate"
+                            >
                               • {rule}
                             </p>
                           ))}

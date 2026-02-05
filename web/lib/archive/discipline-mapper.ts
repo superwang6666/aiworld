@@ -1,6 +1,10 @@
-import type { WorldRule, AcademicDiscipline, DisciplineCoverage } from '@/types';
+import type {
+  WorldRule,
+  AcademicDiscipline,
+  DisciplineCoverage,
+} from "@/types";
 
-import { ACADEMIC_DISCIPLINES } from '@/config/academic-disciplines';
+import { ACADEMIC_DISCIPLINES } from "@/config/academic-disciplines";
 
 /**
  * 学科映射器
@@ -23,10 +27,12 @@ import { ACADEMIC_DISCIPLINES } from '@/config/academic-disciplines';
  */
 export function mapRuleToDisciplines(
   rule: WorldRule,
-  disciplines: AcademicDiscipline[] = ACADEMIC_DISCIPLINES
+  disciplines: AcademicDiscipline[] = ACADEMIC_DISCIPLINES,
 ): string[] {
   // 步骤1: 基于法则过滤候选学科
-  const candidatesByLaw = disciplines.filter((d) => d.related_laws.includes(rule.law));
+  const candidatesByLaw = disciplines.filter((d) =>
+    d.related_laws.includes(rule.law),
+  );
 
   if (candidatesByLaw.length === 0) {
     // 如果没有相关学科,返回空数组
@@ -34,7 +40,7 @@ export function mapRuleToDisciplines(
   }
 
   // 步骤2: 基于关键词匹配
-  const ruleText = (rule.rule + ' ' + rule.expert_logic).toLowerCase();
+  const ruleText = (rule.rule + " " + rule.expert_logic).toLowerCase();
 
   const matchedDisciplines = candidatesByLaw.map((discipline) => {
     // 计算关键词匹配得分
@@ -82,7 +88,9 @@ export function mapRulesToDisciplines(rules: WorldRule[]): WorldRule[] {
  * @param rules 规则数组
  * @returns 学科覆盖统计数组
  */
-export function calculateDisciplineCoverage(rules: WorldRule[]): DisciplineCoverage[] {
+export function calculateDisciplineCoverage(
+  rules: WorldRule[],
+): DisciplineCoverage[] {
   // 统计每个学科的规则数
   const coverageMap: Record<
     string,
@@ -144,7 +152,7 @@ export function calculateDisciplineCoverage(rules: WorldRule[]): DisciplineCover
  */
 export function identifyMissingDisciplines(
   rules: WorldRule[],
-  minRuleCount: number = 1
+  minRuleCount: number = 1,
 ): AcademicDiscipline[] {
   const coverage = calculateDisciplineCoverage(rules);
   const coveredCodes = coverage
@@ -163,22 +171,22 @@ export function identifyMissingDisciplines(
  */
 export function generateDisciplineGapSuggestions(
   missingDisciplines: AcademicDiscipline[],
-  limit: number = 5
+  limit: number = 5,
 ): Array<{
   discipline: AcademicDiscipline;
   reason: string;
-  priority: 'high' | 'medium' | 'low';
+  priority: "high" | "medium" | "low";
 }> {
   // 优先级算法: 基于法则覆盖度
   const suggestions = missingDisciplines.map((discipline) => {
     // 核心法则 (Metaphysics, Time, Power) 缺失 = 高优先级
     const hasCoreLaw = discipline.related_laws.some((law) =>
-      ['Metaphysics', 'Time', 'Power'].includes(law)
+      ["Metaphysics", "Time", "Power"].includes(law),
     );
 
-    const priority: 'high' | 'medium' | 'low' = hasCoreLaw ? 'high' : 'medium';
+    const priority: "high" | "medium" | "low" = hasCoreLaw ? "high" : "medium";
 
-    const reason = `缺少 ${discipline.name} 相关规则,法则: ${discipline.related_laws.join(', ')}`;
+    const reason = `缺少 ${discipline.name} 相关规则,法则: ${discipline.related_laws.join(", ")}`;
 
     return {
       discipline,
@@ -211,7 +219,7 @@ export function generateDisciplineCoverageReport(rules: WorldRule[]): {
   suggestions: Array<{
     discipline: AcademicDiscipline;
     reason: string;
-    priority: 'high' | 'medium' | 'low';
+    priority: "high" | "medium" | "low";
   }>;
 } {
   const coverage = calculateDisciplineCoverage(rules);

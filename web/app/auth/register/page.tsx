@@ -1,6 +1,6 @@
-import RegisterForm from '@/components/auth/RegisterForm';
-import CommonHeader from '@/components/common/CommonHeader';
-import PremiumBackground from '@/components/PremiumBackground';
+import RegisterForm from "@/components/auth/RegisterForm";
+import CommonHeader from "@/components/common/CommonHeader";
+import PremiumBackground from "@/components/PremiumBackground";
 
 export default function RegisterPage() {
   return (

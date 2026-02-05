@@ -1,6 +1,8 @@
-import type { WorldRule, RuleTag } from '@/types';
+import type { WorldRule, RuleTag } from "@/types";
 
-import { LAW_NAMES } from '@/config/law-names';
+import { LAW_NAMES } from "@/config/law-names";
+
+import { logger } from "@/lib/utils/logger";
 
 /**
  * 规则切换结果接口
@@ -26,7 +28,7 @@ export interface DeleteRuleResult {
  */
 export function calculateRuleDeletionScore(
   rule: WorldRule,
-  tagWeights: Record<string, RuleTag>
+  tagWeights: Record<string, RuleTag>,
 ): number {
   if (!rule.tags || rule.tags.length === 0) {
     return 0.5;
@@ -47,7 +49,7 @@ export function calculateRuleDeletionScore(
  */
 export function updateDeletionScores(
   rules: WorldRule[],
-  tagWeights: Record<string, RuleTag>
+  tagWeights: Record<string, RuleTag>,
 ): WorldRule[] {
   return rules.map((rule) => {
     const deletion_score = calculateRuleDeletionScore(rule, tagWeights);
@@ -63,9 +65,9 @@ export async function toggleRule(
   rules: WorldRule[],
   tagWeights: Record<string, RuleTag>,
   _corePremise: string,
-  _artStyle: string
+  _artStyle: string,
 ): Promise<ToggleRuleResult> {
-  const rule = rules.find(r => r.id === ruleId);
+  const rule = rules.find((r) => r.id === ruleId);
   if (!rule) {
     throw new Error(`Rule with id ${ruleId} not found`);
   }
@@ -75,7 +77,7 @@ export async function toggleRule(
 
   // 计算更新后的规则列表
   let finalRules = rules.map((r) =>
-    r.id === ruleId ? { ...r, confirmed: willBeConfirmed, isNew: false } : r
+    r.id === ruleId ? { ...r, confirmed: willBeConfirmed, isNew: false } : r,
   );
 
   let updatedTagWeights = tagWeights;
@@ -83,12 +85,12 @@ export async function toggleRule(
   // 如果确认规则，提升标签权重并重新计算删除评分
   if (willBeConfirmed && rule.tags && rule.tags.length > 0) {
     try {
-      const response = await fetch('/api/tags/update-weights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tags/update-weights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tags: rule.tags,
-          action: 'confirm',
+          action: "confirm",
           currentWeights: tagWeights,
         }),
       });
@@ -101,7 +103,7 @@ export async function toggleRule(
         finalRules = updateDeletionScores(finalRules, updatedTagWeights);
       }
     } catch (err) {
-      console.error('标签权重更新失败:', err);
+      logger.error("Failed to update tag weights", { ruleId, error: err });
     }
   }
 
@@ -121,9 +123,9 @@ export async function deleteRule(
   rules: WorldRule[],
   tagWeights: Record<string, RuleTag>,
   corePremise: string,
-  artStyle: string
+  artStyle: string,
 ): Promise<DeleteRuleResult> {
-  const rule = rules.find(r => r.id === ruleId);
+  const rule = rules.find((r) => r.id === ruleId);
   if (!rule) {
     throw new Error(`Rule with id ${ruleId} not found`);
   }
@@ -137,12 +139,12 @@ export async function deleteRule(
   // 降低标签权重
   if (rule.tags && rule.tags.length > 0) {
     try {
-      const response = await fetch('/api/tags/update-weights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tags/update-weights", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tags: rule.tags,
-          action: 'delete',
+          action: "delete",
           currentWeights: tagWeights,
         }),
       });
@@ -152,21 +154,24 @@ export async function deleteRule(
         updatedTagWeights = data.updatedWeights;
       }
     } catch (err) {
-      console.error('Failed to update tag weights:', err);
+      logger.error("Failed to update tag weights on deletion", {
+        ruleId,
+        error: err,
+      });
     }
   }
 
   // 重新生成同一法则的新规则（带去重检测）
   try {
-    console.log(`重新生成 ${rule.law} 法则的新规则...`);
-    const response = await fetch('/api/generate-single', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    logger.info("Regenerating rule for law", { law: rule.law });
+    const response = await fetch("/api/generate-single", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         corePremise: corePremise.trim(),
         artStyle: artStyle.trim(),
         law: rule.law,
-        existingRules: updatedRules.filter(r => !r.rejected),
+        existingRules: updatedRules.filter((r) => !r.rejected),
       }),
     });
 
@@ -176,26 +181,29 @@ export async function deleteRule(
 
       // 如果有重试信息，在控制台显示
       if (data.retries > 0) {
-        console.log(`✓ 新规则已生成(经过${data.retries}次去重重试)`);
+        logger.info("New rule generated after deduplication retries", {
+          retries: data.retries,
+        });
       } else {
-        console.log('✓ 新规则已生成(无重复)');
+        logger.info("New rule generated without duplicates");
       }
     } else {
       const errorData = await response.json();
-      if (errorData.error === '无法生成不重复的规则,请稍后重试') {
-        console.error('⚠️ 语义去重检测:', {
-          相似度: errorData.similarity,
-          理由: errorData.reasoning,
-          重试次数: errorData.retries,
+      if (errorData.error === "无法生成不重复的规则,请稍后重试") {
+        logger.warn("Semantic deduplication failed", {
+          similarity: errorData.similarity,
+          reasoning: errorData.reasoning,
+          retries: errorData.retries,
         });
-        console.error('⚠️ 无法生成不重复的规则,已重试多次');
-        alert(`暂时无法生成不重复的规则\n相似度: ${errorData.similarity}%\n原因: ${errorData.reasoning}`);
+        alert(
+          `暂时无法生成不重复的规则\n相似度: ${errorData.similarity}%\n原因: ${errorData.reasoning}`,
+        );
       } else {
-        console.error('Failed to regenerate rule:', errorData.error);
+        logger.error("Failed to regenerate rule", { error: errorData.error });
       }
     }
   } catch (err) {
-    console.error('Failed to regenerate rule:', err);
+    logger.error("Failed to regenerate rule", { error: err });
   }
 
   return {
@@ -211,34 +219,33 @@ export async function deleteRule(
 export async function generateRandomRule(
   corePremise: string,
   artStyle: string,
-  existingRules: WorldRule[]
+  existingRules: WorldRule[],
 ): Promise<WorldRule> {
   const randomLaw = LAW_NAMES[Math.floor(Math.random() * LAW_NAMES.length)];
 
-  console.log(`生成随机法则 ${randomLaw} 的新规则...`);
-  const response = await fetch('/api/generate-single', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  logger.info("Generating random rule for law", { law: randomLaw });
+  const response = await fetch("/api/generate-single", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       corePremise: corePremise.trim(),
       artStyle: artStyle.trim(),
       law: randomLaw,
-      existingRules: existingRules.filter(r => !r.rejected),
+      existingRules: existingRules.filter((r) => !r.rejected),
     }),
   });
 
   if (!response.ok) {
     const errorData = await response.json();
-    if (errorData.error === '无法生成不重复的规则,请稍后重试') {
-      console.error('⚠️ 语义去重检测:', {
-        相似度: errorData.similarity,
-        理由: errorData.reasoning,
-        重试次数: errorData.retries,
+    if (errorData.error === "无法生成不重复的规则,请稍后重试") {
+      logger.warn("Semantic deduplication failed for random rule", {
+        similarity: errorData.similarity,
+        reasoning: errorData.reasoning,
+        retries: errorData.retries,
       });
-      console.warn('⚠️ 无法生成不重复的规则,已跳过');
-      throw new Error('无法生成不重复的规则');
+      throw new Error("无法生成不重复的规则");
     }
-    throw new Error(errorData.error || 'Failed to generate rule');
+    throw new Error(errorData.error || "Failed to generate rule");
   }
 
   const data = await response.json();
@@ -246,9 +253,11 @@ export async function generateRandomRule(
 
   // 如果有重试信息，在控制台显示
   if (data.retries > 0) {
-    console.log(`✓ 新随机规则已生成(经过${data.retries}次去重重试)`);
+    logger.info("New random rule generated after deduplication retries", {
+      retries: data.retries,
+    });
   } else {
-    console.log('✓ 新随机规则已生成(无重复)');
+    logger.info("New random rule generated without duplicates");
   }
 
   return newRule;

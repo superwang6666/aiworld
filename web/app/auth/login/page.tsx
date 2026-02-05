@@ -1,6 +1,6 @@
-import LoginForm from '@/components/auth/LoginForm';
-import CommonHeader from '@/components/common/CommonHeader';
-import PremiumBackground from '@/components/PremiumBackground';
+import LoginForm from "@/components/auth/LoginForm";
+import CommonHeader from "@/components/common/CommonHeader";
+import PremiumBackground from "@/components/PremiumBackground";
 
 export default function LoginPage() {
   return (

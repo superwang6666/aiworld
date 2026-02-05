@@ -1,51 +1,53 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { signIn } from 'next-auth/react';
+import { signIn } from "next-auth/react";
 
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 export default function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError('邮箱或密码错误');
+        setError("邮箱或密码错误");
         setIsLoading(false);
         return;
       }
 
       // 登录成功，跳转到首页
-      router.push('/');
+      router.push("/");
       router.refresh();
     } catch (_err) {
-      setError('登录失败，请稍后重试');
+      setError("登录失败，请稍后重试");
       setIsLoading(false);
     }
   };
 
-  const handleOAuthSignIn = async (provider: 'google' | 'discord' | 'twitter') => {
+  const handleOAuthSignIn = async (
+    provider: "google" | "discord" | "twitter",
+  ) => {
     setIsLoading(true);
-    await signIn(provider, { callbackUrl: '/' });
+    await signIn(provider, { callbackUrl: "/" });
   };
 
   return (
@@ -56,9 +58,7 @@ export default function LoginForm() {
           <h1 className="text-3xl sm:text-4xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent mb-3">
             登录
           </h1>
-          <p className="text-[#7a7a88] text-sm">
-            Sign in to your account
-          </p>
+          <p className="text-[#7a7a88] text-sm">Sign in to your account</p>
         </div>
 
         {/* 登录表单 */}
@@ -119,7 +119,7 @@ export default function LoginForm() {
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] disabled:opacity-50 disabled:cursor-not-allowed border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] rounded-xl px-6 py-3 text-[#e8e8ec] font-medium transition-all duration-300"
             >
-              {isLoading ? '登录中...' : '登录'}
+              {isLoading ? "登录中..." : "登录"}
             </button>
           </form>
 
@@ -138,7 +138,7 @@ export default function LoginForm() {
           {/* OAuth 登录按钮 */}
           <div className="space-y-3">
             <button
-              onClick={() => handleOAuthSignIn('google')}
+              onClick={() => handleOAuthSignIn("google")}
               disabled={isLoading}
               className="w-full bg-[rgba(70,70,85,0.7)] hover:bg-[rgba(85,85,100,0.85)] border border-[rgba(110,110,125,0.4)] hover:border-[rgba(130,130,145,0.6)] rounded-xl px-4 py-3 text-[#c1c5cc] font-medium transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -164,7 +164,7 @@ export default function LoginForm() {
             </button>
 
             <button
-              onClick={() => handleOAuthSignIn('discord')}
+              onClick={() => handleOAuthSignIn("discord")}
               disabled={isLoading}
               className="w-full bg-[rgba(70,70,85,0.7)] hover:bg-[rgba(85,85,100,0.85)] border border-[rgba(110,110,125,0.4)] hover:border-[rgba(130,130,145,0.6)] rounded-xl px-4 py-3 text-[#c1c5cc] font-medium transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -175,7 +175,7 @@ export default function LoginForm() {
             </button>
 
             <button
-              onClick={() => handleOAuthSignIn('twitter')}
+              onClick={() => handleOAuthSignIn("twitter")}
               disabled={isLoading}
               className="w-full bg-[rgba(70,70,85,0.7)] hover:bg-[rgba(85,85,100,0.85)] border border-[rgba(110,110,125,0.4)] hover:border-[rgba(130,130,145,0.6)] rounded-xl px-4 py-3 text-[#c1c5cc] font-medium transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -190,7 +190,7 @@ export default function LoginForm() {
         {/* 注册链接 */}
         <div className="text-center mt-6">
           <p className="text-[#7a7a88] text-sm">
-            还没有账号？{' '}
+            还没有账号？{" "}
             <Link
               href="/auth/register"
               className="text-[#00ff88] hover:text-[#39ff14] transition-colors font-medium"
@@ -203,11 +203,7 @@ export default function LoginForm() {
 
       {/* 加载遮罩 */}
       {isLoading && (
-        <LoadingSpinner
-          title="正在登录..."
-          subtitle="请稍候"
-          fullScreen
-        />
+        <LoadingSpinner title="正在登录..." subtitle="请稍候" fullScreen />
       )}
     </>
   );

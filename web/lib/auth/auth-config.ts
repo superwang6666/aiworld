@@ -1,25 +1,29 @@
-import NextAuth from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import Discord from 'next-auth/providers/discord';
-import Google from 'next-auth/providers/google';
-import Twitter from 'next-auth/providers/twitter';
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import Discord from "next-auth/providers/discord";
+import Google from "next-auth/providers/google";
+import Twitter from "next-auth/providers/twitter";
 
-import { authenticateUser, getUserByOAuth, createOAuthUser } from './user-service';
+import {
+  authenticateUser,
+  getUserByOAuth,
+  createOAuthUser,
+} from "./user-service";
 
-import type { SessionUser } from '@/types/auth';
-
+import type { SessionUser } from "@/types/auth";
 
 /**
- * NextAuth.js 配置
+ * 构建 OAuth providers 列表
+ * 只添加已配置环境变量的 provider
  */
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
-    // 邮箱密码登录
+function buildProviders() {
+  const providers: any[] = [
+    // 邮箱密码登录（始终可用）
     Credentials({
-      name: 'credentials',
+      name: "credentials",
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -29,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const user = await authenticateUser(
             credentials.email as string,
-            credentials.password as string
+            credentials.password as string,
           );
 
           if (!user) {
@@ -44,47 +48,64 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             image: user.avatar_url,
             emailVerified: user.email_verified ? new Date() : null,
           };
-        } catch (error) {
-          console.error('Authentication error:', error);
+        } catch {
           return null;
         }
       },
     }),
+  ];
 
-    // Google OAuth
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true, // 允许邮箱关联
-    }),
+  // Google OAuth（仅在配置时添加）
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    providers.push(
+      Google({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      }),
+    );
+  }
 
-    // Discord OAuth
-    Discord({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
+  // Discord OAuth（仅在配置时添加）
+  if (process.env.DISCORD_CLIENT_ID && process.env.DISCORD_CLIENT_SECRET) {
+    providers.push(
+      Discord({
+        clientId: process.env.DISCORD_CLIENT_ID,
+        clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      }),
+    );
+  }
 
-    // Twitter/X OAuth
-    Twitter({
-      clientId: process.env.TWITTER_CLIENT_ID!,
-      clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
-    }),
-  ],
+  // Twitter/X OAuth（仅在配置时添加）
+  if (process.env.TWITTER_CLIENT_ID && process.env.TWITTER_CLIENT_SECRET) {
+    providers.push(
+      Twitter({
+        clientId: process.env.TWITTER_CLIENT_ID,
+        clientSecret: process.env.TWITTER_CLIENT_SECRET,
+      }),
+    );
+  }
+
+  return providers;
+}
+
+/**
+ * NextAuth.js 配置
+ */
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers: buildProviders(),
 
   // 使用 JWT 策略
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 天
   },
 
   // 自定义页面路径
   pages: {
-    signIn: '/auth/login',
-    signOut: '/auth/logout',
-    error: '/auth/error',
-    verifyRequest: '/auth/verify-request',
+    signIn: "/auth/login",
+    signOut: "/auth/logout",
+    error: "/auth/error",
+    verifyRequest: "/auth/verify-request",
   },
 
   // 回调函数
@@ -97,16 +118,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.email = user.email;
         token.name = user.name;
         token.picture = user.image;
-        token.emailVerified = (user as any).emailVerified !== null;
+        // NextAuth User 对象可能有 emailVerified 属性
+        token.emailVerified =
+          "emailVerified" in user && user.emailVerified !== null;
       }
 
       // OAuth 登录时，处理 OAuth 用户
       if (account && profile && profile.email) {
         try {
-          const provider = account.provider as 'google' | 'twitter' | 'discord';
+          const provider = account.provider as "google" | "twitter" | "discord";
           const oauthId = account.providerAccountId;
-          const email = profile.email || '';
-          const username = profile.name || email.split('@')[0];
+          const email = profile.email || "";
+          const username = profile.name || email.split("@")[0];
           const avatarUrl = profile.image || profile.picture;
 
           // 检查用户是否已存在
@@ -119,7 +142,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               username,
               provider,
               oauthId,
-              avatarUrl
+              avatarUrl,
             );
             token.id = newUser.id;
             token.email = newUser.email;
@@ -133,8 +156,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.picture = existingUser.avatar_url;
             token.emailVerified = existingUser.email_verified;
           }
-        } catch (error) {
-          console.error('OAuth user creation error:', error);
+        } catch {
+          // OAuth user creation failed, continue with existing token
         }
       }
 
@@ -152,7 +175,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email_verified: token.emailVerified as boolean,
         };
 
-        session.user = sessionUser as any;
+        // 使用类型断言，因为 NextAuth 的 session.user 类型与我们的 SessionUser 不完全匹配
+        session.user = sessionUser as unknown as typeof session.user;
       }
 
       return session;
@@ -161,7 +185,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // 登录回调：控制是否允许登录
     async signIn({ account, profile }) {
       // 邮箱密码登录
-      if (account?.provider === 'credentials') {
+      if (account?.provider === "credentials") {
         return true;
       }
 
@@ -169,7 +193,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account && profile) {
         // 检查是否有邮箱
         if (!profile.email) {
-          console.error('OAuth profile missing email');
           return false;
         }
         return true;
@@ -181,17 +204,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
   // 事件监听
   events: {
-    async signIn({ user, account }) {
-      console.log('User signed in:', {
-        userId: user.id,
-        provider: account?.provider,
-      });
+    async signIn() {
+      // User signed in
     },
     async signOut() {
-      console.log('User signed out');
+      // User signed out
     },
   },
 
   // 调试模式（生产环境应关闭）
-  debug: process.env.NODE_ENV === 'development',
+  debug: process.env.NODE_ENV === "development",
 });

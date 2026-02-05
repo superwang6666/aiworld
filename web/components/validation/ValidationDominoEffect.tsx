@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { Star } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Star } from "lucide-react";
+import { motion } from "motion/react";
 
-import type { LawImpact } from '@/types';
+import type { LawImpact } from "@/types";
 
-import { LAW_NAME_MAP, LAW_COLORS } from '@/config/law-names';
+import { LAW_NAME_MAP, LAW_COLORS } from "@/config/law-names";
 
-import ValidationDirectionEvaluation from './ValidationDirectionEvaluation';
+import ValidationDirectionEvaluation from "./ValidationDirectionEvaluation";
 
 interface ValidationDominoEffectProps {
   lawImpacts: LawImpact[];
@@ -22,21 +22,27 @@ export default function ValidationDominoEffect({
   lawImpacts,
   onEvaluateDirections,
   isEvaluating = false,
-  hasEvaluated = false
+  hasEvaluated = false,
 }: ValidationDominoEffectProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [showOnlyQualified, setShowOnlyQualified] = useState(false);
 
   // 过滤显示的法则影响
   const displayedImpacts = showOnlyQualified
-    ? lawImpacts.filter(impact => impact.uniquenessScore && impact.uniquenessScore >= 60)
+    ? lawImpacts.filter(
+        (impact) => impact.uniquenessScore && impact.uniquenessScore >= 60,
+      )
     : lawImpacts;
 
   // 统计合格的方向数量
-  const qualifiedCount = lawImpacts.filter(impact => impact.uniquenessScore && impact.uniquenessScore >= 60).length;
+  const qualifiedCount = lawImpacts.filter(
+    (impact) => impact.uniquenessScore && impact.uniquenessScore >= 60,
+  ).length;
 
   // 判断是否有评估分数
-  const hasScores = lawImpacts.some(impact => impact.uniquenessScore !== undefined);
+  const hasScores = lawImpacts.some(
+    (impact) => impact.uniquenessScore !== undefined,
+  );
 
   return (
     <motion.div
@@ -49,8 +55,9 @@ export default function ValidationDominoEffect({
         <div
           className="w-1 h-8 rounded-full"
           style={{
-            background: 'linear-gradient(180deg, #39ff14 0%, rgba(57, 255, 20, 0.3) 100%)',
-            boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+            background:
+              "linear-gradient(180deg, #39ff14 0%, rgba(57, 255, 20, 0.3) 100%)",
+            boxShadow: "0 0 10px rgba(57, 255, 20, 0.5)",
           }}
         />
         <h2 className="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent">
@@ -82,7 +89,9 @@ export default function ValidationDominoEffect({
               </span>
             </label>
             <div className="text-sm text-[#7a7a88]">
-              合格: <span className="text-[#39ff14] font-bold">{qualifiedCount}</span> / {lawImpacts.length}
+              合格:{" "}
+              <span className="text-[#39ff14] font-bold">{qualifiedCount}</span>{" "}
+              / {lawImpacts.length}
             </div>
           </div>
         </div>
@@ -104,11 +113,13 @@ export default function ValidationDominoEffect({
                 delay: 0.5 + index * 0.1,
               }}
               className={`bg-gradient-to-br from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl backdrop-blur-sm p-6 transition-all duration-300 relative overflow-hidden group ${
-                item.uniquenessScore !== undefined && item.uniquenessScore < 60 ? 'opacity-50' : ''
+                item.uniquenessScore !== undefined && item.uniquenessScore < 60
+                  ? "opacity-50"
+                  : ""
               }`}
               style={{
                 border: `1px solid ${isHovered ? color.hoverBorder : color.border}`,
-                boxShadow: isHovered ? color.glow : 'none'
+                boxShadow: isHovered ? color.glow : "none",
               }}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
@@ -139,12 +150,12 @@ export default function ValidationDominoEffect({
                   <div
                     className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${
                       item.uniquenessScore >= 80
-                        ? 'bg-green-500/20 text-green-400'
+                        ? "bg-green-500/20 text-green-400"
                         : item.uniquenessScore >= 60
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : item.uniquenessScore >= 40
-                        ? 'bg-yellow-500/20 text-yellow-400'
-                        : 'bg-red-500/20 text-red-400'
+                          ? "bg-blue-500/20 text-blue-400"
+                          : item.uniquenessScore >= 40
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-red-500/20 text-red-400"
                     }`}
                   >
                     <Star className="w-3 h-3" />
@@ -173,7 +184,10 @@ export default function ValidationDominoEffect({
                   <div className="text-xs text-[#7a7a88] mb-2">通过的标准:</div>
                   <ul className="space-y-1">
                     {item.passedCriteria.map((criteria, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-xs text-[#c1c5cc]">
+                      <li
+                        key={idx}
+                        className="flex items-start gap-2 text-xs text-[#c1c5cc]"
+                      >
                         <span className="text-green-400 mt-0.5">✓</span>
                         <span>{criteria}</span>
                       </li>

@@ -27,7 +27,11 @@ export default function LoadingSpinner({
         <div className="absolute inset-0 w-24 h-24 border-4 border-transparent border-b-[#39ff14] rounded-full animate-spin-reverse"></div>
         {/* 中心图标 */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <svg className="w-10 h-10 text-[#00ff88]" fill="none" viewBox="0 0 24 24">
+          <svg
+            className="w-10 h-10 text-[#00ff88]"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
             <path
               d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
               fill="currentColor"
@@ -42,18 +46,23 @@ export default function LoadingSpinner({
         <p className="text-[#00ff88] text-xl font-bold mb-2 animate-pulse">
           {title}
         </p>
-        {subtitle && (
-          <p className="text-[#c1c5cc] text-sm">
-            {subtitle}
-          </p>
-        )}
+        {subtitle && <p className="text-[#c1c5cc] text-sm">{subtitle}</p>}
       </div>
 
       {/* 进度点 */}
       <div className="flex gap-2">
-        <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        <div
+          className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce"
+          style={{ animationDelay: "0ms" }}
+        ></div>
+        <div
+          className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce"
+          style={{ animationDelay: "150ms" }}
+        ></div>
+        <div
+          className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce"
+          style={{ animationDelay: "300ms" }}
+        ></div>
       </div>
     </div>
   );
@@ -68,9 +77,5 @@ export default function LoadingSpinner({
   }
 
   // 内联模式
-  return (
-    <div className="flex justify-center py-16">
-      {content}
-    </div>
-  );
+  return <div className="flex justify-center py-16">{content}</div>;
 }

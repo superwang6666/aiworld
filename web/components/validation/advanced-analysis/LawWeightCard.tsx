@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { motion } from 'motion/react';
+import { motion } from "motion/react";
 
 interface LawWeightCardProps {
   name: string;
@@ -17,7 +17,7 @@ export default function LawWeightCard({
   color,
   borderColor,
   rules,
-  index
+  index,
 }: LawWeightCardProps) {
   return (
     <motion.div

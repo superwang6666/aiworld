@@ -1,6 +1,6 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
-import type { PasswordValidationResult } from '@/types/auth';
+import type { PasswordValidationResult } from "@/types/auth";
 
 /**
  * 密码策略配置
@@ -10,8 +10,8 @@ const PASSWORD_CONFIG = {
   REQUIRE_UPPERCASE: true,
   REQUIRE_LOWERCASE: true,
   REQUIRE_NUMBER: true,
-  REQUIRE_SPECIAL: false,  // 可选：特殊字符
-  BCRYPT_ROUNDS: 12,       // bcrypt 加密轮数
+  REQUIRE_SPECIAL: false, // 可选：特殊字符
+  BCRYPT_ROUNDS: 12, // bcrypt 加密轮数
 };
 
 /**
@@ -34,22 +34,25 @@ export function validatePassword(password: string): PasswordValidationResult {
 
   // 检查大写字母
   if (PASSWORD_CONFIG.REQUIRE_UPPERCASE && !/[A-Z]/.test(password)) {
-    errors.push('密码必须包含至少一个大写字母');
+    errors.push("密码必须包含至少一个大写字母");
   }
 
   // 检查小写字母
   if (PASSWORD_CONFIG.REQUIRE_LOWERCASE && !/[a-z]/.test(password)) {
-    errors.push('密码必须包含至少一个小写字母');
+    errors.push("密码必须包含至少一个小写字母");
   }
 
   // 检查数字
   if (PASSWORD_CONFIG.REQUIRE_NUMBER && !/[0-9]/.test(password)) {
-    errors.push('密码必须包含至少一个数字');
+    errors.push("密码必须包含至少一个数字");
   }
 
   // 检查特殊字符（可选）
-  if (PASSWORD_CONFIG.REQUIRE_SPECIAL && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-    errors.push('密码必须包含至少一个特殊字符');
+  if (
+    PASSWORD_CONFIG.REQUIRE_SPECIAL &&
+    !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
+  ) {
+    errors.push("密码必须包含至少一个特殊字符");
   }
 
   return {
@@ -83,7 +86,7 @@ export async function hashPassword(plainPassword: string): Promise<string> {
  */
 export async function verifyPassword(
   plainPassword: string,
-  hashedPassword: string
+  hashedPassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(plainPassword, hashedPassword);
 }
@@ -109,19 +112,22 @@ export function validateEmail(email: string): boolean {
  * @param username - 待验证的用户名
  * @returns 验证结果
  */
-export function validateUsername(username: string): { valid: boolean; error?: string } {
+export function validateUsername(username: string): {
+  valid: boolean;
+  error?: string;
+} {
   if (username.length < 2) {
-    return { valid: false, error: '用户名长度至少为 2 个字符' };
+    return { valid: false, error: "用户名长度至少为 2 个字符" };
   }
 
   if (username.length > 20) {
-    return { valid: false, error: '用户名长度不能超过 20 个字符' };
+    return { valid: false, error: "用户名长度不能超过 20 个字符" };
   }
 
   // 允许字母、数字、下划线、中文
   const usernameRegex = /^[\w\u4e00-\u9fa5]+$/;
   if (!usernameRegex.test(username)) {
-    return { valid: false, error: '用户名只能包含字母、数字、下划线和中文' };
+    return { valid: false, error: "用户名只能包含字母、数字、下划线和中文" };
   }
 
   return { valid: true };

@@ -1,9 +1,9 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from "fs";
+import path from "path";
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 
-import { hashPassword, verifyPassword } from './password-utils';
+import { hashPassword, verifyPassword } from "./password-utils";
 
 import type {
   User,
@@ -12,13 +12,12 @@ import type {
   TokenDatabase,
   EmailVerificationToken,
   PasswordResetToken,
-} from '@/types/auth';
-
+} from "@/types/auth";
 
 // 数据存储路径
-const DATA_DIR = path.join(process.cwd(), 'data', 'users');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
-const TOKENS_FILE = path.join(DATA_DIR, 'tokens.json');
+const DATA_DIR = path.join(process.cwd(), "data", "users");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+const TOKENS_FILE = path.join(DATA_DIR, "tokens.json");
 
 /**
  * 确保数据目录存在
@@ -38,7 +37,7 @@ async function readUserDatabase(): Promise<UserDatabase> {
   await ensureDataDir();
 
   try {
-    const data = await fs.readFile(USERS_FILE, 'utf-8');
+    const data = await fs.readFile(USERS_FILE, "utf-8");
     return JSON.parse(data);
   } catch {
     // 文件不存在，返回空数据库
@@ -55,7 +54,7 @@ async function readUserDatabase(): Promise<UserDatabase> {
  */
 async function writeUserDatabase(db: UserDatabase): Promise<void> {
   await ensureDataDir();
-  await fs.writeFile(USERS_FILE, JSON.stringify(db, null, 2), 'utf-8');
+  await fs.writeFile(USERS_FILE, JSON.stringify(db, null, 2), "utf-8");
 }
 
 /**
@@ -65,7 +64,7 @@ async function readTokenDatabase(): Promise<TokenDatabase> {
   await ensureDataDir();
 
   try {
-    const data = await fs.readFile(TOKENS_FILE, 'utf-8');
+    const data = await fs.readFile(TOKENS_FILE, "utf-8");
     return JSON.parse(data);
   } catch {
     // 文件不存在，返回空数据库
@@ -81,7 +80,7 @@ async function readTokenDatabase(): Promise<TokenDatabase> {
  */
 async function writeTokenDatabase(db: TokenDatabase): Promise<void> {
   await ensureDataDir();
-  await fs.writeFile(TOKENS_FILE, JSON.stringify(db, null, 2), 'utf-8');
+  await fs.writeFile(TOKENS_FILE, JSON.stringify(db, null, 2), "utf-8");
 }
 
 /**
@@ -106,13 +105,13 @@ function toPublicUser(user: User): PublicUser {
 export async function createUser(
   email: string,
   password: string,
-  username: string
+  username: string,
 ): Promise<PublicUser> {
   const db = await readUserDatabase();
 
   // 检查邮箱是否已存在
   if (db.email_index[email.toLowerCase()]) {
-    throw new Error('该邮箱已被注册');
+    throw new Error("该邮箱已被注册");
   }
 
   // 加密密码
@@ -145,9 +144,9 @@ export async function createUser(
 export async function createOAuthUser(
   email: string,
   username: string,
-  provider: 'google' | 'twitter' | 'discord',
+  provider: "google" | "twitter" | "discord",
   oauthId: string,
-  avatarUrl?: string
+  avatarUrl?: string,
 ): Promise<PublicUser> {
   const db = await readUserDatabase();
 
@@ -155,7 +154,7 @@ export async function createOAuthUser(
   const oauthKey = `${provider}:${oauthId}`;
   if (db.oauth_index[oauthKey]) {
     const existingUserId = db.oauth_index[oauthKey];
-    const existingUser = db.users.find(u => u.id === existingUserId);
+    const existingUser = db.users.find((u) => u.id === existingUserId);
     if (existingUser) {
       return toPublicUser(existingUser);
     }
@@ -163,7 +162,7 @@ export async function createOAuthUser(
 
   // 检查邮箱是否已存在
   if (db.email_index[email.toLowerCase()]) {
-    throw new Error('该邮箱已被注册');
+    throw new Error("该邮箱已被注册");
   }
 
   // 创建用户
@@ -171,7 +170,7 @@ export async function createOAuthUser(
   const user: User = {
     id: uuidv4(),
     email: email.toLowerCase(),
-    password_hash: '', // OAuth 用户没有密码
+    password_hash: "", // OAuth 用户没有密码
     username,
     avatar_url: avatarUrl,
     email_verified: true, // OAuth 用户默认已验证
@@ -202,7 +201,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
     return null;
   }
 
-  const user = db.users.find(u => u.id === userId);
+  const user = db.users.find((u) => u.id === userId);
   return user || null;
 }
 
@@ -211,7 +210,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
  */
 export async function getUserById(id: string): Promise<User | null> {
   const db = await readUserDatabase();
-  const user = db.users.find(u => u.id === id);
+  const user = db.users.find((u) => u.id === id);
   return user || null;
 }
 
@@ -219,8 +218,8 @@ export async function getUserById(id: string): Promise<User | null> {
  * 通过 OAuth 信息获取用户
  */
 export async function getUserByOAuth(
-  provider: 'google' | 'twitter' | 'discord',
-  oauthId: string
+  provider: "google" | "twitter" | "discord",
+  oauthId: string,
 ): Promise<User | null> {
   const db = await readUserDatabase();
   const oauthKey = `${provider}:${oauthId}`;
@@ -230,7 +229,7 @@ export async function getUserByOAuth(
     return null;
   }
 
-  const user = db.users.find(u => u.id === userId);
+  const user = db.users.find((u) => u.id === userId);
   return user || null;
 }
 
@@ -239,7 +238,7 @@ export async function getUserByOAuth(
  */
 export async function authenticateUser(
   email: string,
-  password: string
+  password: string,
 ): Promise<PublicUser | null> {
   const user = await getUserByEmail(email);
 
@@ -249,7 +248,7 @@ export async function authenticateUser(
 
   // OAuth 用户没有密码
   if (user.oauth_provider) {
-    throw new Error('该账号使用 OAuth 登录，请使用对应的登录方式');
+    throw new Error("该账号使用 OAuth 登录，请使用对应的登录方式");
   }
 
   const isValid = await verifyPassword(password, user.password_hash);
@@ -266,14 +265,18 @@ export async function authenticateUser(
  */
 export async function markEmailAsVerified(userId: string): Promise<void> {
   const db = await readUserDatabase();
-  const user = db.users.find(u => u.id === userId);
+  const userIndex = db.users.findIndex((u) => u.id === userId);
 
-  if (!user) {
-    throw new Error('用户不存在');
+  if (userIndex === -1) {
+    throw new Error("用户不存在");
   }
 
-  user.email_verified = true;
-  user.updated_at = new Date().toISOString();
+  // 不可变更新
+  db.users[userIndex] = {
+    ...db.users[userIndex],
+    email_verified: true,
+    updated_at: new Date().toISOString(),
+  };
 
   await writeUserDatabase(db);
 }
@@ -283,17 +286,21 @@ export async function markEmailAsVerified(userId: string): Promise<void> {
  */
 export async function updateUserPassword(
   userId: string,
-  newPassword: string
+  newPassword: string,
 ): Promise<void> {
   const db = await readUserDatabase();
-  const user = db.users.find(u => u.id === userId);
+  const userIndex = db.users.findIndex((u) => u.id === userId);
 
-  if (!user) {
-    throw new Error('用户不存在');
+  if (userIndex === -1) {
+    throw new Error("用户不存在");
   }
 
-  user.password_hash = await hashPassword(newPassword);
-  user.updated_at = new Date().toISOString();
+  // 不可变更新
+  db.users[userIndex] = {
+    ...db.users[userIndex],
+    password_hash: await hashPassword(newPassword),
+    updated_at: new Date().toISOString(),
+  };
 
   await writeUserDatabase(db);
 }
@@ -304,13 +311,13 @@ export async function updateUserPassword(
  * 创建邮箱验证令牌
  */
 export async function createEmailVerificationToken(
-  userId: string
+  userId: string,
 ): Promise<EmailVerificationToken> {
   const db = await readTokenDatabase();
 
   // 删除该用户的旧令牌
   db.email_verification_tokens = db.email_verification_tokens.filter(
-    t => t.user_id !== userId
+    (t) => t.user_id !== userId,
   );
 
   // 创建新令牌（24小时有效）
@@ -331,9 +338,13 @@ export async function createEmailVerificationToken(
 /**
  * 验证邮箱验证令牌
  */
-export async function verifyEmailToken(tokenString: string): Promise<string | null> {
+export async function verifyEmailToken(
+  tokenString: string,
+): Promise<string | null> {
   const db = await readTokenDatabase();
-  const token = db.email_verification_tokens.find(t => t.token === tokenString);
+  const token = db.email_verification_tokens.find(
+    (t) => t.token === tokenString,
+  );
 
   if (!token) {
     return null;
@@ -346,7 +357,7 @@ export async function verifyEmailToken(tokenString: string): Promise<string | nu
 
   // 删除已使用的令牌
   db.email_verification_tokens = db.email_verification_tokens.filter(
-    t => t.token !== tokenString
+    (t) => t.token !== tokenString,
   );
   await writeTokenDatabase(db);
 
@@ -359,13 +370,13 @@ export async function verifyEmailToken(tokenString: string): Promise<string | nu
  * 创建密码重置令牌
  */
 export async function createPasswordResetToken(
-  userId: string
+  userId: string,
 ): Promise<PasswordResetToken> {
   const db = await readTokenDatabase();
 
   // 删除该用户的旧令牌
   db.password_reset_tokens = db.password_reset_tokens.filter(
-    t => t.user_id !== userId
+    (t) => t.user_id !== userId,
   );
 
   // 创建新令牌（1小时有效）
@@ -387,9 +398,11 @@ export async function createPasswordResetToken(
 /**
  * 验证密码重置令牌
  */
-export async function verifyPasswordResetToken(tokenString: string): Promise<string | null> {
+export async function verifyPasswordResetToken(
+  tokenString: string,
+): Promise<string | null> {
   const db = await readTokenDatabase();
-  const token = db.password_reset_tokens.find(t => t.token === tokenString);
+  const token = db.password_reset_tokens.find((t) => t.token === tokenString);
 
   if (!token) {
     return null;
@@ -411,9 +424,11 @@ export async function verifyPasswordResetToken(tokenString: string): Promise<str
 /**
  * 标记密码重置令牌为已使用
  */
-export async function markPasswordResetTokenAsUsed(tokenString: string): Promise<void> {
+export async function markPasswordResetTokenAsUsed(
+  tokenString: string,
+): Promise<void> {
   const db = await readTokenDatabase();
-  const token = db.password_reset_tokens.find(t => t.token === tokenString);
+  const token = db.password_reset_tokens.find((t) => t.token === tokenString);
 
   if (token) {
     token.used = true;
