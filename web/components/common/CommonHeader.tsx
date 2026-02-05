@@ -1,3 +1,7 @@
+'use client';
+
+import UserMenu from '@/components/auth/UserMenu';
+
 /**
  * 公共标题栏组件 - 所有页面统一使用
  */
@@ -45,15 +49,8 @@ export default function CommonHeader() {
           </a>
         </div>
 
-        {/* 登录按钮 */}
-        <button className="hidden sm:block bg-gradient-to-r from-[#8a8a95] to-[#6a6a75] hover:from-[#9a9aa5] hover:to-[#7a7a85] text-white px-4 py-2 rounded-[18px] text-sm transition-all">
-          登录
-        </button>
-
-        {/* 邀请码按钮 */}
-        <button className="bg-gradient-to-r from-[#ff6b6b] to-[#ee5a6f] hover:from-[#ff7b7b] hover:to-[#fe6a7f] text-white px-4 py-2 rounded-[18px] text-sm transition-all">
-          邀请码
-        </button>
+        {/* 用户菜单（集成登录/注册按钮） */}
+        <UserMenu />
       </div>
     </div>
   );

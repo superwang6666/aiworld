@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npx eslint:*)",
       "Bash(npm run lint:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(node -e:*)",
+      "Bash(git add:*)",
+      "Bash(./node_modules/.bin/tsc:*)"
     ]
   }
 }

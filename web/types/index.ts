@@ -294,6 +294,10 @@ export interface WorldArchive {
   core_premise: string;          // 核心异质点
   art_style?: string;            // 美术风格
 
+  // 用户关联
+  user_id?: string;              // 关联的用户ID (可选，用于软迁移)
+  is_public?: boolean;           // 是否公开 (默认 false)
+
   // 时间戳
   created_at: string;            // 创建时间 (ISO 8601)
   updated_at: string;            // 最后更新时间
@@ -326,6 +330,8 @@ export interface ArchiveMetadata {
   id: string;
   name: string;
   core_premise: string;          // 核心异质点 (用于预览)
+  user_id?: string;              // 关联的用户ID
+  is_public?: boolean;           // 是否公开
   created_at: string;
   updated_at: string;
   rules_count: number;           // 活跃规则数 (不包括已删除)

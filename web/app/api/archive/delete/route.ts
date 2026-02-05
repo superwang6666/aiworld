@@ -1,12 +1,13 @@
 import type { NextRequest} from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { deleteArchive } from '@/lib/archive/archive-manager';
+import { deleteArchive, loadArchive } from '@/lib/archive/archive-manager';
+import { requireAuth } from '@/lib/auth/middleware';
 
 /**
  * DELETE /api/archive/delete?id={archiveId}
  *
- * 删除世界存档
+ * 删除世界存档（需要登录，只能删除自己的存档）
  *
  * Query Parameters:
  * - id: 存档ID
@@ -19,6 +20,13 @@ import { deleteArchive } from '@/lib/archive/archive-manager';
  */
 export async function DELETE(req: NextRequest) {
   try {
+    // 要求用户登录
+    const userOrResponse = await requireAuth(req);
+    if (userOrResponse instanceof NextResponse) {
+      return userOrResponse;
+    }
+    const user = userOrResponse;
+
     const { searchParams } = new URL(req.url);
     const archiveId = searchParams.get('id');
 
@@ -26,6 +34,22 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing archive id' }, { status: 400 });
     }
 
+    // 加载存档以检查所有权
+    const archive = await loadArchive(archiveId);
+
+    if (!archive) {
+      return NextResponse.json({ error: 'Archive not found' }, { status: 404 });
+    }
+
+    // 权限检查：只能删除自己的存档
+    if (archive.user_id && archive.user_id !== user.id) {
+      return NextResponse.json(
+        { error: 'Access denied: You can only delete your own archives' },
+        { status: 403 }
+      );
+    }
+
+    // 如果是旧存档（没有 user_id），允许删除（软迁移）
     const success = await deleteArchive(archiveId);
 
     if (!success) {
