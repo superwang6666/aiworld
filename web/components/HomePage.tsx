@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { ART_STYLES } from '@/config/art-styles';
 
 import CommonHeader from '@/components/common/CommonHeader';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 /**
  * 新的主页组件 - 整合艺术风格选择
@@ -12,7 +13,7 @@ import CommonHeader from '@/components/common/CommonHeader';
 
 interface HomePageProps {
   onStart: (worldDescription: string, artStyle: string) => void;
-  onRecommendMode?: (description: string) => void;
+  onRecommendMode?: (description: string, artStyle: string) => void;
 }
 
 export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
@@ -95,7 +96,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     // 使用 setTimeout 确保 loading 状态先更新到 UI
     setTimeout(() => {
       if (useRecommendMode && onRecommendMode) {
-        onRecommendMode(worldDescription);
+        onRecommendMode(worldDescription, selectedArtStyle);
       } else {
         onStart(worldDescription, selectedArtStyle);
       }
@@ -270,44 +271,11 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
 
       {/* 加载遮罩层 */}
       {isLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-6">
-            {/* 加载动画 */}
-            <div className="relative">
-              {/* 外圈旋转 */}
-              <div className="w-24 h-24 border-4 border-[rgba(100,100,120,0.3)] border-t-[#00ff88] rounded-full animate-spin"></div>
-              {/* 内圈反向旋转 */}
-              <div className="absolute inset-0 w-24 h-24 border-4 border-transparent border-b-[#39ff14] rounded-full animate-spin-reverse"></div>
-              {/* 中心图标 */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <svg className="w-10 h-10 text-[#00ff88]" fill="none" viewBox="0 0 24 24">
-                  <path
-                    d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                    fill="currentColor"
-                    className="animate-pulse"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            {/* 加载文字 */}
-            <div className="text-center">
-              <p className="text-[#00ff88] text-xl font-bold mb-2 animate-pulse">
-                正在验证核心异质点...
-              </p>
-              <p className="text-[#c1c5cc] text-sm">
-                专家团队正在分析您的世界设定
-              </p>
-            </div>
-
-            {/* 进度点 */}
-            <div className="flex gap-2">
-              <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-[#00ff88] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
-          </div>
-        </div>
+        <LoadingSpinner
+          title="正在验证核心异质点..."
+          subtitle="专家团队正在分析您的世界设定"
+          fullScreen
+        />
       )}
     </div>
   );

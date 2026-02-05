@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 
-import { Loader2, Search, Menu } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import type { GameInfo } from '@/types';
+
+import CommonHeader from '@/components/common/CommonHeader';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface GameRecommendViewProps {
   worldDescription: string;
@@ -92,28 +94,9 @@ export default function GameRecommendView({
         <div className="absolute blur-[80px] left-[109.57px] opacity-43 size-[837.462px] top-[154.11px]" style={{ backgroundImage: "url('data:image/svg+xml;utf8,<svg viewBox=\"0 0 837.46 837.46\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" height=\"100%\" width=\"100%\" fill=\"url(%23grad)\" opacity=\"1\"/><defs><radialGradient id=\"grad\" gradientUnits=\"userSpaceOnUse\" cx=\"0\" cy=\"0\" r=\"10\" gradientTransform=\"matrix(0 -59.218 -59.218 0 418.73 418.73)\"><stop stop-color=\"rgba(120,80,180,0.25)\" offset=\"0\"/><stop stop-color=\"rgba(100,70,150,0.15)\" offset=\"0.25\"/><stop stop-color=\"rgba(80,60,120,0.08)\" offset=\"0.5\"/><stop stop-color=\"rgba(0,0,0,0)\" offset=\"0.7\"/></radialGradient></defs></svg>')" }} />
       </div>
 
-      {/* Top Header - Matching game recommend1 */}
-      <header className="absolute content-stretch flex h-[88px] items-center justify-between left-0 px-[64px] top-0 w-full z-50">
-        {/* Left: WORLD & BETA labels */}
-        <div className="h-[40px] relative shrink-0 flex gap-[8px] items-center">
-          <div className="bg-gradient-to-b flex-1 from-[#8a8a95] h-[40px] rounded-[18px] to-[#6a6a75] px-[16px] flex items-center">
-            <p className="font-bold leading-[24px] text-[13px] text-white">WORLD</p>
-          </div>
-          <div className="bg-[#2a2a35] h-[26px] rounded-[18px] px-[12px] flex items-center">
-            <p className="font-regular leading-[18px] text-[#c1c5cc] text-[12px]">BETA</p>
-          </div>
-        </div>
-
-        {/* Right: Language, Search, Menu */}
-        <div className="h-[37px] relative flex gap-[16px] items-center">
-          <p className="font-regular leading-[21px] text-[#c1c5cc] text-[14px]">简体中文</p>
-          <button className="bg-[rgba(60,60,70,0.6)] rounded-[12px] size-[36px] flex items-center justify-center hover:bg-[rgba(80,80,90,0.7)] transition-colors">
-            <Search className="w-5 h-5 text-[#9A9AAA]" />
-          </button>
-          <button className="bg-[rgba(60,60,70,0.6)] rounded-[12px] size-[36px] flex items-center justify-center hover:bg-[rgba(80,80,90,0.7)] transition-colors">
-            <Menu className="w-5 h-5 text-[#9A9AAA]" />
-          </button>
-        </div>
+      {/* Top Header */}
+      <header className="absolute left-0 top-0 w-full z-50">
+        <CommonHeader />
       </header>
 
       {/* Main Content */}
@@ -144,10 +127,10 @@ export default function GameRecommendView({
 
         {/* 搜索中 */}
         {isSearching && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-[#00ff88]" />
-            <span className="text-[#c1c5cc] font-mono text-base">AI 正在为您搜索代表作游戏...</span>
-          </div>
+          <LoadingSpinner
+            title="AI 正在为您搜索代表作游戏..."
+            subtitle="分析世界特征，匹配相关游戏"
+          />
         )}
 
         {/* 游戏列表 */}

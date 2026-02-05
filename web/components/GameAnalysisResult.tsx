@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-import { Loader2, Search, Menu } from 'lucide-react';
-
 import type { GameInfo } from '@/types';
+
+import CommonHeader from '@/components/common/CommonHeader';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface GameAnalysis {
   individualAnalyses: Array<{
@@ -33,6 +34,7 @@ export default function GameAnalysisResult({
 }: GameAnalysisResultProps) {
   const [analysis, setAnalysis] = useState<GameAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
+  const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -70,7 +72,11 @@ export default function GameAnalysisResult({
 
   const handleApplyInsights = () => {
     if (analysis?.comparativeAnalysis?.premiseSummary) {
-      onComplete(analysis.comparativeAnalysis.premiseSummary);
+      setIsApplying(true);
+      // 使用 setTimeout 确保 loading 状态先更新到 UI
+      setTimeout(() => {
+        onComplete(analysis.comparativeAnalysis.premiseSummary);
+      }, 100);
     } else {
       alert('分析数据不完整，请重试');
     }
@@ -86,36 +92,17 @@ export default function GameAnalysisResult({
       </div>
 
       {/* Top Header */}
-      <header className="absolute content-stretch flex h-[88px] items-center justify-between left-0 px-[64px] top-0 w-full z-50">
-        {/* Left: WORLD & BETA labels */}
-        <div className="h-[40px] relative shrink-0 flex gap-[8px] items-center">
-          <div className="bg-gradient-to-b flex-1 from-[#8a8a95] h-[40px] rounded-[18px] to-[#6a6a75] px-[16px] flex items-center">
-            <p className="font-bold leading-[24px] text-[13px] text-white">WORLD</p>
-          </div>
-          <div className="bg-[#2a2a35] h-[26px] rounded-[18px] px-[12px] flex items-center">
-            <p className="font-regular leading-[18px] text-[#c1c5cc] text-[12px]">BETA</p>
-          </div>
-        </div>
-
-        {/* Right: Language, Search, Menu */}
-        <div className="h-[37px] relative flex gap-[16px] items-center">
-          <p className="font-regular leading-[21px] text-[#c1c5cc] text-[14px]">简体中文</p>
-          <button className="bg-[rgba(60,60,70,0.6)] rounded-[12px] size-[36px] flex items-center justify-center hover:bg-[rgba(80,80,90,0.7)] transition-colors">
-            <Search className="w-5 h-5 text-[#9A9AAA]" />
-          </button>
-          <button className="bg-[rgba(60,60,70,0.6)] rounded-[12px] size-[36px] flex items-center justify-center hover:bg-[rgba(80,80,90,0.7)] transition-colors">
-            <Menu className="w-5 h-5 text-[#9A9AAA]" />
-          </button>
-        </div>
+      <header className="absolute left-0 top-0 w-full z-50">
+        <CommonHeader />
       </header>
 
       {/* Main Content */}
       <main className="relative z-10 pt-[120px] px-[64px] pb-[64px]">
         {isAnalyzing && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-[#00ff88]" />
-            <span className="text-[#c1c5cc] font-mono text-base">AI 正在分析选中的游戏...</span>
-          </div>
+          <LoadingSpinner
+            title="AI 正在分析选中的游戏..."
+            subtitle="提取核心特征，生成世界观启发"
+          />
         )}
 
         {error && (
@@ -281,6 +268,15 @@ export default function GameAnalysisResult({
           </div>
         )}
       </main>
+
+      {/* 采纳分析结果加载遮罩层 */}
+      {isApplying && (
+        <LoadingSpinner
+          title="正在验证核心异质点..."
+          subtitle="专家团队正在分析您的世界设定"
+          fullScreen
+        />
+      )}
     </div>
   );
 }

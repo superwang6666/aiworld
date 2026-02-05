@@ -36,6 +36,7 @@ export default function Home() {
   const [rules, setRules] = useState<WorldRule[]>([]);
   const [deacAnalysis, setDeacAnalysis] = useState<DEACAnalysis | null>(null);
   const [deacLoading, setDeacLoading] = useState(false);
+  const [isGeneratingRules, setIsGeneratingRules] = useState(false);
   const [tagWeights, setTagWeights] = useState<Record<string, RuleTag>>(initializeTagWeights());
   const [showArchiveManager, setShowArchiveManager] = useState(false);
   const [archiveName, setArchiveName] = useState('');
@@ -72,6 +73,8 @@ export default function Home() {
 
   // 验证通过，开始生成规则
   const handleAcceptValidation = async () => {
+    setIsGeneratingRules(true);
+
     try {
       const generatedRules = await generateRules({
         corePremise: corePremise.trim(),
@@ -103,6 +106,8 @@ export default function Home() {
     } catch (err: any) {
       console.error('Generation error:', err);
       alert(err.message || 'An error occurred while generating rules');
+    } finally {
+      setIsGeneratingRules(false);
     }
   };
 
@@ -274,8 +279,9 @@ export default function Home() {
       {currentStep === 'homepage' ? (
         <HomePage
           onStart={handleStart}
-          onRecommendMode={(description) => {
+          onRecommendMode={(description, selectedArtStyle) => {
             setWorldDescription(description);
+            setArtStyle(selectedArtStyle);
             setCurrentStep('gameRecommend');
           }}
         />
@@ -291,9 +297,30 @@ export default function Home() {
       ) : currentStep === 'gameAnalysisResult' ? (
         <GameAnalysisResult
           selectedGames={selectedGamesForAnalysis}
-          onComplete={(premiseSummary) => {
+          onComplete={async (premiseSummary) => {
             setCorePremise(premiseSummary);
-            setCurrentStep('homepage');
+            // 直接进入验证流程
+            try {
+              const { validationResult: result, lawWeights: weights } = await validatePremise(premiseSummary.trim());
+              setValidationResult(result);
+              setLawWeights(weights);
+              setCurrentStep('validation');
+
+              // 触发 DEAC 专家分析（异步）
+              setDeacLoading(true);
+              triggerDEACAnalysis(premiseSummary.trim(), result, weights)
+                .then(analysis => {
+                  setDeacAnalysis(analysis);
+                  setDeacLoading(false);
+                })
+                .catch(err => {
+                  console.error('DEAC 分析错误:', err);
+                  setDeacLoading(false);
+                });
+            } catch (err: any) {
+              console.error('Validation error:', err);
+              alert(err.message || 'An error occurred while validating premise');
+            }
           }}
           onBack={() => setCurrentStep('gameRecommend')}
         />
@@ -304,6 +331,7 @@ export default function Home() {
           deacAnalysis={deacAnalysis}
           deacLoading={deacLoading}
           generationMode={generationMode}
+          isGeneratingRules={isGeneratingRules}
           onGenerationModeChange={setGenerationMode}
           onAccept={handleAcceptValidation}
           onReject={handleRejectValidation}

@@ -187,25 +187,10 @@ export async function POST(request: NextRequest) {
       }
 
       // Fix common AI JSON issues
-      // 1. Replace smart quotes with regular quotes first
+      // 1. Replace smart quotes with regular quotes (but preserve single quotes inside strings)
       cleanedContent = cleanedContent.replace(/[""]/g, '"');
-      cleanedContent = cleanedContent.replace(/['']/g, "'");
 
-      // 2. Fix single quotes used as string delimiters (invalid in JSON)
-      // This regex handles single-quoted strings more carefully
-      // Match patterns like: 'key': 'value' or "key": 'value'
-      cleanedContent = cleanedContent.replace(/:\s*'([^']*)'/g, (_match, content) => {
-        // Value after colon - replace single quotes with double quotes
-        return `: "${content.replace(/"/g, '\\"')}"`;
-      });
-
-      // Match single-quoted property names: 'key':
-      cleanedContent = cleanedContent.replace(/'([^']+)':/g, (_match, content) => {
-        // Property name - replace single quotes with double quotes
-        return `"${content}":`;
-      });
-
-      // 3. Remove trailing commas before } or ]
+      // 2. Remove trailing commas before } or ]
       cleanedContent = cleanedContent.replace(/,(\s*[}\]])/g, '$1');
 
       // First try: parse as-is
@@ -215,7 +200,9 @@ export async function POST(request: NextRequest) {
       } catch (firstError: any) {
         // Log the specific error location for debugging
         console.error('JSON parse error at:', firstError.message);
-        console.error('Problem area:', cleanedContent.substring(Math.max(0, (firstError as any).position - 50), Math.min(cleanedContent.length, (firstError as any).position + 50)));
+        const errorPos = (firstError as any).position || 0;
+        console.error('Problem area:', cleanedContent.substring(Math.max(0, errorPos - 100), Math.min(cleanedContent.length, errorPos + 100)));
+        console.error('Full response:', cleanedContent);
         throw firstError;
       }
 

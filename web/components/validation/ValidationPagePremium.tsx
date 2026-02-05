@@ -5,6 +5,7 @@ import { useState } from 'react';
 import type { ValidationResult, LawWeight, DEACAnalysis, LawImpact } from '@/types';
 
 import CommonHeader from '@/components/common/CommonHeader';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 import AdvancedAnalysisModal from './AdvancedAnalysisModal';
 import ValidationActions from './ValidationActions';
@@ -21,6 +22,7 @@ interface ValidationPagePremiumProps {
   deacAnalysis: DEACAnalysis | null;
   deacLoading: boolean;
   generationMode: 'fast' | 'deep';
+  isGeneratingRules?: boolean;
   onGenerationModeChange: (mode: 'fast' | 'deep') => void;
   onAccept: () => void;
   onReject: () => void;
@@ -32,6 +34,7 @@ export default function ValidationPagePremium({
   deacAnalysis,
   deacLoading,
   generationMode,
+  isGeneratingRules = false,
   onGenerationModeChange,
   onAccept,
   onReject
@@ -192,6 +195,15 @@ export default function ValidationPagePremium({
         lawWeights={lawWeights}
         deacAnalysis={deacAnalysis}
       />
+
+      {/* 生成规则加载遮罩层 */}
+      {isGeneratingRules && (
+        <LoadingSpinner
+          title={generationMode === 'deep' ? '正在深度生成世界规则...' : '正在生成世界规则...'}
+          subtitle={generationMode === 'deep' ? '整合专家洞察，构建深度规则体系' : '基于法则权重，快速生成规则'}
+          fullScreen
+        />
+      )}
     </>
   );
 }
