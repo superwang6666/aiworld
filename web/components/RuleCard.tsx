@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, X, Trash2, AlertTriangle, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { WorldRule, RuleTag } from "@/types";
 
@@ -24,6 +25,7 @@ export default function RuleCard({
   tagWeights,
   showPrediction = true,
 }: RuleCardProps) {
+  const t = useTranslations("Rules");
 
   // 计算风险等级
   const deletionScore = rule.deletion_score || 0;
@@ -62,13 +64,13 @@ export default function RuleCard({
       {isDanger && !rule.isNew && (
         <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg z-10">
           <AlertTriangle className="w-3 h-3" />
-          高风险
+          {t("highRisk")}
         </div>
       )}
       {isWarning && !isDanger && !rule.isNew && (
         <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg z-10">
           <AlertTriangle className="w-3 h-3" />
-          预测
+          {t("prediction")}
         </div>
       )}
 
@@ -87,7 +89,7 @@ export default function RuleCard({
               <span
                 key={tag.id}
                 className="px-2 py-0.5 text-xs rounded bg-[rgba(100,100,120,0.3)] border border-[rgba(140,140,160,0.4)] text-[#c1c5cc]"
-                title={`权重: ${(tag.weight * 100).toFixed(0)}%`}
+                title={`${t("weight")}: ${(tag.weight * 100).toFixed(0)}%`}
               >
                 {tag.name}
               </span>
@@ -106,7 +108,7 @@ export default function RuleCard({
           {/* 专家逻辑 */}
           <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-3 py-2 border border-[rgba(80,80,95,0.3)]">
             <p className="text-[#7a7a88] text-xs leading-relaxed">
-              <span className="font-semibold text-[#c1c5cc]">专家逻辑: </span>
+              <span className="font-semibold text-[#c1c5cc]">{t("expertLogic")} </span>
               {rule.expert_logic}
             </p>
           </div>
@@ -115,7 +117,7 @@ export default function RuleCard({
           {showPrediction && deletionScore >= 0.6 && (
             <div className="bg-gradient-to-r from-yellow-900/20 to-yellow-800/20 border border-yellow-700/50 rounded-lg px-3 py-2">
               <p className="text-yellow-400 text-xs">
-                根据您的偏好，这条规则可能不符合您的审美 (评分:{" "}
+                {t("predictionWarning")}{" "}
                 {(deletionScore * 100).toFixed(0)}%)
               </p>
             </div>
@@ -136,8 +138,8 @@ export default function RuleCard({
                   : "bg-[rgba(70,70,85,0.5)] border-[rgba(100,100,115,0.4)] text-[#7a7a88] hover:bg-[rgba(85,85,100,0.6)] hover:border-[rgba(120,120,135,0.5)]"
               }
             `}
-            aria-label={rule.confirmed ? "Unconfirm rule" : "Confirm rule"}
-            title={rule.confirmed ? "取消确认" : "确认规则"}
+            aria-label={rule.confirmed ? t("unconfirmRule") : t("confirmRule")}
+            title={rule.confirmed ? t("unconfirmRule") : t("confirmRule")}
           >
             {rule.confirmed ? (
               <Check className="w-5 h-5" />
@@ -156,8 +158,8 @@ export default function RuleCard({
                   ? "border-[rgba(100,100,115,0.3)] bg-[rgba(35,35,45,0.5)] text-[#7a7a88] cursor-not-allowed"
                   : "bg-gradient-to-r from-[rgba(139,0,0,0.3)] to-[rgba(139,0,0,0.2)] border-[rgba(220,38,38,0.5)] text-[#fca5a5] hover:from-[rgba(139,0,0,0.4)] hover:to-[rgba(139,0,0,0.3)] hover:border-[rgba(220,38,38,0.7)]"
               }`}
-              aria-label={rule.rejected ? "Rule deleted" : "Delete rule"}
-              title={rule.rejected ? "已删除" : "删除规则 (将降低相关标签权重)"}
+              aria-label={rule.rejected ? t("ruleDeleted") : t("deleteRule")}
+              title={rule.rejected ? t("ruleDeleted") : t("deleteRule")}
             >
               <Trash2 className="w-4 h-4" />
             </button>

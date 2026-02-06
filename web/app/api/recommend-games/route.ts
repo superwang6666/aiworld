@@ -1,7 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+
+import type { Locale} from "@/types/i18n";
 
 const RECOMMENDATION_PROMPT = `你是游戏设计专家.你的任务是根据用户描述的核心异质点，推荐具有相似概念,机制或世界观设定的代表作游戏.
 
@@ -76,7 +81,7 @@ const RECOMMENDATION_PROMPT = `你是游戏设计专家.你的任务是根据用
 
 export async function POST(request: NextRequest) {
   try {
-    const { anomalyDescription } = await request.json();
+    const { anomalyDescription, locale: requestLocale } = await request.json();
 
     if (!anomalyDescription?.trim()) {
       return NextResponse.json(
@@ -85,11 +90,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
+
     const { openai, model } = getOpenAIClient();
+
+    // 添加语言指令
+    const systemPrompt = createLanguageAwareSystemPrompt(RECOMMENDATION_PROMPT, locale);
+
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: RECOMMENDATION_PROMPT },
+        { role: "system", content: systemPrompt },
         {
           role: "user",
           content: `核心异质点描述:\n\n${anomalyDescription.trim()}`,

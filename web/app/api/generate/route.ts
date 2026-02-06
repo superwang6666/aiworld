@@ -5,11 +5,17 @@ import type { LawWeight, Law, ExpertResponse } from "@/types";
 
 import { LAWS } from "@/config/law-names";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
+
 import { validateRuleDistribution } from "@/lib/laws/weight-calculator";
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import {
   getOpenAIClient,
   cleanAIJsonResponse,
 } from "@/lib/utils/openai-client";
+
+import type { Locale} from "@/types/i18n";
 
 // 基础提示词（不包含权重信息时使用）
 const BASE_EXPERT_COUNCIL_PROMPT = `You are the 'Expert Council of World Builders'.
@@ -110,7 +116,7 @@ Do not include any other text or markdown formatting.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { corePremise, artStyle, lawWeights, mode, expertResponses } =
+    const { corePremise, artStyle, lawWeights, mode, expertResponses, locale: requestLocale } =
       await request.json();
 
     if (!corePremise || !artStyle) {
@@ -120,18 +126,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
+
     // Get configured OpenAI client
     const { openai, model } = getOpenAIClient();
 
     // 选择提示词：如果有权重信息，使用加权提示词
     // 深度模式会传递 expertResponses
-    const systemPrompt =
+    const baseSystemPrompt =
       lawWeights && Array.isArray(lawWeights) && lawWeights.length > 0
         ? generateWeightedPrompt(
             lawWeights,
             mode === "deep" ? expertResponses : undefined,
           )
         : BASE_EXPERT_COUNCIL_PROMPT;
+
+    // 添加语言指令
+    const systemPrompt = createLanguageAwareSystemPrompt(baseSystemPrompt, locale);
 
     const userPrompt = `Core Premise: ${corePremise}\nArt Style: ${artStyle}`;
 

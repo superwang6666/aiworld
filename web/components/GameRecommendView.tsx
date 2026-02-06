@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { GameInfo } from "@/types";
 
@@ -22,6 +23,8 @@ export default function GameRecommendView({
   onGameSelect,
   onBack,
 }: GameRecommendViewProps) {
+  const t = useTranslations("GameRecommend");
+  const tLoading = useTranslations("Loading");
   const [searchResults, setSearchResults] = useState<GameInfo[]>([]);
   const [selectedGames, setSelectedGames] = useState<Set<number>>(new Set());
   const [isSearching, setIsSearching] = useState(true);
@@ -60,11 +63,11 @@ export default function GameRecommendView({
       setSearchResults(data.games || []);
 
       if (data.games?.length === 0) {
-        setError("AI 未能找到匹配的游戏，请尝试更具体的描述");
+        setError(t("noMatchingGames"));
       }
     } catch (err: unknown) {
       logger.error("Game search failed", { error: err });
-      setError(err instanceof Error ? err.message : "AI 推荐失败，请稍后重试");
+      setError(err instanceof Error ? err.message : t("recommendFailed"));
     } finally {
       setIsSearching(false);
     }
@@ -85,7 +88,7 @@ export default function GameRecommendView({
   const handleProceed = () => {
     const selected = searchResults.filter((g) => selectedGames.has(g.id));
     if (selected.length === 0) {
-      alert("请至少选择一个游戏");
+      alert(t("pleaseSelectAtLeastOne"));
       return;
     }
     onGameSelect(selected);
@@ -116,7 +119,7 @@ export default function GameRecommendView({
         {/* 世界描述 section */}
         <div className="mb-12">
           <div className="text-[#c1c5cc] text-[14px] leading-relaxed">
-            <p className="font-semibold text-[#e5e5e5] mb-4">您的世界描述:</p>
+            <p className="font-semibold text-[#e5e5e5] mb-4">{t("yourWorldDescription")}</p>
             <p className="text-[#9A9AAA]">{worldDescription}</p>
           </div>
         </div>
@@ -124,7 +127,7 @@ export default function GameRecommendView({
         {/* 错误提示 */}
         {error && (
           <div className="bg-red-900/20 border border-red-700 text-red-300 px-6 py-4 rounded-lg font-mono text-sm mb-8">
-            错误: {error}
+            {t("error")} {error}
             <button
               onClick={() => {
                 setError(null);
@@ -132,7 +135,7 @@ export default function GameRecommendView({
               }}
               className="ml-4 px-4 py-1 bg-red-700 text-white rounded hover:bg-red-600 transition-colors"
             >
-              重试
+              {t("retry")}
             </button>
           </div>
         )}
@@ -140,8 +143,8 @@ export default function GameRecommendView({
         {/* 搜索中 */}
         {isSearching && (
           <LoadingSpinner
-            title="AI 正在为您搜索代表作游戏..."
-            subtitle="分析世界特征，匹配相关游戏"
+            title={t("searchingGames")}
+            subtitle={tLoading("analyzingExperts")}
           />
         )}
 
@@ -149,9 +152,9 @@ export default function GameRecommendView({
         {!isSearching && searchResults.length > 0 && (
           <div>
             <h2 className="text-[#e5e5e5] text-[20px] font-bold mb-8">
-              AI 为您推荐了{" "}
+              {t("aiRecommended")}{" "}
               <span className="text-[#00ff88]">{searchResults.length}</span>{" "}
-              部代表作游戏
+              {t("representativeGames")}
             </h2>
 
             <div className="space-y-4 mb-12">
@@ -349,7 +352,7 @@ export default function GameRecommendView({
                     "0 4px 16px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05) inset",
                 }}
               >
-                返回
+                {t("back")}
               </button>
               <button
                 onClick={handleProceed}
@@ -368,7 +371,7 @@ export default function GameRecommendView({
                     : {}
                 }
               >
-                分析选中游戏 ({selectedGames.size})
+                {t("analyzeSelected")} ({selectedGames.size})
               </button>
             </div>
           </div>
@@ -379,13 +382,13 @@ export default function GameRecommendView({
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <div className="text-6xl mb-4">🎮</div>
             <span className="text-[#c1c5cc] text-base">
-              暂无推荐结果，请尝试修改世界描述
+              {t("noResults")}
             </span>
             <button
               onClick={onBack}
               className="mt-4 px-8 py-2 bg-gradient-to-b from-[#8a8a95] to-[#6a6a75] text-white font-bold rounded-lg hover:from-[#9a9aaa] hover:to-[#7a7a85] transition-colors"
             >
-              返回修改
+              {t("backToModify")}
             </button>
           </div>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import CircularProgress from "./animations/CircularProgress";
 import CountUpAnimation from "./animations/CountUpAnimation";
@@ -12,11 +13,13 @@ interface ValidationScoreCardProps {
 export default function ValidationScoreCard({
   score,
 }: ValidationScoreCardProps) {
+  const t = useTranslations("Validation");
+
   // 根据分数获取标签
   const getScoreLabel = (score: number) => {
-    if (score >= 67) return "独一无二的";
-    if (score >= 34) return "高度独特";
-    return "有趣";
+    if (score >= 67) return t("scoreLabels.unique");
+    if (score >= 34) return t("scoreLabels.highlyUnique");
+    return t("scoreLabels.interesting");
   };
 
   const scoreLabel = getScoreLabel(score);
@@ -41,7 +44,7 @@ export default function ValidationScoreCard({
           {/* Text Content */}
           <div className="flex-1">
             <h3 className="text-[#ebebf0] text-xl leading-snug font-semibold mb-3">
-              独特性评分
+              {t("uniquenessScore")}
             </h3>
             <div className="flex items-baseline gap-2 mb-2">
               <motion.span

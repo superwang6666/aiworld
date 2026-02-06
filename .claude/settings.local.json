@@ -15,7 +15,8 @@
       "Bash(if exist contexts rmdir contexts)",
       "Bash(if exist hooks rmdir hooks)",
       "Bash(if exist componentsui rmdir componentsui)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 实现完整的国际化系统支持中英文切换\n\n- 集成 next-intl 实现完整的国际化基础设施\n- 添加语言切换器组件支持中文/英文切换\n- 创建 I18nProvider 统一管理语言状态\n- 实现 LLM 语言指令系统确保 AI 响应语言一致性\n\n组件国际化:\n- 修复 HomePage、GameAnalysis、GameRecommend 组件\n- 修复 Auth 相关组件 \\(LoginForm, RegisterForm, UserMenu\\)\n- 修复 Validation 相关组件 \\(ScoreCard, CoreAnomaly, DominoEffect 等\\)\n- 修复 Rules 和 Archive 管理组件\n- 修复所有 Loading 状态文本\n\n翻译文件:\n- 创建 messages/zh-CN.json 和 messages/en.json\n- 包含 10+ 命名空间 \\(Common, Auth, Validation, Rules, Laws 等\\)\n- 添加 200+ 翻译键覆盖所有用户界面文本\n\nAPI 路由增强:\n- 所有 API 路由支持 locale 参数\n- 实现语言感知的系统提示词生成\n- 确保 LLM 响应与用户选择的语言一致\n\n配置和工具:\n- 更新 law-names.ts 支持多语言法则名称\n- 创建 llm-language.ts 管理 LLM 语言指令\n- 添加 translations.ts 提供便捷的翻译 hooks\n- 创建完整的国际化文档 \\(I18N_GUIDE.md, I18N_QUICK_GUIDE.md\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

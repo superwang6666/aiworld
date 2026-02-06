@@ -1,7 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+
+import type { Locale} from "@/types/i18n";
 
 const ANALYSIS_PROMPT = `你是游戏设计与世界观构建专家。你的任务是分析多个游戏，提取它们的核心元素和异同点，为世界观构建提供参考。
 
@@ -58,7 +63,7 @@ const ANALYSIS_PROMPT = `你是游戏设计与世界观构建专家。你的任�
 
 export async function POST(request: NextRequest) {
   try {
-    const { games } = await request.json();
+    const { games, locale: requestLocale } = await request.json();
 
     if (!games || !Array.isArray(games) || games.length === 0) {
       return NextResponse.json(
@@ -67,7 +72,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
+
     const { openai, model } = getOpenAIClient();
+
+    // 添加语言指令
+    const systemPrompt = createLanguageAwareSystemPrompt(ANALYSIS_PROMPT, locale);
     const gamesDescription = games
       .map(
         (game: {
@@ -92,7 +106,7 @@ export async function POST(request: NextRequest) {
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: ANALYSIS_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
       temperature: 0.7,

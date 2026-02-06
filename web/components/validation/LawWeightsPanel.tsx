@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { LawWeight } from "@/types";
 
@@ -12,6 +13,7 @@ interface LawWeightsPanelProps {
 }
 
 export default function LawWeightsPanel({ lawWeights }: LawWeightsPanelProps) {
+  const t = useTranslations("Validation");
   const adaptedData = adaptLawWeights(lawWeights);
 
   return (
@@ -22,7 +24,7 @@ export default function LawWeightsPanel({ lawWeights }: LawWeightsPanelProps) {
         transition={{ duration: 0.6 }}
       >
         <h2 className="text-[28px] sm:text-[32px] mb-8 font-bold bg-gradient-to-r from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent leading-tight">
-          法则权柄分析
+          {t("lawWeightsAnalysis")}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

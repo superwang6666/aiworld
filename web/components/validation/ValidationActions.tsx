@@ -2,6 +2,7 @@
 
 import { ChevronDown, Check, X } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 interface ValidationActionsProps {
   onAccept: () => void;
@@ -14,6 +15,8 @@ export default function ValidationActions({
   onReject,
   onAdvancedAnalysis,
 }: ValidationActionsProps) {
+  const t = useTranslations("Validation");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -28,7 +31,7 @@ export default function ValidationActions({
       >
         <ChevronDown className="w-5 h-5 text-[#e8e8ec]" />
         <span className="text-[#e8e8ec] font-bold text-[14px] sm:text-[15px]">
-          跳转至高级分析阶段
+          {t("advancedAnalysis")}
         </span>
       </button>
 
@@ -39,7 +42,7 @@ export default function ValidationActions({
       >
         <X className="w-5 h-5 text-[#ebebf0]" />
         <span className="text-[#ebebf0] font-bold text-[14px] sm:text-[15px]">
-          拒绝验证
+          {t("rejectValidation")}
         </span>
       </button>
 
@@ -59,7 +62,7 @@ export default function ValidationActions({
             textShadow: "0 0 10px rgba(57, 255, 20, 0.5)",
           }}
         >
-          接受验证
+          {t("acceptValidation")}
         </span>
       </button>
     </motion.div>

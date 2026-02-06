@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 interface SynthesisConsensusProps {
   consensus: string;
@@ -9,6 +10,8 @@ interface SynthesisConsensusProps {
 export default function SynthesisConsensus({
   consensus,
 }: SynthesisConsensusProps) {
+  const t = useTranslations("Validation");
+
   // 解析共识字符串，提取列表项
   const parseConsensus = (text: string): string[] => {
     // 尝试通过数字序号解析（1. 2. 或 1) 2) 或 ① ②）
@@ -72,11 +75,11 @@ export default function SynthesisConsensus({
           </div>
           <div className="flex-1">
             <h3 className="text-[#e8e8ec] text-lg font-bold mb-1 flex items-center gap-2 group-hover:text-[#39ff14] transition-colors duration-300">
-              <span>专家共识</span>
+              <span>{t("expertConsensus")}</span>
               <div className="h-px flex-1 bg-gradient-to-r from-[rgba(57,255,20,0.4)] to-transparent" />
             </h3>
             <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">
-              Cross-Expert Consensus
+              {t("crossExpertConsensus")}
             </p>
           </div>
         </div>
@@ -85,7 +88,7 @@ export default function SynthesisConsensus({
           <div className="absolute left-5 top-0 bottom-0 w-px bg-gradient-to-b from-[rgba(57,255,20,0.4)] via-[rgba(57,255,20,0.2)] to-transparent" />
           <div className="text-[#c1c5cc] leading-relaxed text-sm space-y-2">
             {consensusItems.length > 1 && (
-              <p className="mb-2">所有专家一致认为：</p>
+              <p className="mb-2">{t("allExpertsAgree")}</p>
             )}
             {consensusItems.map((item, index) => (
               <p key={index} className="flex items-start gap-2">

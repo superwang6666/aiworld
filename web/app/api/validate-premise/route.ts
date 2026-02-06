@@ -1,11 +1,16 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
 import { calculateLawWeights } from "@/lib/laws/weight-calculator";
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import {
   getOpenAIClient,
   cleanAIJsonResponse,
 } from "@/lib/utils/openai-client";
+
+import type { Locale} from "@/types/i18n";
 
 // 辅助函数:获取基础 URL
 function getBaseUrl(): string {
@@ -83,7 +88,7 @@ IMPORTANT RULES:
 
 export async function POST(request: NextRequest) {
   try {
-    const { corePremise } = await request.json();
+    const { corePremise, locale: requestLocale } = await request.json();
 
     if (!corePremise || corePremise.trim().length === 0) {
       return NextResponse.json(
@@ -92,17 +97,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
+
     // Get configured OpenAI client
     const { openai, model } = getOpenAIClient();
 
     const userPrompt = `Core Premise to validate:\n\n${corePremise}`;
+
+    // 创建带语言指令的系统提示词
+    const systemPrompt = createLanguageAwareSystemPrompt(VALIDATION_PROMPT, locale);
 
     const completion = await openai.chat.completions.create({
       model: model,
       messages: [
         {
           role: "system",
-          content: VALIDATION_PROMPT,
+          content: systemPrompt,
         },
         {
           role: "user",

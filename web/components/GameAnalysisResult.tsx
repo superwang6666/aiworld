@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 
+import { useTranslations } from "next-intl";
+
 import type { GameInfo } from "@/types";
 
 import { logger } from "@/lib/utils/logger";
@@ -34,6 +36,7 @@ export default function GameAnalysisResult({
   onComplete,
   onBack,
 }: GameAnalysisResultProps) {
+  const t = useTranslations("GameAnalysis");
   const [analysis, setAnalysis] = useState<GameAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
@@ -65,7 +68,7 @@ export default function GameAnalysisResult({
       const data = await response.json();
       setAnalysis(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "分析失败，请稍后重试");
+      setError(err instanceof Error ? err.message : t("analysisFailed"));
       logger.error("Game analysis failed", { error: err });
     } finally {
       setIsAnalyzing(false);
@@ -80,7 +83,7 @@ export default function GameAnalysisResult({
         onComplete(analysis.comparativeAnalysis.premiseSummary);
       }, 100);
     } else {
-      alert("分析数据不完整，请重试");
+      alert(t("incompleteData"));
     }
   };
 
@@ -108,14 +111,14 @@ export default function GameAnalysisResult({
       <main className="relative z-10 pt-[120px] px-[64px] pb-[64px]">
         {isAnalyzing && (
           <LoadingSpinner
-            title="AI 正在分析选中的游戏..."
-            subtitle="提取核心特征，生成世界观启发"
+            title={t("analyzing")}
+            subtitle={t("analyzingSubtitle")}
           />
         )}
 
         {error && (
           <div className="bg-red-900/20 border border-red-700 text-red-300 px-6 py-4 rounded-lg font-mono text-sm mb-8">
-            错误: {error}
+            {t("error")} {error}
             <button
               onClick={() => {
                 setError(null);
@@ -123,7 +126,7 @@ export default function GameAnalysisResult({
               }}
               className="ml-4 px-4 py-1 bg-red-700 text-white rounded hover:bg-red-600 transition-colors"
             >
-              重试
+              {t("retry")}
             </button>
           </div>
         )}
@@ -135,7 +138,7 @@ export default function GameAnalysisResult({
               analysis.individualAnalyses.length > 0 && (
                 <section>
                   <h2 className="text-[#e5e5e5] text-[20px] font-bold mb-6">
-                    各游戏 <span className="text-[#00ff88]">核心特征</span>
+                    {t("eachGame")} <span className="text-[#00ff88]">{t("coreFeatures")}</span>
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {analysis.individualAnalyses.map((game, i: number) => (
@@ -150,7 +153,7 @@ export default function GameAnalysisResult({
                           <div className="space-y-4 text-sm">
                             <div className="pb-4 border-b border-[rgba(100,100,115,0.3)]">
                               <p className="text-[#9A9AAA] text-[11px] uppercase tracking-widest font-semibold mb-2">
-                                美术风格
+                                {t("artStyle")}
                               </p>
                               <p className="text-[#c1c5cc] leading-relaxed">
                                 {game.artStyle}
@@ -158,7 +161,7 @@ export default function GameAnalysisResult({
                             </div>
                             <div className="pb-4 border-b border-[rgba(100,100,115,0.3)]">
                               <p className="text-[#9A9AAA] text-[11px] uppercase tracking-widest font-semibold mb-2">
-                                核心玩法
+                                {t("coreGameplay")}
                               </p>
                               <div className="flex flex-wrap gap-2">
                                 {game.gameplayMechanics.map(
@@ -175,7 +178,7 @@ export default function GameAnalysisResult({
                             </div>
                             <div>
                               <p className="text-[#9A9AAA] text-[11px] uppercase tracking-widest font-semibold mb-2">
-                                叙事结构
+                                {t("narrativeStructure")}
                               </p>
                               <p className="text-[#c1c5cc] leading-relaxed">
                                 {game.narrativeStructure}
@@ -202,7 +205,7 @@ export default function GameAnalysisResult({
             {analysis.comparativeAnalysis?.coreGenreElements && (
               <section>
                 <h2 className="text-[#e5e5e5] text-[20px] font-bold mb-6">
-                  提取的 <span className="text-[#00ff88]">类型核心元素</span>
+                  {t("extracted")} <span className="text-[#00ff88]">{t("extractedGenreElements")}</span>
                 </h2>
                 <div className="group relative bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 border border-[rgba(100,100,115,0.4)] hover:border-[rgba(130,130,145,0.6)] p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -237,7 +240,7 @@ export default function GameAnalysisResult({
             {analysis.comparativeAnalysis?.worldBuildingInsights && (
               <section>
                 <h2 className="text-[#e5e5e5] text-[20px] font-bold mb-6">
-                  世界观 <span className="text-[#00ff88]">构建启发</span>
+                  {t("worldBuildingPrefix")} <span className="text-[#00ff88]">{t("worldBuildingInsightsTitle")}</span>
                 </h2>
                 <div className="group relative bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 border border-[rgba(0,255,136,0.3)] hover:border-[rgba(0,255,136,0.5)] p-6">
                   <div className="space-y-4">
@@ -271,7 +274,7 @@ export default function GameAnalysisResult({
             {analysis.comparativeAnalysis?.premiseSummary && (
               <section>
                 <h2 className="text-[#e5e5e5] text-[20px] font-bold mb-6">
-                  推荐的 <span className="text-[#00ff88]">世界观概述</span>
+                  {t("recommended")} <span className="text-[#00ff88]">{t("recommendedPremise")}</span>
                 </h2>
                 <div className="group relative bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 border border-[rgba(0,255,136,0.5)] hover:border-[rgba(0,255,136,0.7)] p-8">
                   <p className="text-[#c1c5cc] text-[16px] leading-relaxed font-light">
@@ -296,13 +299,13 @@ export default function GameAnalysisResult({
                 onClick={onBack}
                 className="px-12 py-3 bg-gradient-to-b from-[#8a8a95] to-[#6a6a75] text-white font-bold rounded-lg hover:from-[#9a9aaa] hover:to-[#7a7a85] transition-colors text-[14px]"
               >
-                返回重选
+                {t("backToReselect")}
               </button>
               <button
                 onClick={handleApplyInsights}
                 className="px-12 py-3 bg-[#00ff88] text-[#0f0f14] font-bold rounded-lg hover:bg-[#00e67e] shadow-[0_0_20px_rgba(0,255,136,0.3)] transition-colors text-[14px]"
               >
-                采纳分析结果
+                {t("adoptAnalysis")}
               </button>
             </div>
           </div>
@@ -312,8 +315,8 @@ export default function GameAnalysisResult({
       {/* 采纳分析结果加载遮罩层 */}
       {isApplying && (
         <LoadingSpinner
-          title="正在验证核心异质点..."
-          subtitle="专家团队正在分析您的世界设定"
+          title={t("validatingAnomaly")}
+          subtitle={t("analyzingWorldSetting")}
           fullScreen
         />
       )}

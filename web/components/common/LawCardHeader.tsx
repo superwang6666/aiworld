@@ -1,8 +1,12 @@
+'use client';
+
 import type { ReactNode } from "react";
 
 import type { Law } from "@/types";
 
-import { LAW_NAME_MAP, LAW_COLORS } from "@/config/law-names";
+import { getLawName, LAW_COLORS } from "@/config/law-names";
+
+import { useI18n } from "@/components/providers/I18nProvider";
 
 interface LawCardHeaderProps {
   law: Law;
@@ -21,9 +25,11 @@ export default function LawCardHeader({
   rightContent,
   className = "",
 }: LawCardHeaderProps) {
-  // 获取法则颜色配置和中文名称
+  const { locale } = useI18n();
+
+  // 获取法则颜色配置和本地化名称
   const color = LAW_COLORS[law] || LAW_COLORS.Space;
-  const lawName = LAW_NAME_MAP[law] || law;
+  const lawName = getLawName(law, locale);
 
   return (
     <div className={`flex items-center justify-between ${className}`}>

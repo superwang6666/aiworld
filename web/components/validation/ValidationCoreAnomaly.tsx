@@ -2,10 +2,13 @@
 
 import { Zap } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { Law } from "@/types";
 
-import { LAW_NAME_MAP } from "@/config/law-names";
+import { getLawName } from "@/config/law-names";
+
+import { useI18n } from "@/components/providers/I18nProvider";
 
 interface ValidationCoreAnomalyProps {
   coreAnomalyIdentified: string;
@@ -16,8 +19,12 @@ export default function ValidationCoreAnomaly({
   coreAnomalyIdentified,
   coreLaw,
 }: ValidationCoreAnomalyProps) {
+  const { locale } = useI18n();
+  const t = useTranslations("Validation");
+  const tLaws = useTranslations("Laws");
+
   // 如果没有指定核心法则，默认使用"形而上学"
-  const lawName = coreLaw ? LAW_NAME_MAP[coreLaw] : "形而上学";
+  const lawName = coreLaw ? getLawName(coreLaw, locale) : tLaws("Metaphysics");
 
   return (
     <motion.div
@@ -34,10 +41,10 @@ export default function ValidationCoreAnomaly({
           />
           <div className="flex-1">
             <h3 className="text-[#ebebf0] text-xl leading-snug font-semibold mb-1">
-              核心异常已识别
+              {t("coreAnomalyIdentified")}
             </h3>
             <p className="text-[#7a7a88] text-xs leading-normal">
-              Metaphysical Anomaly Detected
+              {t("metaphysicalAnomalyDetected")}
             </p>
           </div>
         </div>
@@ -52,7 +59,7 @@ export default function ValidationCoreAnomaly({
               }}
             />
             <h4 className="text-[#e8e8ec] text-base leading-normal font-semibold">
-              {lawName}异常
+              {lawName}{t("anomaly")}
             </h4>
           </div>
           <p className="text-[#c1c5cc] text-sm leading-relaxed">

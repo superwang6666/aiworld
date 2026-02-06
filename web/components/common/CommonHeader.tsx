@@ -1,6 +1,7 @@
 "use client";
 
 import UserMenu from "@/components/auth/UserMenu";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 
 /**
  * 公共标题栏组件 - 所有页面统一使用
@@ -23,9 +24,7 @@ export default function CommonHeader() {
       {/* 右侧功能区 */}
       <div className="flex items-center gap-2 sm:gap-4">
         {/* 语言切换 */}
-        <button className="text-[#c1c5cc] hover:text-white transition-colors text-sm">
-          EN
-        </button>
+        <LanguageSwitcher />
 
         {/* 社交链接 */}
         <div className="hidden sm:flex items-center gap-2">

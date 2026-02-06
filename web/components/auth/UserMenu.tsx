@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 
 import { useSession, signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 
 /**
  * 用户菜单组件
@@ -12,6 +13,7 @@ import { useSession, signOut } from "next-auth/react";
  * 显示用户头像和下拉菜单
  */
 export default function UserMenu() {
+  const t = useTranslations("Auth");
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -52,13 +54,13 @@ export default function UserMenu() {
           href="/auth/login"
           className="hidden sm:block bg-gradient-to-r from-[#8a8a95] to-[#6a6a75] hover:from-[#9a9aa5] hover:to-[#7a7a85] text-white px-4 py-2 rounded-[18px] text-sm transition-all"
         >
-          登录
+          {t("loginButton")}
         </Link>
         <Link
           href="/auth/register"
           className="bg-gradient-to-r from-[#00ff88] to-[#39ff14] hover:from-[#39ff14] hover:to-[#00ff88] text-[#1a1a23] px-4 py-2 rounded-[18px] text-sm font-medium transition-all"
         >
-          注册
+          {t("registerButton")}
         </Link>
       </div>
     );
@@ -123,7 +125,7 @@ export default function UserMenu() {
             <p className="text-[#e8e8ec] font-medium text-sm">{username}</p>
             <p className="text-[#7a7a88] text-xs mt-1">{user.email}</p>
             {!user.email_verified && (
-              <p className="text-[#ff6b6b] text-xs mt-1">⚠️ 邮箱未验证</p>
+              <p className="text-[#ff6b6b] text-xs mt-1">{t("emailUnverified")}</p>
             )}
           </div>
 
@@ -147,7 +149,7 @@ export default function UserMenu() {
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 />
               </svg>
-              <span className="text-sm">个人资料</span>
+              <span className="text-sm">{t("myProfile")}</span>
             </Link>
 
             <Link
@@ -168,7 +170,7 @@ export default function UserMenu() {
                   d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
                 />
               </svg>
-              <span className="text-sm">我的存档</span>
+              <span className="text-sm">{t("myArchives")}</span>
             </Link>
 
             <Link
@@ -195,7 +197,7 @@ export default function UserMenu() {
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span className="text-sm">设置</span>
+              <span className="text-sm">{t("settings")}</span>
             </Link>
           </div>
 
@@ -218,7 +220,7 @@ export default function UserMenu() {
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-              <span className="text-sm">登出</span>
+              <span className="text-sm">{t("logout")}</span>
             </button>
           </div>
         </div>

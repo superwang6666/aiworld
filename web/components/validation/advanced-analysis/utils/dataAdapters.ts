@@ -1,6 +1,8 @@
 import type { LawWeight, ExpertResponse, DEACAnalysis } from '@/types';
 
-import { LAW_NAME_MAP, LAW_COLORS } from '@/config/law-names';
+import { getLawName, LAW_COLORS } from '@/config/law-names';
+
+import { DEFAULT_LOCALE } from '@/types/i18n';
 
 import { getIconForDomain, getColorForDomain } from './expertIconMapping';
 import { getLawGradient } from './lawGradients';
@@ -34,11 +36,12 @@ export interface ExpertCardData {
 /**
  * 将LawWeight数组转换为UI所需的数据格式
  * @param lawWeights 法则权重数组
+ * @param locale 语言代码（可选，默认使用中文）
  * @returns 法则权重卡片数据数组
  */
-export function adaptLawWeights(lawWeights: LawWeight[]): LawWeightCardData[] {
+export function adaptLawWeights(lawWeights: LawWeight[], locale = DEFAULT_LOCALE): LawWeightCardData[] {
   return lawWeights.map(lw => ({
-    name: LAW_NAME_MAP[lw.law],
+    name: getLawName(lw.law, locale),
     percentage: Math.round(lw.weight * 100),
     color: getLawGradient(lw.law),
     borderColor: LAW_COLORS[lw.law].border,

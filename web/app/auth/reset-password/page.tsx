@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+
+import { useTranslations } from "next-intl";
 
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
@@ -11,7 +13,9 @@ import PremiumBackground from "@/components/PremiumBackground";
 
 import type { ResetPasswordRequest, PasswordResetResponse } from "@/types/auth";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
+  const t = useTranslations("Auth");
+  const tCommon = useTranslations("Common");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [token, setToken] = useState("");
@@ -27,7 +31,7 @@ export default function ResetPasswordPage() {
       if (tokenParam) {
         setToken(tokenParam);
       } else {
-        setError("缺少重置令牌");
+        setError(t("missingResetToken"));
       }
     };
     handleTokenCheck();
@@ -38,12 +42,12 @@ export default function ResetPasswordPage() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("两次输入的密码不一致");
+      setError(t("passwordMismatch"));
       return;
     }
 
     if (!token) {
-      setError("缺少重置令牌");
+      setError(t("missingResetToken"));
       return;
     }
 
@@ -66,7 +70,7 @@ export default function ResetPasswordPage() {
       const data: PasswordResetResponse = await response.json();
 
       if (!data.success) {
-        setError(data.error || "重置失败，请稍后重试");
+        setError(data.error || t("resetFailedRetry"));
         setIsLoading(false);
         return;
       }
@@ -79,7 +83,7 @@ export default function ResetPasswordPage() {
         router.push("/auth/login");
       }, 3000);
     } catch (_err) {
-      setError("重置失败，请稍后重试");
+      setError(t("resetFailedRetry"));
       setIsLoading(false);
     }
   };
@@ -110,21 +114,19 @@ export default function ResetPasswordPage() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-[#ebebf0] mb-4">
-                  密码重置成功！
+                  {t("passwordResetSuccess")}
                 </h2>
                 <p className="text-[#c1c5cc] mb-6">
-                  您的密码已成功重置。
-                  <br />
-                  现在可以使用新密码登录了。
+                  {t("passwordResetSuccessMessage")}
                 </p>
                 <p className="text-[#7a7a88] text-sm">
-                  3秒后自动跳转到登录页...
+                  {t("redirectingIn3Seconds")}
                 </p>
                 <Link
                   href="/auth/login"
                   className="inline-block mt-6 text-[#00ff88] hover:text-[#39ff14] transition-colors"
                 >
-                  立即登录 →
+                  {t("loginNow")} →
                 </Link>
               </div>
             ) : (
@@ -132,9 +134,9 @@ export default function ResetPasswordPage() {
               <>
                 <div className="text-center mb-8">
                   <h1 className="text-3xl sm:text-4xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent mb-3">
-                    重置密码
+                    {t("resetPasswordTitle")}
                   </h1>
-                  <p className="text-[#7a7a88] text-sm">Set a new password</p>
+                  <p className="text-[#7a7a88] text-sm">{t("setNewPassword")}</p>
                 </div>
 
                 <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl px-6 py-8 border border-[rgba(100,100,115,0.4)] backdrop-blur-sm">
@@ -147,13 +149,13 @@ export default function ResetPasswordPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-[#c1c5cc] mb-2">
-                        新密码
+                        {t("newPassword")}
                       </label>
                       <input
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        placeholder="至少8个字符，包含大小写字母和数字"
+                        placeholder={t("newPasswordPlaceholder")}
                         required
                         disabled={isLoading || !token}
                         className="w-full bg-[rgba(25,25,35,0.6)] rounded-xl px-4 py-3 border border-[rgba(80,80,95,0.3)] text-[#c1c5cc] placeholder-[#7a7a88] outline-none focus:border-[rgba(100,100,115,0.5)] transition-colors disabled:opacity-50"
@@ -162,13 +164,13 @@ export default function ResetPasswordPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-[#c1c5cc] mb-2">
-                        确认新密码
+                        {t("confirmNewPassword")}
                       </label>
                       <input
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="再次输入新密码"
+                        placeholder={t("confirmNewPasswordPlaceholder")}
                         required
                         disabled={isLoading || !token}
                         className="w-full bg-[rgba(25,25,35,0.6)] rounded-xl px-4 py-3 border border-[rgba(80,80,95,0.3)] text-[#c1c5cc] placeholder-[#7a7a88] outline-none focus:border-[rgba(100,100,115,0.5)] transition-colors disabled:opacity-50"
@@ -180,7 +182,7 @@ export default function ResetPasswordPage() {
                       disabled={isLoading || !token}
                       className="w-full bg-gradient-to-r from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] disabled:opacity-50 disabled:cursor-not-allowed border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] rounded-xl px-6 py-3 text-[#e8e8ec] font-medium transition-all duration-300"
                     >
-                      {isLoading ? "重置中..." : "重置密码"}
+                      {isLoading ? t("resettingPassword") : t("resetPasswordButton")}
                     </button>
                   </form>
 
@@ -189,7 +191,7 @@ export default function ResetPasswordPage() {
                       href="/auth/login"
                       className="text-sm text-[#00ff88] hover:text-[#39ff14] transition-colors"
                     >
-                      ← 返回登录
+                      ← {t("backToLogin")}
                     </Link>
                   </div>
                 </div>
@@ -200,8 +202,17 @@ export default function ResetPasswordPage() {
       </div>
 
       {isLoading && (
-        <LoadingSpinner title="正在重置密码..." subtitle="请稍候" fullScreen />
+        <LoadingSpinner title={t("resettingPassword")} subtitle={tCommon("pleaseWait")} fullScreen />
       )}
     </PremiumBackground>
+  );
+}
+
+export default function ResetPasswordPage() {
+  const tCommon = useTranslations("Common");
+  return (
+    <Suspense fallback={<LoadingSpinner title={tCommon("loading")} subtitle={tCommon("pleaseWait")} fullScreen />}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import Link from "next/link";
 
+import { useTranslations } from "next-intl";
+
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import PremiumBackground from "@/components/PremiumBackground";
@@ -14,6 +16,8 @@ import type {
 } from "@/types/auth";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("Auth");
+  const tCommon = useTranslations("Common");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -38,7 +42,7 @@ export default function ForgotPasswordPage() {
       const data: PasswordResetResponse = await response.json();
 
       if (!data.success) {
-        setError(data.error || "请求失败，请稍后重试");
+        setError(data.error || t("requestFailedRetry"));
         setIsLoading(false);
         return;
       }
@@ -46,7 +50,7 @@ export default function ForgotPasswordPage() {
       setSuccess(true);
       setIsLoading(false);
     } catch (_err) {
-      setError("请求失败，请稍后重试");
+      setError(t("requestFailedRetry"));
       setIsLoading(false);
     }
   };
@@ -77,21 +81,19 @@ export default function ForgotPasswordPage() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-[#ebebf0] mb-4">
-                  邮件已发送
+                  {t("emailSent")}
                 </h2>
                 <p className="text-[#c1c5cc] mb-6">
-                  如果该邮箱已注册，您将收到密码重置邮件。
-                  <br />
-                  请查收邮件并点击链接重置密码。
+                  {t("resetEmailSentMessage")}
                 </p>
                 <p className="text-[#7a7a88] text-sm mb-6">
-                  邮件有效期为 1 小时
+                  {t("emailValidFor1Hour")}
                 </p>
                 <Link
                   href="/auth/login"
                   className="inline-block text-[#00ff88] hover:text-[#39ff14] transition-colors"
                 >
-                  返回登录 →
+                  {t("backToLogin")} →
                 </Link>
               </div>
             ) : (
@@ -99,14 +101,14 @@ export default function ForgotPasswordPage() {
               <>
                 <div className="text-center mb-8">
                   <h1 className="text-3xl sm:text-4xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent mb-3">
-                    忘记密码
+                    {t("forgotPasswordTitle")}
                   </h1>
-                  <p className="text-[#7a7a88] text-sm">Reset your password</p>
+                  <p className="text-[#7a7a88] text-sm">{t("resetYourPassword")}</p>
                 </div>
 
                 <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl px-6 py-8 border border-[rgba(100,100,115,0.4)] backdrop-blur-sm">
                   <p className="text-[#c1c5cc] text-sm mb-6">
-                    输入您的注册邮箱，我们将发送密码重置链接到您的邮箱。
+                    {t("enterEmailForReset")}
                   </p>
 
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -118,13 +120,13 @@ export default function ForgotPasswordPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-[#c1c5cc] mb-2">
-                        邮箱
+                        {t("email")}
                       </label>
                       <input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="your@email.com"
+                        placeholder={t("emailPlaceholder")}
                         required
                         disabled={isLoading}
                         className="w-full bg-[rgba(25,25,35,0.6)] rounded-xl px-4 py-3 border border-[rgba(80,80,95,0.3)] text-[#c1c5cc] placeholder-[#7a7a88] outline-none focus:border-[rgba(100,100,115,0.5)] transition-colors disabled:opacity-50"
@@ -136,7 +138,7 @@ export default function ForgotPasswordPage() {
                       disabled={isLoading}
                       className="w-full bg-gradient-to-r from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] disabled:opacity-50 disabled:cursor-not-allowed border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] rounded-xl px-6 py-3 text-[#e8e8ec] font-medium transition-all duration-300"
                     >
-                      {isLoading ? "发送中..." : "发送重置邮件"}
+                      {isLoading ? t("sendingEmail") : t("sendResetEmail")}
                     </button>
                   </form>
 
@@ -145,7 +147,7 @@ export default function ForgotPasswordPage() {
                       href="/auth/login"
                       className="text-sm text-[#00ff88] hover:text-[#39ff14] transition-colors"
                     >
-                      ← 返回登录
+                      ← {t("backToLogin")}
                     </Link>
                   </div>
                 </div>
@@ -156,7 +158,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       {isLoading && (
-        <LoadingSpinner title="正在发送邮件..." subtitle="请稍候" fullScreen />
+        <LoadingSpinner title={t("sendingResetEmail")} subtitle={tCommon("pleaseWait")} fullScreen />
       )}
     </PremiumBackground>
   );

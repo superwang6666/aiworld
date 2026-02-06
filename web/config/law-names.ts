@@ -1,9 +1,11 @@
 /**
  * 七法则配置
- * 统一管理所有法则的中文显示名称和颜色配置
+ * 统一管理所有法则的多语言显示名称和颜色配置
  */
 
 import type { Law } from '@/types';
+
+import type { Locale } from '@/types/i18n';
 
 /**
  * 法则定义（包含名称和描述）
@@ -24,16 +26,27 @@ export const LAWS = [
 export const LAW_NAMES = LAWS.map(law => law.name);
 
 /**
- * 法则名称映射（英文 -> 中文）
+ * 法则名称映射（多语言支持）
  */
-export const LAW_NAME_MAP: Record<Law, string> = {
-  Space: '空间法则',
-  Survival: '生存法则',
-  Cognition: '认知法则',
-  Scarcity: '稀缺法则',
-  Time: '时间法则',
-  Power: '权力法则',
-  Metaphysics: '形而上学法则',
+export const LAW_NAME_MAP: Record<Locale, Record<Law, string>> = {
+  'zh-CN': {
+    Space: '空间法则',
+    Survival: '生存法则',
+    Cognition: '认知法则',
+    Scarcity: '稀缺法则',
+    Time: '时间法则',
+    Power: '权力法则',
+    Metaphysics: '形而上学法则',
+  },
+  'en': {
+    Space: 'Space Law',
+    Survival: 'Survival Law',
+    Cognition: 'Cognition Law',
+    Scarcity: 'Scarcity Law',
+    Time: 'Time Law',
+    Power: 'Power Law',
+    Metaphysics: 'Metaphysics Law',
+  },
 };
 
 /**
@@ -103,12 +116,13 @@ export const LAW_SIMPLE_COLORS: Record<Law, string> = {
 };
 
 /**
- * 获取法则的中文名称
+ * 获取法则的本地化名称
  * @param law 法则英文名
- * @returns 法则中文名
+ * @param locale 语言代码
+ * @returns 法则本地化名称
  */
-export function getLawName(law: Law): string {
-  return LAW_NAME_MAP[law];
+export function getLawName(law: Law, locale: Locale = 'zh-CN'): string {
+  return LAW_NAME_MAP[locale][law];
 }
 
 /**

@@ -5,12 +5,18 @@ import type { Law, WorldRule } from "@/types";
 
 import { LAWS } from "@/config/law-names";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
+
 import {
   checkRuleSemanticDuplication,
   SEMANTIC_DEDUPLICATION_CONFIG,
 } from "@/lib/rules/semantic-matcher";
 import { generateTagsForRule } from "@/lib/tags/tag-generator";
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+
+import type { Locale} from "@/types/i18n";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +25,7 @@ export async function POST(request: NextRequest) {
       artStyle,
       law,
       existingRules = [],
+      locale: requestLocale,
     } = await request.json();
 
     if (!corePremise || !artStyle || !law) {
@@ -27,6 +34,12 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
 
     // Validate law
     const validLaw = LAWS.find((l) => l.name === law);
@@ -39,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const { openai, model } = getOpenAIClient();
 
-    const systemPrompt = `You are an expert world-builder specializing in the "${validLaw.name}" law (${validLaw.description}).
+    const baseSystemPrompt = `You are an expert world-builder specializing in the "${validLaw.name}" law (${validLaw.description}).
 
 Generate ONE specific, practical rule for a world based on the provided Core Premise and Art Style.
 The rule must be related to the "${validLaw.name}" law domain.
@@ -58,6 +71,9 @@ Return a JSON object with a "rule" key containing the rule object.
 Format: { "rule": {...} }
 
 Do not include any other text or markdown formatting.`;
+
+    // 添加语言指令
+    const systemPrompt = createLanguageAwareSystemPrompt(baseSystemPrompt, locale);
 
     const userPrompt = `Core Premise: ${corePremise}\nArt Style: ${artStyle}`;
 

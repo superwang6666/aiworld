@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 
+import { useTranslations } from "next-intl";
+
 import { ART_STYLES } from "@/config/art-styles";
 
 import CommonHeader from "@/components/common/CommonHeader";
@@ -17,6 +19,9 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
+  const t = useTranslations('HomePage');
+  const tCommon = useTranslations('Common');
+
   const [showTip, setShowTip] = useState(true);
   const [worldDescription, setWorldDescription] = useState("");
   const [selectedArtStyle, setSelectedArtStyle] = useState("");
@@ -35,7 +40,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
   const experts = [
     {
       id: "geologist",
-      name: "地质学家",
+      name: t('experts.geologist'),
       color: "from-[rgba(139,69,19,0.95)] to-transparent",
       borderColor: "border-[rgba(139,69,19,0.6)]",
       textColor: "text-[#f4e4c1]",
@@ -44,7 +49,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     },
     {
       id: "anthropologist",
-      name: "人类学家",
+      name: t('experts.anthropologist'),
       color: "from-[rgba(70,130,180,0.95)] to-transparent",
       borderColor: "border-[rgba(70,130,180,0.6)]",
       textColor: "text-[#e6f2ff]",
@@ -53,7 +58,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     },
     {
       id: "linguist",
-      name: "语言学家",
+      name: t('experts.linguist'),
       color: "from-[rgba(128,0,128,0.95)] to-transparent",
       borderColor: "border-[rgba(128,0,128,0.6)]",
       textColor: "text-[#f4d4ff]",
@@ -62,7 +67,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     },
     {
       id: "economist",
-      name: "经济学家",
+      name: t('experts.economist'),
       color: "from-[rgba(218,165,32,0.95)] to-transparent",
       borderColor: "border-[rgba(218,165,32,0.6)]",
       textColor: "text-[#fff8dc]",
@@ -71,7 +76,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     },
     {
       id: "historian",
-      name: "历史学家",
+      name: t('experts.historian'),
       color: "from-[rgba(255,215,0,0.95)] to-transparent",
       borderColor: "border-[rgba(255,215,0,0.6)]",
       textColor: "text-[#fffacd]",
@@ -80,7 +85,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     },
     {
       id: "military_expert",
-      name: "军事专家",
+      name: t('experts.military_expert'),
       color: "from-[rgba(34,139,34,0.95)] to-transparent",
       borderColor: "border-[rgba(34,139,34,0.6)]",
       textColor: "text-[#e0ffe0]",
@@ -91,11 +96,11 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
 
   const handleStart = () => {
     if (!worldDescription.trim()) {
-      alert("请输入世界描述");
+      alert(t('pleaseEnterDescription'));
       return;
     }
     if (!selectedArtStyle) {
-      alert("请选择艺术风格");
+      alert(t('pleaseSelectArtStyle'));
       return;
     }
     setIsLoading(true);
@@ -123,9 +128,9 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
         {showTip && (
           <div className="w-full max-w-[640px] bg-gradient-to-r from-[rgba(26,26,35,0.85)] to-[rgba(35,35,45,0.85)] rounded-2xl px-4 sm:px-6 py-3 mb-8 sm:mb-12 flex items-center justify-between border border-[rgba(80,80,95,0.3)]">
             <div className="flex items-center gap-2 flex-1">
-              <span className="text-[14px]">💡</span>
+              <span className="text-[14px]">{t('tipTitle')}</span>
               <p className="text-[#c1c5cc] text-[13px] sm:text-[14px] line-clamp-1">
-                全新好玩功能到了！点击左上方&ldquo;导出动画&rdquo;立即体验，制服神奇有一身吗~
+                {t('tipContent')}
               </p>
             </div>
             <button
@@ -155,7 +160,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
           </h1>
           <div className="shimmer-text-container mt-2 sm:mt-4">
             <p className="shimmer-text text-sm sm:text-base lg:text-lg text-center text-[#b4b9c3] px-4">
-              基于LLM启发式构想的世界规则生成器
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -198,7 +203,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
         {/* 艺术风格选择 */}
         <div className="w-full max-w-4xl mb-6">
           <label className="block text-[#c1c5cc] text-sm mb-3 px-2">
-            选择艺术风格
+            {t('artStyleLabel')}
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {ART_STYLES.map((style) => (
@@ -231,7 +236,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
                 type="text"
                 value={worldDescription}
                 onChange={(e) => setWorldDescription(e.target.value)}
-                placeholder="请用一句话描述你脑海里中的世界最特殊的地方!!!!"
+                placeholder={t('worldDescriptionPlaceholder')}
                 className="w-full bg-transparent text-[#c1c5cc] text-[13px] sm:text-[14px] placeholder-[#7a7a88] outline-none"
                 disabled={isLoading}
               />
@@ -281,7 +286,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
                 </svg>
 
                 <span className="text-[#c1c5cc] text-[13px] sm:text-[14px] font-medium whitespace-nowrap">
-                  {useRecommendMode ? "游戏推荐" : "直接构建"}
+                  {useRecommendMode ? t('recommendMode') : t('normalMode')}
                 </span>
               </button>
 
@@ -307,8 +312,8 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
       {/* 加载遮罩层 */}
       {isLoading && (
         <LoadingSpinner
-          title="正在验证核心异质点..."
-          subtitle="专家团队正在分析您的世界设定"
+          title={tCommon('generating')}
+          subtitle={tCommon('pleaseWait')}
           fullScreen
         />
       )}

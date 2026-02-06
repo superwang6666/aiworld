@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+
 import { Star } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { LawImpact } from "@/types";
 
@@ -25,6 +27,7 @@ export default function ValidationDominoEffect({
   isEvaluating = false,
   hasEvaluated = false,
 }: ValidationDominoEffectProps) {
+  const t = useTranslations("Validation");
   const [showOnlyQualified, setShowOnlyQualified] = useState(false);
 
   // 过滤显示的法则影响
@@ -61,7 +64,7 @@ export default function ValidationDominoEffect({
           }}
         />
         <h2 className="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent">
-          多米诺效应分析
+          {t("dominoEffect")}
         </h2>
       </div>
 
@@ -85,11 +88,11 @@ export default function ValidationDominoEffect({
                 className="w-4 h-4 rounded border-[rgba(100,100,115,0.4)] bg-[rgba(25,25,35,0.6)] text-[#39ff14] focus:ring-[#39ff14]/30"
               />
               <span className="text-[#c1c5cc] text-sm font-medium">
-                只显示合格方向（评分 ≥ 60）
+                {t("showOnlyQualified")}
               </span>
             </label>
             <div className="text-sm text-[#7a7a88]">
-              合格:{" "}
+              {t("qualified")}:{" "}
               <span className="text-[#39ff14] font-bold">{qualifiedCount}</span>{" "}
               / {lawImpacts.length}
             </div>
@@ -162,7 +165,7 @@ export default function ValidationDominoEffect({
                 {item.passedCriteria && item.passedCriteria.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-[rgba(80,80,95,0.3)] ml-3">
                     <div className="text-xs text-[#7a7a88] mb-2">
-                      通过的标准:
+                      {t("passedCriteria")}:
                     </div>
                     <ul className="space-y-1">
                       {item.passedCriteria.map((criteria, idx) => (

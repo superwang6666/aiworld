@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+
+import { useTranslations } from "next-intl";
 
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import PremiumBackground from "@/components/PremiumBackground";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
+  const t = useTranslations("Auth");
+  const tCommon = useTranslations("Common");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -23,7 +27,7 @@ export default function VerifyEmailPage() {
     const handleVerification = async () => {
       if (!token) {
         setStatus("error");
-        setMessage("缺少验证令牌");
+        setMessage(t("missingVerificationToken"));
         return;
       }
 
@@ -40,18 +44,18 @@ export default function VerifyEmailPage() {
 
         if (data.success) {
           setStatus("success");
-          setMessage(data.message || "邮箱验证成功！");
+          setMessage(data.message || t("verificationSuccess"));
           // 3秒后跳转到登录页
           setTimeout(() => {
             router.push("/auth/login");
           }, 3000);
         } else {
           setStatus("error");
-          setMessage(data.error || "验证失败");
+          setMessage(data.error || t("verificationFailed"));
         }
       } catch {
         setStatus("error");
-        setMessage("验证失败，请稍后重试");
+        setMessage(t("verificationFailedRetry"));
       }
     };
 
@@ -67,7 +71,7 @@ export default function VerifyEmailPage() {
           <div className="w-full max-w-md">
             <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl px-6 py-12 border border-[rgba(100,100,115,0.4)] backdrop-blur-sm text-center">
               {status === "loading" && (
-                <LoadingSpinner title="正在验证邮箱..." subtitle="请稍候" />
+                <LoadingSpinner title={t("verifyingEmail")} subtitle={tCommon("pleaseWait")} />
               )}
 
               {status === "success" && (
@@ -88,17 +92,17 @@ export default function VerifyEmailPage() {
                     </svg>
                   </div>
                   <h2 className="text-2xl font-bold text-[#ebebf0] mb-4">
-                    验证成功！
+                    {t("verificationSuccess")}
                   </h2>
                   <p className="text-[#c1c5cc] mb-6">{message}</p>
                   <p className="text-[#7a7a88] text-sm">
-                    3秒后自动跳转到登录页...
+                    {t("redirectingIn3Seconds")}
                   </p>
                   <Link
                     href="/auth/login"
                     className="inline-block mt-6 text-[#00ff88] hover:text-[#39ff14] transition-colors"
                   >
-                    立即登录 →
+                    {t("loginNow")} →
                   </Link>
                 </>
               )}
@@ -121,14 +125,14 @@ export default function VerifyEmailPage() {
                     </svg>
                   </div>
                   <h2 className="text-2xl font-bold text-[#ebebf0] mb-4">
-                    验证失败
+                    {t("verificationFailed")}
                   </h2>
                   <p className="text-[#ff6b6b] mb-6">{message}</p>
                   <Link
                     href="/auth/login"
                     className="inline-block text-[#00ff88] hover:text-[#39ff14] transition-colors"
                   >
-                    返回登录 →
+                    {t("backToLogin")} →
                   </Link>
                 </>
               )}
@@ -137,5 +141,14 @@ export default function VerifyEmailPage() {
         </main>
       </div>
     </PremiumBackground>
+  );
+}
+
+export default function VerifyEmailPage() {
+  const tCommon = useTranslations("Common");
+  return (
+    <Suspense fallback={<LoadingSpinner title={tCommon("loading")} subtitle={tCommon("pleaseWait")} fullScreen />}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

@@ -3,6 +3,8 @@
 import { useState } from "react";
 
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
+
 
 import type { DEACAnalysis } from "@/types";
 
@@ -16,6 +18,7 @@ interface ExpertInsightsPanelProps {
 export default function ExpertInsightsPanel({
   analysis,
 }: ExpertInsightsPanelProps) {
+  const t = useTranslations("Validation");
   const [expandedExperts, setExpandedExperts] = useState<Set<number>>(
     new Set(),
   );
@@ -23,7 +26,7 @@ export default function ExpertInsightsPanel({
   if (!analysis) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-[#7a7a88] text-sm">专家分析尚未完成，请稍候...</p>
+        <p className="text-[#7a7a88] text-sm">{t("expertAnalysisNotComplete")}</p>
       </div>
     );
   }
@@ -50,7 +53,7 @@ export default function ExpertInsightsPanel({
       >
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-[28px] sm:text-[32px] font-bold bg-gradient-to-r from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent leading-tight">
-            专家委员会洞察
+            {t("expertCommitteeInsights")}
           </h2>
           <div className="flex items-center gap-2 bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] px-4 py-2 rounded-xl border border-[rgba(100,100,115,0.4)]">
             <div
@@ -58,7 +61,7 @@ export default function ExpertInsightsPanel({
               style={{ boxShadow: "0 0 8px rgba(57, 255, 20, 0.8)" }}
             />
             <span className="text-[#c1c5cc] text-[13px] font-medium">
-              {adaptedData.experts.length} 位专家
+              {adaptedData.experts.length} {t("expertsCount")}
             </span>
           </div>
         </div>

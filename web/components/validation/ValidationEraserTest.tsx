@@ -2,6 +2,7 @@
 
 import { FlaskConical } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { EraserTest } from "@/types";
 
@@ -12,6 +13,7 @@ interface ValidationEraserTestProps {
 export default function ValidationEraserTest({
   eraserTest,
 }: ValidationEraserTestProps) {
+  const t = useTranslations("Validation");
   const isStructural = eraserTest.verdict === "structural";
 
   return (
@@ -31,7 +33,7 @@ export default function ValidationEraserTest({
           }}
         />
         <h2 className="text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent">
-          橡皮擦测试
+          {t("eraserTest")}
         </h2>
       </div>
 
@@ -43,10 +45,10 @@ export default function ValidationEraserTest({
           />
           <div className="flex-1">
             <h3 className="text-[#ebebf0] text-xl leading-snug font-semibold mb-1">
-              The Eraser Test
+              {t("eraserTestTitle")}
             </h3>
             <p className="text-[#7a7a88] text-xs leading-normal">
-              测试核心前提是结构性还是装饰性
+              {t("eraserTestSubtitle")}
             </p>
           </div>
         </div>
@@ -55,7 +57,7 @@ export default function ValidationEraserTest({
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-1 h-4 rounded-full bg-[rgba(100,150,255,0.6)]" />
-            <h4 className="text-[#e8e8ec] text-sm font-semibold">原始场景</h4>
+            <h4 className="text-[#e8e8ec] text-sm font-semibold">{t("originalScenario")}</h4>
           </div>
           <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-4 py-3 border border-[rgba(80,80,95,0.3)]">
             <p className="text-[#c1c5cc] text-sm leading-relaxed">
@@ -68,7 +70,7 @@ export default function ValidationEraserTest({
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-1 h-4 rounded-full bg-[rgba(255,160,100,0.6)]" />
-            <h4 className="text-[#e8e8ec] text-sm font-semibold">替换场景</h4>
+            <h4 className="text-[#e8e8ec] text-sm font-semibold">{t("replacementScenario")}</h4>
           </div>
           <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-4 py-3 border border-[rgba(80,80,95,0.3)]">
             <p className="text-[#c1c5cc] text-sm leading-relaxed">
@@ -81,7 +83,7 @@ export default function ValidationEraserTest({
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-1 h-4 rounded-full bg-[rgba(180,120,255,0.6)]" />
-            <h4 className="text-[#e8e8ec] text-sm font-semibold">分析</h4>
+            <h4 className="text-[#e8e8ec] text-sm font-semibold">{t("analysis")}</h4>
           </div>
           <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-4 py-3 border border-[rgba(80,80,95,0.3)]">
             <p className="text-[#c1c5cc] text-sm leading-relaxed">

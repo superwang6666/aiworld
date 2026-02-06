@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { LawWeight, DEACAnalysis } from "@/types";
 
@@ -25,6 +26,7 @@ export default function AdvancedAnalysisModal({
   lawWeights,
   deacAnalysis,
 }: AdvancedAnalysisModalProps) {
+  const t = useTranslations("Validation");
   const adaptedData = adaptDEACAnalysis(deacAnalysis);
 
   if (!isOpen) return null;
@@ -54,7 +56,7 @@ export default function AdvancedAnalysisModal({
             {/* 头部 */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(100,100,115,0.3)]">
               <h2 className="text-2xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent">
-                高级分析阶段
+                {t("advancedAnalysisStage")}
               </h2>
               <button
                 onClick={onClose}

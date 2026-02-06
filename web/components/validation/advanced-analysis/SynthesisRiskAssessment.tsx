@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Shield, TrendingDown, Brain } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { LucideIcon } from "lucide-react";
 
@@ -27,6 +28,8 @@ const RISK_COLORS: string[] = [
 export default function SynthesisRiskAssessment({
   riskAssessment,
 }: SynthesisRiskAssessmentProps) {
+  const t = useTranslations("Validation");
+
   // 解析风险评估字符串，提取多个风险点
   const parseRiskAssessment = (text: string): RiskItem[] => {
     // 尝试通过数字序号解析（1. 2. 或 1) 2) 或 ① ②）
@@ -114,7 +117,7 @@ export default function SynthesisRiskAssessment({
           </div>
           <div className="flex-1">
             <h3 className="text-red-300 text-lg font-bold mb-1 flex items-center gap-2 group-hover:text-red-400 transition-colors duration-300">
-              <span>风险评估</span>
+              <span>{t("riskAssessment")}</span>
               <div className="h-px flex-1 bg-gradient-to-r from-red-400/40 to-transparent" />
             </h3>
             <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">

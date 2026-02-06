@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 
 import { Loader2, Archive, Trash2, Download, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import type { ArchiveMetadata } from "@/types";
 
@@ -15,6 +16,7 @@ export default function ArchiveManager({
   onLoadArchive,
   onClose,
 }: ArchiveManagerProps) {
+  const t = useTranslations("Archive");
   const [archives, setArchives] = useState<ArchiveMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,21 +33,21 @@ export default function ArchiveManager({
       const response = await fetch("/api/archive/list");
 
       if (!response.ok) {
-        throw new Error("加载存档列表失败");
+        throw new Error(t("loadArchiveListFailed"));
       }
 
       const data = await response.json();
       setArchives(data.archives || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "未知错误");
+      setError(err instanceof Error ? err.message : t("unknownError"));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(archiveId: string) {
-    if (!confirm("确定要删除这个存档吗?此操作无法撤销。")) {
+    if (!confirm(t("confirmDeleteMessage"))) {
       return;
     }
 
@@ -57,13 +59,13 @@ export default function ArchiveManager({
       });
 
       if (!response.ok) {
-        throw new Error("删除存档失败");
+        throw new Error(t("deleteArchiveFailed"));
       }
 
       // 重新加载列表
       await loadArchives();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "删除失败");
+      alert(err instanceof Error ? err.message : t("deleteFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -80,7 +82,7 @@ export default function ArchiveManager({
               <Archive className="w-5 h-5 text-[#e8e8ec]" />
             </div>
             <h2 className="text-2xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent">
-              世界存档
+              {t("worldArchive")}
             </h2>
           </div>
           <button
@@ -101,7 +103,7 @@ export default function ArchiveManager({
 
           {error && (
             <div className="bg-gradient-to-r from-[rgba(139,0,0,0.2)] to-[rgba(139,0,0,0.1)] border border-[rgba(220,38,38,0.5)] text-[#fca5a5] px-4 py-3 rounded-xl">
-              错误: {error}
+              {t("error")} {error}
             </div>
           )}
 
@@ -110,8 +112,8 @@ export default function ArchiveManager({
               <div className="text-center text-[#7a7a88]">
                 <div className="bg-gradient-to-r from-[rgba(35,35,45,0.6)] to-[rgba(45,45,55,0.6)] rounded-2xl p-8 inline-block">
                   <Archive className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg text-[#c1c5cc]">还没有存档</p>
-                  <p className="text-sm mt-2">生成规则后可以保存为存档</p>
+                  <p className="text-lg text-[#c1c5cc]">{t("noArchivesYet")}</p>
+                  <p className="text-sm mt-2">{t("saveAfterGeneration")}</p>
                 </div>
               </div>
             </div>
@@ -135,21 +137,17 @@ export default function ArchiveManager({
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#7a7a88]">
                       <span className="bg-[rgba(70,70,85,0.5)] px-2 py-1 rounded whitespace-nowrap">
-                        {archive.rules_count} 条规则
+                        {archive.rules_count} {t("rulesCount")}
                       </span>
                       <span className="hidden sm:inline">·</span>
                       <span className="whitespace-nowrap">
-                        创建于{" "}
-                        {new Date(archive.created_at).toLocaleDateString(
-                          "zh-CN",
-                        )}
+                        {t("createdOn")}{" "}
+                        {new Date(archive.created_at).toLocaleDateString()}
                       </span>
                       <span className="hidden sm:inline">·</span>
                       <span className="whitespace-nowrap">
-                        更新于{" "}
-                        {new Date(archive.updated_at).toLocaleDateString(
-                          "zh-CN",
-                        )}
+                        {t("updatedOn")}{" "}
+                        {new Date(archive.updated_at).toLocaleDateString()}
                       </span>
                     </div>
 

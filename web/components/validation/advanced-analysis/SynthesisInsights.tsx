@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 interface SynthesisInsightsProps {
   insights: string[];
@@ -38,6 +39,8 @@ const INSIGHT_COLORS: string[] = [
 export default function SynthesisInsights({
   insights,
 }: SynthesisInsightsProps) {
+  const t = useTranslations("Validation");
+
   if (!insights || insights.length === 0) {
     return null;
   }
@@ -78,7 +81,7 @@ export default function SynthesisInsights({
           </div>
           <div className="flex-1">
             <h3 className="text-[#e8e8ec] text-lg font-bold mb-1 flex items-center gap-2 group-hover:text-cyan-400 transition-colors duration-300">
-              <span>涌现洞察</span>
+              <span>{t("emergentInsights")}</span>
               <div className="h-px flex-1 bg-gradient-to-r from-cyan-400/40 to-transparent" />
             </h3>
             <p className="text-[#7a7a88] text-xs uppercase tracking-wider font-medium">

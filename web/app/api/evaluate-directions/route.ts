@@ -3,11 +3,17 @@ import { NextResponse } from "next/server";
 
 import { EVALUATION_CONFIG } from "@/config/evaluation-rules";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
+
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+
+import type { Locale} from "@/types/i18n";
 
 export async function POST(request: NextRequest) {
   try {
-    const { lawImpacts } = await request.json();
+    const { lawImpacts, locale: requestLocale } = await request.json();
 
     if (!lawImpacts || !Array.isArray(lawImpacts)) {
       return NextResponse.json(
@@ -16,7 +22,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
+
     const { openai, model } = getOpenAIClient();
+
+    // 添加语言指令
+    const systemPrompt = createLanguageAwareSystemPrompt(EVALUATION_CONFIG.systemPrompt, locale);
 
     const userPrompt = `Law Impacts to Evaluate:
 ${JSON.stringify(lawImpacts, null, 2)}
@@ -30,7 +45,7 @@ IMPORTANT: Return your response in valid JSON format following the structure spe
       messages: [
         {
           role: "system",
-          content: EVALUATION_CONFIG.systemPrompt,
+          content: systemPrompt,
         },
         {
           role: "user",
