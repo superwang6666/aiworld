@@ -7,7 +7,8 @@ import { motion } from "motion/react";
 
 import type { LawImpact } from "@/types";
 
-import { LAW_NAME_MAP, LAW_COLORS } from "@/config/law-names";
+import LawCard from "@/components/common/LawCard";
+import LawCardHeader from "@/components/common/LawCardHeader";
 
 import ValidationDirectionEvaluation from "./ValidationDirectionEvaluation";
 
@@ -24,7 +25,6 @@ export default function ValidationDominoEffect({
   isEvaluating = false,
   hasEvaluated = false,
 }: ValidationDominoEffectProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [showOnlyQualified, setShowOnlyQualified] = useState(false);
 
   // 过滤显示的法则影响
@@ -97,12 +97,8 @@ export default function ValidationDominoEffect({
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
         {displayedImpacts.map((item, index) => {
-          const color = LAW_COLORS[item.law] || LAW_COLORS.Space;
-          const lawName = LAW_NAME_MAP[item.law] || item.law;
-          const isHovered = hoveredIndex === index;
-
           return (
             <motion.div
               key={index}
@@ -112,89 +108,76 @@ export default function ValidationDominoEffect({
                 duration: 0.6,
                 delay: 0.5 + index * 0.1,
               }}
-              className={`bg-gradient-to-br from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl backdrop-blur-sm p-6 transition-all duration-300 relative overflow-hidden group ${
-                item.uniquenessScore !== undefined && item.uniquenessScore < 60
-                  ? "opacity-50"
-                  : ""
-              }`}
-              style={{
-                border: `1px solid ${isHovered ? color.hoverBorder : color.border}`,
-                boxShadow: isHovered ? color.glow : "none",
-              }}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
+              className="h-full"
             >
-              {/* 左侧装饰条 */}
-              <div
-                className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
-                style={{ background: color.accent }}
-              />
-
-              {/* 标题和分数 */}
-              <div className="flex items-center justify-between mb-3 ml-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      background: color.accent,
-                      boxShadow: `0 0 8px ${color.accent}`,
-                    }}
+              <LawCard
+                law={item.law}
+                className={`p-6 group h-full ${
+                  item.uniquenessScore !== undefined &&
+                  item.uniquenessScore < 60
+                    ? "opacity-50"
+                    : ""
+                }`}
+              >
+                {/* 标题和分数 */}
+                <div className="mb-3 ml-3">
+                  <LawCardHeader
+                    law={item.law}
+                    rightContent={
+                      item.uniquenessScore !== undefined ? (
+                        <div
+                          className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${
+                            item.uniquenessScore >= 80
+                              ? "bg-green-500/20 text-green-400"
+                              : item.uniquenessScore >= 60
+                                ? "bg-blue-500/20 text-blue-400"
+                                : item.uniquenessScore >= 40
+                                  ? "bg-yellow-500/20 text-yellow-400"
+                                  : "bg-red-500/20 text-red-400"
+                          }`}
+                        >
+                          <Star className="w-3 h-3" />
+                          {item.uniquenessScore}
+                        </div>
+                      ) : null
+                    }
                   />
-                  <h3 className="text-[#ebebf0] text-lg font-bold">
-                    {lawName}
-                  </h3>
                 </div>
 
-                {/* 评估分数 */}
-                {item.uniquenessScore !== undefined && (
-                  <div
-                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${
-                      item.uniquenessScore >= 80
-                        ? "bg-green-500/20 text-green-400"
-                        : item.uniquenessScore >= 60
-                          ? "bg-blue-500/20 text-blue-400"
-                          : item.uniquenessScore >= 40
-                            ? "bg-yellow-500/20 text-yellow-400"
-                            : "bg-red-500/20 text-red-400"
-                    }`}
-                  >
-                    <Star className="w-3 h-3" />
-                    {item.uniquenessScore}
+                {/* 影响描述 */}
+                <p className="text-[#c1c5cc] text-sm leading-relaxed mb-3 ml-3">
+                  {item.impact}
+                </p>
+
+                {/* 示例 */}
+                {item.example && (
+                  <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-3 py-2 border border-[rgba(80,80,95,0.3)] ml-3">
+                    <p className="text-[#7a7a88] text-xs leading-relaxed">
+                      {item.example}
+                    </p>
                   </div>
                 )}
-              </div>
 
-              {/* 影响描述 */}
-              <p className="text-[#c1c5cc] text-sm leading-relaxed mb-3 ml-3">
-                {item.impact}
-              </p>
-
-              {/* 示例 */}
-              {item.example && (
-                <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-3 py-2 border border-[rgba(80,80,95,0.3)] ml-3">
-                  <p className="text-[#7a7a88] text-xs leading-relaxed">
-                    {item.example}
-                  </p>
-                </div>
-              )}
-
-              {/* 通过的标准 */}
-              {item.passedCriteria && item.passedCriteria.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-[rgba(80,80,95,0.3)] ml-3">
-                  <div className="text-xs text-[#7a7a88] mb-2">通过的标准:</div>
-                  <ul className="space-y-1">
-                    {item.passedCriteria.map((criteria, idx) => (
-                      <li
-                        key={idx}
-                        className="flex items-start gap-2 text-xs text-[#c1c5cc]"
-                      >
-                        <span className="text-green-400 mt-0.5">✓</span>
-                        <span>{criteria}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {/* 通过的标准 */}
+                {item.passedCriteria && item.passedCriteria.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[rgba(80,80,95,0.3)] ml-3">
+                    <div className="text-xs text-[#7a7a88] mb-2">
+                      通过的标准:
+                    </div>
+                    <ul className="space-y-1">
+                      {item.passedCriteria.map((criteria, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-xs text-[#c1c5cc]"
+                        >
+                          <span className="text-green-400 mt-0.5">✓</span>
+                          <span>{criteria}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </LawCard>
             </motion.div>
           );
         })}

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-
 import { Check, X, Trash2, AlertTriangle, Sparkles } from "lucide-react";
 
 import type { WorldRule, RuleTag } from "@/types";
 
-import { LAW_NAME_MAP, LAW_COLORS } from "@/config/law-names";
 import { getPredefinedTagById } from "@/config/predefined-tags";
+
+import LawCard from "./common/LawCard";
+import LawCardHeader from "./common/LawCardHeader";
 
 interface RuleCardProps {
   rule: WorldRule;
@@ -24,10 +24,6 @@ export default function RuleCard({
   tagWeights,
   showPrediction = true,
 }: RuleCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
-  // 获取法则颜色配置
-  const color = LAW_COLORS[rule.law] || LAW_COLORS.Space;
 
   // 计算风险等级
   const deletionScore = rule.deletion_score || 0;
@@ -45,26 +41,15 @@ export default function RuleCard({
     .filter(Boolean) as RuleTag[];
 
   return (
-    <div
+    <LawCard
+      law={rule.law}
       className={`
-        relative bg-gradient-to-br from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl backdrop-blur-sm p-5 transition-all duration-300 overflow-hidden
+        p-5
         ${rule.confirmed ? "opacity-100" : "opacity-70 hover:opacity-100"}
         ${isDanger ? "ring-2 ring-red-500/50" : isWarning ? "ring-1 ring-yellow-500/50" : ""}
         ${rule.isNew ? "ring-2 ring-[#39ff14]/50 animate-pulse-glow" : ""}
       `}
-      style={{
-        border: `1px solid ${isHovered ? color.hoverBorder : color.border}`,
-        boxShadow: isHovered ? color.glow : "none",
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* 左侧装饰条 */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
-        style={{ background: color.accent }}
-      />
-
       {/* NEW 标识 */}
       {rule.isNew && (
         <div className="absolute -top-2 -left-2 bg-[#39ff14] text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg z-10">
@@ -91,18 +76,11 @@ export default function RuleCard({
         <div className="flex-1 space-y-3 ml-3">
           {/* 法则 + 标签 */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{
-                  background: color.accent,
-                  boxShadow: `0 0 8px ${color.accent}`,
-                }}
-              />
-              <span className="text-[#ebebf0] text-sm font-bold uppercase">
-                {LAW_NAME_MAP[rule.law]}
-              </span>
-            </div>
+            <LawCardHeader
+              law={rule.law}
+              className="mb-0"
+              rightContent={null}
+            />
 
             {/* 标签列表 */}
             {tagObjects.slice(0, 5).map((tag) => (
@@ -186,6 +164,6 @@ export default function RuleCard({
           )}
         </div>
       </div>
-    </div>
+    </LawCard>
   );
 }
