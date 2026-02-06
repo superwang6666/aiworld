@@ -1,29 +1,21 @@
 "use client";
 
+import { useState } from "react";
+
 import { Check, X, Trash2, AlertTriangle, Sparkles } from "lucide-react";
 
-import type { WorldRule, Law, RuleTag } from "@/types";
+import type { WorldRule, RuleTag } from "@/types";
 
-import { LAW_NAME_MAP } from "@/config/law-names";
+import { LAW_NAME_MAP, LAW_COLORS } from "@/config/law-names";
 import { getPredefinedTagById } from "@/config/predefined-tags";
 
 interface RuleCardProps {
   rule: WorldRule;
   onToggle: (id: string) => void;
-  onDelete?: (id: string) => void; // 新增: 删除回调
-  tagWeights?: Record<string, RuleTag>; // 新增: 标签权重映射
-  showPrediction?: boolean; // 新增: 是否显示预测警告
+  onDelete?: (id: string) => void;
+  tagWeights?: Record<string, RuleTag>;
+  showPrediction?: boolean;
 }
-
-const lawColors: Record<Law, string> = {
-  Space: "bg-blue-900/30 border-blue-700 text-blue-300",
-  Survival: "bg-green-900/30 border-green-700 text-green-300",
-  Cognition: "bg-purple-900/30 border-purple-700 text-purple-300",
-  Scarcity: "bg-yellow-900/30 border-yellow-700 text-yellow-300",
-  Time: "bg-red-900/30 border-red-700 text-red-300",
-  Power: "bg-orange-900/30 border-orange-700 text-orange-300",
-  Metaphysics: "bg-indigo-900/30 border-indigo-700 text-indigo-300",
-};
 
 export default function RuleCard({
   rule,
@@ -32,7 +24,10 @@ export default function RuleCard({
   tagWeights,
   showPrediction = true,
 }: RuleCardProps) {
-  const lawColorClass = lawColors[rule.law];
+  const [isHovered, setIsHovered] = useState(false);
+
+  // 获取法则颜色配置
+  const color = LAW_COLORS[rule.law] || LAW_COLORS.Space;
 
   // 计算风险等级
   const deletionScore = rule.deletion_score || 0;
@@ -43,10 +38,8 @@ export default function RuleCard({
   const tags = rule.tags || [];
   const tagObjects = tags
     .map((tagId) => {
-      // 先从预定义标签查找
       const predefined = getPredefinedTagById(tagId);
       if (predefined) return predefined;
-      // 再从权重映射查找 (可能是LLM生成的标签)
       return tagWeights?.[tagId];
     })
     .filter(Boolean) as RuleTag[];
@@ -54,16 +47,27 @@ export default function RuleCard({
   return (
     <div
       className={`
-        relative border-2 rounded-lg p-4 transition-all duration-200
-        ${lawColorClass}
-        ${rule.confirmed ? "opacity-100 ring-2 ring-cyan-400" : "opacity-70 hover:opacity-100"}
+        relative bg-gradient-to-br from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl backdrop-blur-sm p-5 transition-all duration-300 overflow-hidden
+        ${rule.confirmed ? "opacity-100" : "opacity-70 hover:opacity-100"}
         ${isDanger ? "ring-2 ring-red-500/50" : isWarning ? "ring-1 ring-yellow-500/50" : ""}
-        ${rule.isNew ? "ring-2 ring-[#00ff88]/50 animate-pulse-glow" : ""}
+        ${rule.isNew ? "ring-2 ring-[#39ff14]/50 animate-pulse-glow" : ""}
       `}
+      style={{
+        border: `1px solid ${isHovered ? color.hoverBorder : color.border}`,
+        boxShadow: isHovered ? color.glow : "none",
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* 左侧装饰条 */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full"
+        style={{ background: color.accent }}
+      />
+
       {/* NEW 标识 */}
       {rule.isNew && (
-        <div className="absolute -top-2 -left-2 bg-[#00ff88] text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+        <div className="absolute -top-2 -left-2 bg-[#39ff14] text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg z-10">
           <Sparkles className="w-3 h-3" />
           NEW
         </div>
@@ -71,31 +75,40 @@ export default function RuleCard({
 
       {/* 预测警告标识 */}
       {isDanger && !rule.isNew && (
-        <div className="absolute -top-2 -right-2 bg-red-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-red-600 to-red-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg z-10">
           <AlertTriangle className="w-3 h-3" />
           高风险
         </div>
       )}
       {isWarning && !isDanger && !rule.isNew && (
-        <div className="absolute -top-2 -right-2 bg-yellow-600 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+        <div className="absolute -top-2 -right-2 bg-gradient-to-r from-yellow-600 to-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg z-10">
           <AlertTriangle className="w-3 h-3" />
           预测
         </div>
       )}
 
       <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-3 ml-3">
           {/* 法则 + 标签 */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2 py-1 text-xs font-bold uppercase border rounded bg-black/20">
-              {LAW_NAME_MAP[rule.law]}
-            </span>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{
+                  background: color.accent,
+                  boxShadow: `0 0 8px ${color.accent}`,
+                }}
+              />
+              <span className="text-[#ebebf0] text-sm font-bold uppercase">
+                {LAW_NAME_MAP[rule.law]}
+              </span>
+            </div>
 
             {/* 标签列表 */}
             {tagObjects.slice(0, 5).map((tag) => (
               <span
                 key={tag.id}
-                className="px-2 py-0.5 text-xs rounded bg-purple-900/30 border border-purple-700 text-purple-300"
+                className="px-2 py-0.5 text-xs rounded bg-[rgba(100,100,120,0.3)] border border-[rgba(140,140,160,0.4)] text-[#c1c5cc]"
                 title={`权重: ${(tag.weight * 100).toFixed(0)}%`}
               >
                 {tag.name}
@@ -103,43 +116,46 @@ export default function RuleCard({
             ))}
 
             {tags.length > 5 && (
-              <span className="px-2 py-0.5 text-xs text-gray-500">
+              <span className="px-2 py-0.5 text-xs text-[#7a7a88]">
                 +{tags.length - 5}
               </span>
             )}
           </div>
 
           {/* 规则文本 */}
-          <p className="text-sm font-medium leading-relaxed">{rule.rule}</p>
+          <p className="text-[#c1c5cc] text-sm leading-relaxed">{rule.rule}</p>
 
           {/* 专家逻辑 */}
-          <div className="text-xs text-gray-400 italic border-l-2 border-gray-700 pl-3">
-            <span className="font-semibold text-gray-500">Expert Logic: </span>
-            {rule.expert_logic}
+          <div className="bg-[rgba(25,25,35,0.6)] rounded-lg px-3 py-2 border border-[rgba(80,80,95,0.3)]">
+            <p className="text-[#7a7a88] text-xs leading-relaxed">
+              <span className="font-semibold text-[#c1c5cc]">专家逻辑: </span>
+              {rule.expert_logic}
+            </p>
           </div>
 
           {/* 预测评分 (仅在警告时显示) */}
           {showPrediction && deletionScore >= 0.6 && (
-            <div className="text-xs text-yellow-400 bg-yellow-900/20 border border-yellow-700 rounded px-2 py-1">
-              根据您的偏好,这条规则可能不符合您的审美 (评分:{" "}
-              {(deletionScore * 100).toFixed(0)}
-              %)
+            <div className="bg-gradient-to-r from-yellow-900/20 to-yellow-800/20 border border-yellow-700/50 rounded-lg px-3 py-2">
+              <p className="text-yellow-400 text-xs">
+                根据您的偏好，这条规则可能不符合您的审美 (评分:{" "}
+                {(deletionScore * 100).toFixed(0)}%)
+              </p>
             </div>
           )}
         </div>
 
         {/* 操作按钮 */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 shrink-0">
           {/* 确认按钮 */}
           <button
             onClick={() => onToggle(rule.id)}
             className={`
-              flex-shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center
-              transition-all duration-200
+              w-10 h-10 rounded-xl flex items-center justify-center
+              transition-all duration-200 border
               ${
                 rule.confirmed
-                  ? "bg-cyan-500/20 border-cyan-400 text-cyan-300 hover:bg-cyan-500/30"
-                  : "bg-gray-800/50 border-gray-600 text-gray-400 hover:bg-gray-700/50 hover:border-gray-500"
+                  ? "bg-gradient-to-br from-[rgba(57,255,20,0.2)] to-[rgba(57,255,20,0.1)] border-[rgba(57,255,20,0.5)] text-[#39ff14] hover:from-[rgba(57,255,20,0.3)] hover:to-[rgba(57,255,20,0.2)]"
+                  : "bg-[rgba(70,70,85,0.5)] border-[rgba(100,100,115,0.4)] text-[#7a7a88] hover:bg-[rgba(85,85,100,0.6)] hover:border-[rgba(120,120,135,0.5)]"
               }
             `}
             aria-label={rule.confirmed ? "Unconfirm rule" : "Confirm rule"}
@@ -157,10 +173,10 @@ export default function RuleCard({
             <button
               onClick={() => !rule.rejected && onDelete(rule.id)}
               disabled={rule.rejected}
-              className={`flex-shrink-0 w-10 h-10 rounded-full border-2 transition-all duration-200 flex items-center justify-center ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 border ${
                 rule.rejected
-                  ? "border-gray-700 bg-gray-900/50 text-gray-600 cursor-not-allowed"
-                  : "border-red-700 bg-red-900/20 text-red-400 hover:bg-red-900/40 hover:border-red-600"
+                  ? "border-[rgba(100,100,115,0.3)] bg-[rgba(35,35,45,0.5)] text-[#7a7a88] cursor-not-allowed"
+                  : "bg-gradient-to-r from-[rgba(139,0,0,0.3)] to-[rgba(139,0,0,0.2)] border-[rgba(220,38,38,0.5)] text-[#fca5a5] hover:from-[rgba(139,0,0,0.4)] hover:to-[rgba(139,0,0,0.3)] hover:border-[rgba(220,38,38,0.7)]"
               }`}
               aria-label={rule.rejected ? "Rule deleted" : "Delete rule"}
               title={rule.rejected ? "已删除" : "删除规则 (将降低相关标签权重)"}

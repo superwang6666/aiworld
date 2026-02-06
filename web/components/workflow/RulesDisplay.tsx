@@ -1,8 +1,12 @@
+"use client";
+
 import { Download, Archive } from "lucide-react";
 
 import type { WorldRule, RuleTag } from "@/types";
 
+import CommonHeader from "@/components/common/CommonHeader";
 import RuleCard from "@/components/RuleCard";
+import WorkflowFooter from "@/components/workflow/WorkflowFooter";
 
 interface RulesDisplayProps {
   rules: WorldRule[];
@@ -32,94 +36,121 @@ export default function RulesDisplay({
   onReset,
 }: RulesDisplayProps) {
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-[#00ff88] font-mono uppercase">
-            Generated Rules ({rules.length})
-          </h2>
-          <span className="text-sm text-gray-400 font-mono">
-            Confirmed: {confirmedCount}/{rules.length}
-          </span>
-        </div>
+    <>
+      <div className="size-full overflow-y-auto">
+        {/* 使用公共标题栏 */}
+        <CommonHeader />
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onShowArchiveManager}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-900/30 border border-purple-700 text-purple-300 rounded hover:bg-purple-900/50 transition-colors font-mono text-sm"
-          >
-            <Archive className="w-4 h-4" />
-            Manage Archives
-          </button>
-          <button
-            onClick={onReset}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-700 text-gray-300 rounded hover:bg-gray-600 transition-colors font-mono text-sm"
-          >
-            Start Over
-          </button>
-          <button
-            onClick={onExport}
-            disabled={confirmedCount === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-[#00ff88]/20 border border-[#00ff88]/50 text-[#00ff88] rounded hover:bg-[#00ff88]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-mono text-sm"
-          >
-            <Download className="w-4 h-4" />
-            Export Confirmed ({confirmedCount})
-          </button>
-        </div>
-      </div>
-
-      {/* 存档保存区域 */}
-      {rules.length > 0 && (
-        <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-bold text-purple-300 font-mono mb-4">
-            Save World Archive
-          </h3>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={archiveName}
-              onChange={(e) => onArchiveNameChange(e.target.value)}
-              placeholder="Enter archive name..."
-              className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded text-white font-mono focus:border-purple-500 focus:outline-none"
-            />
-            <button
-              onClick={onSaveArchive}
-              disabled={!archiveName.trim() || rules.length === 0}
-              className="px-6 py-2 bg-purple-900/30 border border-purple-700 text-purple-300 rounded hover:bg-purple-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-mono"
-            >
-              Save Archive
-            </button>
+        {/* Main Content */}
+        <main className="px-4 sm:px-8 lg:px-12 xl:px-16 pb-12">
+          {/* Title */}
+          <div className="mb-8 sm:mb-12">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent mb-3">
+              世界规则
+            </h1>
+            <p className="text-[#7a7a88] text-sm sm:text-base">
+              World Rules Generation System
+            </p>
           </div>
-          <p className="text-xs text-gray-500 mt-2 font-mono">
-            Archive will include all rules, tag weights, and preferences
-          </p>
-        </div>
-      )}
 
-      {rules.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {rules.map((rule) => (
-            <RuleCard
-              key={rule.id}
-              rule={rule}
-              onToggle={onToggleRule}
-              onDelete={onDeleteRule}
-              tagWeights={tagWeights}
-              showPrediction={true}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="border border-gray-800 bg-[#111111] rounded-lg p-8 text-center">
-          <p className="text-gray-400 font-mono">No rules generated yet.</p>
-          <button
-            onClick={onReset}
-            className="mt-4 px-6 py-2 bg-[#00ff88] text-black font-bold rounded hover:bg-[#00cc6f] transition-colors font-mono"
-          >
-            Start Over
-          </button>
-        </div>
-      )}
-    </div>
+          {/* 统计信息和操作按钮 */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-12">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-xl px-4 py-2 border border-[rgba(100,100,115,0.4)]">
+                <span className="text-[#c1c5cc] text-sm">
+                  已生成规则: <span className="text-[#ebebf0] font-bold">{rules.length}</span>
+                </span>
+              </div>
+              <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-xl px-4 py-2 border border-[rgba(100,100,115,0.4)]">
+                <span className="text-[#c1c5cc] text-sm">
+                  已确认: <span className="text-[#ebebf0] font-bold">{confirmedCount}/{rules.length}</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={onShowArchiveManager}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[rgba(100,100,120,0.6)] to-[rgba(80,80,100,0.6)] hover:from-[rgba(120,120,145,0.8)] hover:to-[rgba(100,100,125,0.8)] border border-[rgba(140,140,160,0.4)] hover:border-[rgba(160,160,180,0.6)] text-[#e8e8ec] rounded-xl transition-all duration-300 text-sm"
+              >
+                <Archive className="w-4 h-4" />
+                存档管理
+              </button>
+              <button
+                onClick={onReset}
+                className="flex items-center gap-2 px-4 py-2 bg-[rgba(70,70,85,0.7)] hover:bg-[rgba(85,85,100,0.85)] border border-[rgba(110,110,125,0.4)] hover:border-[rgba(130,130,145,0.6)] text-[#c1c5cc] rounded-xl transition-all duration-300 text-sm"
+              >
+                重新开始
+              </button>
+              <button
+                onClick={onExport}
+                disabled={confirmedCount === 0}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] disabled:opacity-50 disabled:cursor-not-allowed border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] text-[#e8e8ec] rounded-xl transition-all duration-300 text-sm"
+              >
+                <Download className="w-4 h-4" />
+                导出已确认 ({confirmedCount})
+              </button>
+            </div>
+          </div>
+
+          {/* 存档保存区域 */}
+          {rules.length > 0 && (
+            <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl px-6 py-5 border border-[rgba(100,100,115,0.4)] backdrop-blur-sm mb-8 sm:mb-12">
+              <h3 className="text-lg font-bold text-[#c1c5cc] uppercase mb-4 tracking-wider">
+                保存世界存档
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={archiveName}
+                  onChange={(e) => onArchiveNameChange(e.target.value)}
+                  placeholder="输入存档名称..."
+                  className="flex-1 px-4 py-3 bg-[rgba(25,25,35,0.6)] border border-[rgba(80,80,95,0.3)] rounded-xl text-[#c1c5cc] placeholder-[#7a7a88] focus:border-[rgba(140,140,160,0.5)] focus:outline-none transition-colors"
+                />
+                <button
+                  onClick={onSaveArchive}
+                  disabled={!archiveName.trim() || rules.length === 0}
+                  className="px-6 py-3 bg-gradient-to-r from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] text-[#e8e8ec] rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                >
+                  保存存档
+                </button>
+              </div>
+              <p className="text-xs text-[#7a7a88] mt-3">
+                存档将包含所有规则、标签权重和偏好设置
+              </p>
+            </div>
+          )}
+
+          {/* 规则列表 */}
+          {rules.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {rules.map((rule) => (
+                <RuleCard
+                  key={rule.id}
+                  rule={rule}
+                  onToggle={onToggleRule}
+                  onDelete={onDeleteRule}
+                  tagWeights={tagWeights}
+                  showPrediction={true}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] border border-[rgba(100,100,115,0.4)] rounded-2xl p-12 text-center">
+              <p className="text-[#7a7a88] text-base mb-6">暂无生成的规则</p>
+              <button
+                onClick={onReset}
+                className="px-6 py-3 bg-gradient-to-br from-[rgba(100,100,120,0.8)] to-[rgba(80,80,100,0.8)] hover:from-[rgba(120,120,145,0.95)] hover:to-[rgba(100,100,125,0.95)] border border-[rgba(140,140,160,0.5)] hover:border-[rgba(160,160,180,0.7)] text-[#e8e8ec] font-bold rounded-xl transition-all duration-300"
+              >
+                重新开始
+              </button>
+            </div>
+          )}
+        </main>
+
+        {/* Footer */}
+        <WorkflowFooter />
+      </div>
+    </>
   );
 }

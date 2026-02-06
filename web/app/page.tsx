@@ -42,7 +42,6 @@ import HomePage from "@/components/HomePage";
 import PremiumBackground from "@/components/PremiumBackground";
 import ValidationPagePremium from "@/components/validation/ValidationPagePremium";
 import RulesDisplay from "@/components/workflow/RulesDisplay";
-import WorkflowFooter from "@/components/workflow/WorkflowFooter";
 
 type WorkflowStep =
   | "homepage"
@@ -374,25 +373,19 @@ export default function Home() {
           onReject={handleRejectValidation}
         />
       ) : currentStep === "rules" ? (
-        <div className="min-h-screen flex flex-col relative z-10">
-          <main className="container mx-auto px-4 py-8 max-w-7xl">
-            <RulesDisplay
-              rules={rules}
-              tagWeights={tagWeights}
-              archiveName={archiveName}
-              confirmedCount={confirmedCount}
-              onToggleRule={handleToggleRule}
-              onDeleteRule={handleDeleteRule}
-              onArchiveNameChange={setArchiveName}
-              onSaveArchive={handleSaveArchive}
-              onShowArchiveManager={() => setShowArchiveManager(true)}
-              onExport={handleExport}
-              onReset={handleResetWorkflow}
-            />
-          </main>
-
-          <WorkflowFooter />
-        </div>
+        <RulesDisplay
+          rules={rules}
+          tagWeights={tagWeights}
+          archiveName={archiveName}
+          confirmedCount={confirmedCount}
+          onToggleRule={handleToggleRule}
+          onDeleteRule={handleDeleteRule}
+          onArchiveNameChange={setArchiveName}
+          onSaveArchive={handleSaveArchive}
+          onShowArchiveManager={() => setShowArchiveManager(true)}
+          onExport={handleExport}
+          onReset={handleResetWorkflow}
+        />
       ) : null}
 
       {showArchiveManager && (
