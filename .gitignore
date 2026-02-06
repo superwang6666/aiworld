@@ -17,3 +17,6 @@ bin-release/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 /样式修改/node_modules
+
+# Claude Code local settings
+.claude/settings.local.json
