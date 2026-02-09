@@ -19,7 +19,7 @@ export const LLM_LANGUAGE_CONFIG = {
    * 是否启用语言强制指令
    * 设置为 false 可以让 LLM 根据输入自动选择语言
    */
-  enforceLanguage: true,
+  enforceLanguage: false,
 
   /**
    * 语言指令插入位置
