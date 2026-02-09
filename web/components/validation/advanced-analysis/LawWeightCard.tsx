@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 interface LawWeightCardProps {
   name: string;
@@ -19,6 +20,8 @@ export default function LawWeightCard({
   rules,
   index,
 }: LawWeightCardProps) {
+  const t = useTranslations("Validation");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -58,7 +61,7 @@ export default function LawWeightCard({
       </div>
 
       <p className="text-[#7a7a88] text-[13px] leading-normal">
-        {rules} 条规则
+        {t("lawRuleCount", { count: rules })}
       </p>
     </motion.div>
   );

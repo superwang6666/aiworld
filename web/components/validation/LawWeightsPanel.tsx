@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import type { LawWeight } from "@/types";
 
@@ -14,7 +14,8 @@ interface LawWeightsPanelProps {
 
 export default function LawWeightsPanel({ lawWeights }: LawWeightsPanelProps) {
   const t = useTranslations("Validation");
-  const adaptedData = adaptLawWeights(lawWeights);
+  const locale = useLocale() as 'zh-CN' | 'en';
+  const adaptedData = adaptLawWeights(lawWeights, locale);
 
   return (
     <div className="space-y-6">

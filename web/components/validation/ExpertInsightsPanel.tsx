@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { motion } from "motion/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 
 import type { DEACAnalysis } from "@/types";
@@ -19,6 +19,7 @@ export default function ExpertInsightsPanel({
   analysis,
 }: ExpertInsightsPanelProps) {
   const t = useTranslations("Validation");
+  const locale = useLocale();
   const [expandedExperts, setExpandedExperts] = useState<Set<number>>(
     new Set(),
   );
@@ -31,7 +32,7 @@ export default function ExpertInsightsPanel({
     );
   }
 
-  const adaptedData = adaptDEACAnalysis(analysis);
+  const adaptedData = adaptDEACAnalysis(analysis, locale as 'zh-CN' | 'en');
   if (!adaptedData) return null;
 
   const toggleExpert = (index: number) => {

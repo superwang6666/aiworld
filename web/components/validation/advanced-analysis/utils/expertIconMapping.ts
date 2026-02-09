@@ -8,13 +8,12 @@ import {
   Atom,
   Mountain,
   Brain,
-  type LucideIcon
-} from 'lucide-react';
+  type LucideIcon,
+} from "lucide-react";
 
-/**
- * 专家领域到图标的映射
- */
-export const DOMAIN_ICON_MAP: Record<string, LucideIcon> = {
+import { DEFAULT_LOCALE, type Locale } from "@/types/i18n";
+
+const DOMAIN_ICON_MAP: Record<string, LucideIcon> = {
   "人类学与社会学": User,
   "经济学": TrendingUp,
   "地质学与气候学": Globe,
@@ -26,10 +25,7 @@ export const DOMAIN_ICON_MAP: Record<string, LucideIcon> = {
   "心理学": Brain,
 };
 
-/**
- * 专家领域到颜色的映射
- */
-export const DOMAIN_COLOR_MAP: Record<string, string> = {
+const DOMAIN_COLOR_MAP: Record<string, string> = {
   "人类学与社会学": "#7dd3fc",
   "经济学": "#fbbf24",
   "地质学与气候学": "#34d399",
@@ -41,20 +37,45 @@ export const DOMAIN_COLOR_MAP: Record<string, string> = {
   "心理学": "#8b5cf6",
 };
 
-/**
- * 根据专家领域获取对应的图标
- * @param domain 专家领域
- * @returns Lucide图标组件
- */
+const DOMAIN_LABEL_MAP: Record<Locale, Record<string, string>> = {
+  "zh-CN": {
+    "人类学与社会学": "人类学与社会学",
+    "经济学": "经济学",
+    "地质学与气候学": "地质学与气候学",
+    "历史学与考古学": "历史学与考古学",
+    "语言学": "语言学",
+    "政治学与军事学": "政治学与军事学",
+    "物理学": "物理学",
+    "生物学": "生物学",
+    "心理学": "心理学",
+  },
+  en: {
+    "人类学与社会学": "Anthropology & Sociology",
+    "经济学": "Economics",
+    "地质学与气候学": "Geology & Climate",
+    "历史学与考古学": "History & Archaeology",
+    "语言学": "Linguistics",
+    "政治学与军事学": "Politics & Military Science",
+    "物理学": "Physics",
+    "生物学": "Biology",
+    "心理学": "Psychology",
+  },
+};
+
 export function getIconForDomain(domain: string): LucideIcon {
   return DOMAIN_ICON_MAP[domain] || User;
 }
 
-/**
- * 根据专家领域获取对应的颜色
- * @param domain 专家领域
- * @returns 颜色十六进制字符串
- */
 export function getColorForDomain(domain: string): string {
   return DOMAIN_COLOR_MAP[domain] || "#7dd3fc";
+}
+
+export function getDomainLabel(
+  domain: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  const localized = DOMAIN_LABEL_MAP[locale]?.[domain];
+  if (localized) return localized;
+  const fallback = DOMAIN_LABEL_MAP[DEFAULT_LOCALE]?.[domain];
+  return fallback || domain;
 }

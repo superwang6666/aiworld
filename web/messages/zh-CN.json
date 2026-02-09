@@ -174,7 +174,13 @@
     "crossExpertConsensus": "Cross-Expert Consensus",
     "allExpertsAgree": "所有专家一致认为：",
     "emergentInsights": "涌现洞察",
-    "riskAssessment": "风险评估"
+    "riskAssessment": "风险评估",
+    "lawRuleCount": "{count} 条规则",
+    "expertProfessionalOpinion": "专业意见",
+    "collapseContent": "收起内容",
+    "expandFullText": "展开全文",
+    "riskWarning": "风险警告",
+    "actionSuggestion": "行动建议"
   },
   "Laws": {
     "Space": "空间法则",

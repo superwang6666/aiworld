@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import type { LawWeight, DEACAnalysis } from "@/types";
 
@@ -27,7 +27,8 @@ export default function AdvancedAnalysisModal({
   deacAnalysis,
 }: AdvancedAnalysisModalProps) {
   const t = useTranslations("Validation");
-  const adaptedData = adaptDEACAnalysis(deacAnalysis);
+  const locale = useLocale() as 'zh-CN' | 'en';
+  const adaptedData = adaptDEACAnalysis(deacAnalysis, locale);
 
   if (!isOpen) return null;
 

@@ -93,7 +93,7 @@ export default function SynthesisConsensus({
             {consensusItems.map((item, index) => (
               <p key={index} className="flex items-start gap-2">
                 <span className="text-[#39ff14] font-medium flex-shrink-0">
-                  {index + 1}）
+                  {index + 1}.
                 </span>
                 <span>{item}</span>
               </p>
