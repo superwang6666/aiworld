@@ -104,12 +104,44 @@ async function queryExpert(
 
   const openai = new OpenAI({ apiKey, baseURL });
 
+  // 根据专家的 locale 决定使用的语言
+  const isEnglish = expert.locale === "en";
+  const separator = isEnglish ? ", " : "、";
+
   // 填充提示词模板
   const systemPrompt = expert.prompt_template
     .replace("{{heterogeneity_point}}", heterogeneity_point)
-    .replace("{{knowledge_scope}}", expert.knowledge_scope.join("、"));
+    .replace("{{knowledge_scope}}", expert.knowledge_scope.join(separator));
 
-  const userPrompt = `核心异质点: ${heterogeneity_point}
+  const userPrompt = isEnglish
+    ? `Core Heterogeneity Point: ${heterogeneity_point}
+
+${
+  context.validation_result
+    ? `
+Validation Context:
+- Uniqueness Score: ${context.validation_result.uniquenessScore}/100
+- Core Anomaly Identified: ${context.validation_result.coreAnomalyIdentified}
+- Eraser Test Verdict: ${context.validation_result.eraserTest.verdict}
+`
+    : ""
+}
+
+Please provide your expert analysis in valid JSON format:
+{
+  "analysis": "Your main expert insights (2-3 paragraphs)",
+  "law_impacts": [
+    {
+      "law": "Law name",
+      "prediction": "Specific prediction for this law",
+      "confidence": 0.85
+    }
+  ],
+  "warnings": ["Warning 1", "Warning 2"],
+  "suggestions": ["Suggestion 1", "Suggestion 2"],
+  "reasoning_trace": "Optional: Show your reasoning process"
+}`
+    : `核心异质点: ${heterogeneity_point}
 
 ${
   context.validation_result
@@ -168,14 +200,19 @@ ${
     };
   } catch (error) {
     logger.error("Expert query failed", { expertName: expert.name, error });
-    // 返回错误响应
+    // 返回错误响应（根据专家语言）
+    const isEnglish = expert.locale === "en";
     return {
       expert_id: expert.id,
       expert_name: expert.name,
       domain: expert.domain,
-      analysis: "专家分析暂时不可用",
+      analysis: isEnglish
+        ? "Expert analysis temporarily unavailable"
+        : "专家分析暂时不可用",
       law_impacts: [],
-      warnings: ["专家响应失败"],
+      warnings: [
+        isEnglish ? "Expert response failed" : "专家响应失败",
+      ],
       suggestions: [],
       timestamp: new Date().toISOString(),
     };

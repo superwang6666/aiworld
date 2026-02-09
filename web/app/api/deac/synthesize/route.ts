@@ -5,6 +5,8 @@ import OpenAI from "openai";
 
 import type { ExpertResponse } from "@/types";
 
+import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
+
 import {
   synthesizeWithWeights,
   detectDisagreements,
@@ -12,6 +14,9 @@ import {
   identifyConsensus,
 } from "@/lib/deac/weighted-synthesis";
 import { logger } from "@/lib/utils/logger";
+import { loadSynthesizePrompts } from "@/lib/utils/prompt-loader";
+
+import type { Locale } from "@/types/i18n";
 
 /**
  * POST /api/deac/synthesize
@@ -39,12 +44,18 @@ import { logger } from "@/lib/utils/logger";
  */
 export async function POST(request: NextRequest) {
   try {
-    const { expert_responses, heterogeneity_point, law_weights } =
+    const { expert_responses, heterogeneity_point, law_weights, locale: requestLocale } =
       await request.json();
 
     if (!expert_responses || expert_responses.length === 0) {
       return NextResponse.json({ error: "没有提供专家响应" }, { status: 400 });
     }
+
+    // 验证并获取语言设置
+    const locale: Locale =
+      requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
+        ? requestLocale
+        : DEFAULT_LOCALE;
 
     // ==================== 加权综合算法 ====================
     let weightedPredictions = null;
@@ -85,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     const openai = new OpenAI({ apiKey, baseURL });
 
-    // 增强的提示词，包含算法结果
+    // 从 i18n 加载提示词
     const mathInsightsSection = mathConsensus
       ? `
 加权综合算法结果:
@@ -95,42 +106,33 @@ export async function POST(request: NextRequest) {
 `
       : "";
 
-    const synthesis_prompt = `你是世界构建综合 AI,负责整合多个专家视角。
-
-核心异质点: ${heterogeneity_point}
-${mathInsightsSection}
-专家分析:
-${expert_responses
-  .map(
-    (r: ExpertResponse, i: number) => `
+    const expertAnalyses = expert_responses
+      .map(
+        (r: ExpertResponse, i: number) => `
 专家 ${i + 1}: ${r.expert_name} (${r.domain})
 ${r.analysis}
 ${r.warnings?.length ? `警告: ${r.warnings.join("; ")}` : ""}
 `,
-  )
-  .join("\n---\n")}
+      )
+      .join("\n---\n");
 
-请通过以下方式综合这些视角:
-1. 识别专家达成共识的地方(共识点)
-2. 突出分歧(专家对同一主题的不同观点)
-3. 提取涌现洞察(结合多个视角产生的新想法)${emergentInsights.length > 0 ? "\n   注意: 算法已生成基础洞察，请在此基础上深化" : ""}
-4. 提供整体风险评估
+    const emergentNote = emergentInsights.length > 0
+      ? "\n   注意: 算法已生成基础洞察，请在此基础上深化"
+      : "";
 
-重要: 必须返回严格有效的 JSON 格式，不要包含任何额外的文本或解释。
-所有字符串值必须使用标准英文双引号(")，不要使用中文引号('')或其他特殊引号。
-字符串内的引号必须正确转义为 \"。结构如下:
-{
-  "consensus": "专家共识的详细描述",
-  "disagreements": [{"topic": "分歧主题", "perspectives": [{"expert": "专家名", "view": "观点"}]}],
-  "emergent_insights": ["洞察1", "洞察2"],
-  "risk_assessment": "综合风险评估"
-}`;
+    const prompts = loadSynthesizePrompts(locale);
+    const userPrompt = prompts.userTemplate(
+      heterogeneity_point,
+      mathInsightsSection,
+      expertAnalyses,
+      emergentNote
+    );
 
     const completion = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: "你是世界构建的专家综合 AI。" },
-        { role: "user", content: synthesis_prompt },
+        { role: "system", content: prompts.system },
+        { role: "user", content: userPrompt },
       ],
       temperature: 0.7,
       response_format: { type: "json_object" },

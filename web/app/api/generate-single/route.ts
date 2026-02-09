@@ -15,6 +15,7 @@ import {
 import { generateTagsForRule } from "@/lib/tags/tag-generator";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+import { loadGenerateSinglePrompts } from "@/lib/utils/prompt-loader";
 import { getServerTranslation } from "@/lib/utils/server-translations";
 
 import type { Locale} from "@/types/i18n";
@@ -53,30 +54,16 @@ export async function POST(request: NextRequest) {
 
     const { openai, model } = getOpenAIClient();
 
-    const baseSystemPrompt = `You are an expert world-builder specializing in the "${validLaw.name}" law (${validLaw.description}).
-
-Generate ONE specific, practical rule for a world based on the provided Core Premise and Art Style.
-The rule must be related to the "${validLaw.name}" law domain.
-
-Examples: "Police sirens require citizens to stop and pray", "Water is only traded at night".
-
-CRITICAL JSON FORMAT RULES:
-1. Use ONLY double quotes (") for all strings - NEVER use single quotes (')
-2. All property names must use double quotes
-3. All string values must use double quotes
-
-Format the rule as a JSON object with these exact fields:
-{ "law": "${validLaw.name}", "rule": "Description", "expert_logic": "Why this exists" }
-
-Return a JSON object with a "rule" key containing the rule object.
-Format: { "rule": {...} }
-
-Do not include any other text or markdown formatting.`;
+    // 从 i18n 加载提示词
+    const prompts = loadGenerateSinglePrompts(
+      locale,
+      validLaw.name,
+      validLaw.description
+    );
 
     // 添加语言指令
-    const systemPrompt = createLanguageAwareSystemPrompt(baseSystemPrompt, locale);
-
-    const userPrompt = `Core Premise: ${corePremise}\nArt Style: ${artStyle}`;
+    const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
+    const userPrompt = prompts.userTemplate(corePremise, artStyle);
 
     const completion = await openai.chat.completions.create({
       model: model,

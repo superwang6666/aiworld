@@ -3,30 +3,38 @@ import path from "path";
 
 import type { ExpertConfig } from "@/types";
 
+
+import { DEFAULT_LOCALE } from "@/types/i18n";
+
+import { getExpertsDir } from "@/lib/experts/path-utils";
 import { logger } from "@/lib/utils/logger";
 
-const SPECIAL_EXPERTS_DIR = path.join(
-  process.cwd(),
-  "lib",
-  "experts",
-  "special",
-);
+import type { Locale } from "@/types/i18n";
 
 /**
  * 缓存生成的特殊专家以供将来重用
+ *
+ * @param expert - 专家配置
+ * @param locale - 目标语言 (默认: 'zh-CN')
  */
-export async function cacheSpecialExpert(expert: ExpertConfig): Promise<void> {
+export async function cacheSpecialExpert(
+  expert: ExpertConfig,
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<void> {
   try {
-    // 确保目录存在
-    await fs.mkdir(SPECIAL_EXPERTS_DIR, { recursive: true });
+    const targetDir = getExpertsDir("special", locale);
 
-    const filePath = path.join(SPECIAL_EXPERTS_DIR, `${expert.id}.json`);
+    // 确保目录存在
+    await fs.mkdir(targetDir, { recursive: true });
+
+    const filePath = path.join(targetDir, `${expert.id}.json`);
     await fs.writeFile(filePath, JSON.stringify(expert, null, 2), "utf-8");
 
-    logger.info("Cached special expert", { expertId: expert.id });
+    logger.info("Cached special expert", { expertId: expert.id, locale });
   } catch (error) {
     logger.error("Failed to cache special expert", {
       expertId: expert.id,
+      locale,
       error,
     });
   }
@@ -34,10 +42,18 @@ export async function cacheSpecialExpert(expert: ExpertConfig): Promise<void> {
 
 /**
  * 检查缓存中是否存在特殊专家
+ *
+ * @param expertId - 专家 ID
+ * @param locale - 目标语言 (默认: 'zh-CN')
+ * @returns 是否存在
  */
-export async function hasCachedExpert(expertId: string): Promise<boolean> {
+export async function hasCachedExpert(
+  expertId: string,
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<boolean> {
   try {
-    const filePath = path.join(SPECIAL_EXPERTS_DIR, `${expertId}.json`);
+    const targetDir = getExpertsDir("special", locale);
+    const filePath = path.join(targetDir, `${expertId}.json`);
     await fs.access(filePath);
     return true;
   } catch {
@@ -47,21 +63,29 @@ export async function hasCachedExpert(expertId: string): Promise<boolean> {
 
 /**
  * 按领域关键词搜索已缓存的特殊专家
+ *
+ * @param keywords - 关键词数组
+ * @param locale - 目标语言 (默认: 'zh-CN')
+ * @returns 匹配的专家配置数组
  */
 export async function findCachedExpertsByDomain(
   keywords: string[],
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<ExpertConfig[]> {
   try {
-    const files = await fs.readdir(SPECIAL_EXPERTS_DIR);
+    const targetDir = getExpertsDir("special", locale);
+    const files = await fs.readdir(targetDir);
     const jsonFiles = files.filter((f) => f.endsWith(".json"));
 
     const experts = await Promise.all(
       jsonFiles.map(async (file) => {
         const content = await fs.readFile(
-          path.join(SPECIAL_EXPERTS_DIR, file),
+          path.join(targetDir, file),
           "utf-8",
         );
-        return JSON.parse(content) as ExpertConfig;
+        const expert = JSON.parse(content) as ExpertConfig;
+        expert.locale = locale;
+        return expert;
       }),
     );
 
@@ -76,3 +100,4 @@ export async function findCachedExpertsByDomain(
     return [];
   }
 }
+

@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+
+import { DEFAULT_LOCALE } from "@/types/i18n";
+
 import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
 import { analyzeGaps } from "@/lib/experts/gap-analyzer";
 import { loadCoreExperts } from "@/lib/experts/loader";
@@ -17,7 +20,8 @@ import { generateSpecialExpert } from "@/lib/experts/prompt-architect";
  *   heterogeneity_point: string,
  *   gap_analysis: GapAnalysis,
  *   context: DEACContext,
- *   generate_special_experts: boolean (默认: true)
+ *   generate_special_experts: boolean (默认: true),
+ *   locale?: Locale
  * }
  *
  * 响应:
@@ -34,10 +38,11 @@ export async function POST(request: NextRequest) {
       gap_analysis,
       context,
       generate_special_experts = true,
+      locale = DEFAULT_LOCALE,
     } = await request.json();
 
-    // 加载核心专家
-    const coreExperts = await loadCoreExperts();
+    // 加载核心专家（使用指定语言）
+    const coreExperts = await loadCoreExperts(locale);
 
     // 如果未提供 gap_analysis,则计算它
     let finalGapAnalysis = gap_analysis;
@@ -46,10 +51,11 @@ export async function POST(request: NextRequest) {
         heterogeneity_point,
         validation_result: context.validation_result,
         available_experts: coreExperts,
+        locale,
       });
     }
 
-    // 如果需要,生成特殊专家
+    // 如果需要,生成特殊专家（使用指定语言）
     const specialExperts = [];
     if (
       generate_special_experts &&
@@ -57,16 +63,19 @@ export async function POST(request: NextRequest) {
     ) {
       for (const gap of finalGapAnalysis.special_expertise_needed) {
         try {
-          const specialExpert = await generateSpecialExpert({
-            domain: gap.domain,
-            reason: gap.reason,
-            knowledge_scope: gap.suggested_knowledge,
-            heterogeneity_point,
-            validation_result: context.validation_result,
-          });
+          const specialExpert = await generateSpecialExpert(
+            {
+              domain: gap.domain,
+              reason: gap.reason,
+              knowledge_scope: gap.suggested_knowledge,
+              heterogeneity_point,
+              validation_result: context.validation_result,
+            },
+            locale,
+          );
 
-          // 缓存以备将来使用
-          await cacheSpecialExpert(specialExpert);
+          // 缓存以备将来使用（使用指定语言）
+          await cacheSpecialExpert(specialExpert, locale);
           specialExperts.push(specialExpert);
         } catch (_error) {
           // Error handled silently

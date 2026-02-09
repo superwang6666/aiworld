@@ -1,20 +1,16 @@
-/**
- * 智能专家匹配器
- *
- * 功能:
- * 1. 分析已缓存的特殊专家与新需求的相似度
- * 2. 决定是复用、更新还是创建新专家
- * 3. 合并重复专家的知识领域
- */
-
 import OpenAI from "openai";
 
 import type { ExpertConfig } from "@/types";
+
+
+import { DEFAULT_LOCALE } from "@/types/i18n";
 
 import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
 import { logger } from "@/lib/utils/logger";
 
 import { loadAllSpecialExperts } from "./loader";
+
+import type { Locale } from "@/types/i18n";
 
 interface MatchResult {
   action: "reuse" | "update" | "create";
@@ -174,9 +170,10 @@ ${JSON.stringify(existingExpert, null, 2)}
  */
 export async function smartMatchExpert(
   request: SpecialExpertRequest,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<MatchResult> {
-  // 1. 加载所有已缓存的特殊专家
-  const cachedExperts = await loadAllSpecialExperts();
+  // 1. 加载所有已缓存的特殊专家（使用指定语言）
+  const cachedExperts = await loadAllSpecialExperts(locale);
 
   if (cachedExperts.length === 0) {
     return {

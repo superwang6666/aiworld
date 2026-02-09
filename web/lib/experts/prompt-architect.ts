@@ -2,10 +2,17 @@ import OpenAI from "openai";
 
 import type { ExpertConfig, ValidationResult } from "@/types";
 
+
+import { DEFAULT_LOCALE } from "@/types/i18n";
+
 import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
 import { logger } from "@/lib/utils/logger";
+import { loadPrompt } from "@/lib/utils/prompt-loader";
 
 import { smartMatchExpert } from "./expert-matcher";
+import { getFallbackLocale } from "./path-utils";
+
+import type { Locale } from "@/types/i18n";
 
 interface SpecialExpertRequest {
   domain: string;
@@ -22,14 +29,19 @@ interface SpecialExpertRequest {
  * 1. 检查已缓存的特殊专家
  * 2. 如果找到相似的专家则复用或更新
  * 3. 只在必要时创建新专家
+ *
+ * @param request - 专家请求
+ * @param locale - 目标语言 (默认: 'zh-CN')
+ * @returns 专家配置
  */
 export async function generateSpecialExpert(
   request: SpecialExpertRequest,
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<ExpertConfig> {
-  logger.info("Smart matching expert for domain", { domain: request.domain });
+  logger.info("Smart matching expert for domain", { domain: request.domain, locale });
 
   // 使用智能匹配器
-  const matchResult = await smartMatchExpert(request);
+  const matchResult = await smartMatchExpert(request, locale);
 
   if (matchResult.action === "reuse") {
     logger.info("Reusing existing expert", { reason: matchResult.reason });
@@ -38,16 +50,28 @@ export async function generateSpecialExpert(
     logger.info("Updating existing expert", { reason: matchResult.reason });
     return matchResult.expert!;
   } else {
-    logger.info("Creating new special expert", { reason: matchResult.reason });
+    logger.info("Creating new special expert", { reason: matchResult.reason, locale });
 
-    // 创建新专家
-    const newExpert = await generateNewSpecialExpert(request);
+    // 创建新专家（主语言）
+    const newExpert = await generateNewSpecialExpert(request, locale);
 
-    // 缓存新专家
-    await cacheSpecialExpert(newExpert);
+    // 缓存新专家（主语言）
+    await cacheSpecialExpert(newExpert, locale);
+
+    // 异步生成另一种语言版本（不阻塞）
+    const otherLocale = getFallbackLocale(locale);
+    generateNewSpecialExpert(request, otherLocale)
+      .then((otherExpert) => cacheSpecialExpert(otherExpert, otherLocale))
+      .catch((error) =>
+        logger.error("Background locale generation failed", {
+          error,
+          locale: otherLocale,
+        }),
+      );
 
     logger.info("New expert created and cached", {
       expertName: newExpert.name,
+      locale,
     });
     return newExpert;
   }
@@ -55,9 +79,14 @@ export async function generateSpecialExpert(
 
 /**
  * 使用 LLM 生成新的特殊专家配置(内部函数)
+ *
+ * @param request - 专家请求
+ * @param locale - 目标语言
+ * @returns 专家配置
  */
 async function generateNewSpecialExpert(
   request: SpecialExpertRequest,
+  locale: Locale,
 ): Promise<ExpertConfig> {
   const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
   const baseURL = process.env.DEEPSEEK_API_KEY
@@ -67,51 +96,31 @@ async function generateNewSpecialExpert(
 
   const openai = new OpenAI({ apiKey, baseURL });
 
-  const generation_prompt = `你是提示词建筑师代理(Prompt Architect Agent),负责为世界构建分析创建专家角色。
-
-**任务:** 为分析这个核心异质点生成一个专业化的专家配置。
-
-**所需专业领域:** ${request.domain}
-**需要原因:** ${request.reason}
-**核心异质点:** ${request.heterogeneity_point}
-**知识领域:** ${request.knowledge_scope.join("、")}
-
-**指示:**
-1. 创建一个独特的专家角色,有一个易记的中文名字(如"XXX博士"或"XXX教授")
-2. 定义他们具体的 knowledge_scope (5-8项,用中文)
-3. 将他们映射到主要和次要法则: Space(空间), Survival(生存), Cognition(认知), Scarcity(稀缺), Time(时间), Power(权力), Metaphysics(形而上)
-4. 编写详细的 prompt_template 来指导该专家的分析(使用 {{heterogeneity_point}} 和 {{knowledge_scope}} 作为占位符,用中文撰写)
-5. 选择 reasoning_style: analytical(分析型), holistic(整体型), adversarial(批判型), speculative(推测型), 或 empirical(实证型)
-6. 设置 expertise_depth (1-10, 对特殊专家使用 6-9)
-7. 添加相关的 specialization_tags(用中文)
-
-只返回有效的 JSON,必须严格符合以下结构:
-{
-  "id": "kebab-case-id",
-  "version": "1.0.0",
-  "name": "博士/教授全名",
-  "domain": "${request.domain}",
-  "knowledge_scope": ["项目1", "项目2"],
-  "law_mapping": {
-    "primary": ["Law1", "Law2"],
-    "secondary": ["Law3"]
-  },
-  "prompt_template": "你是[姓名]...",
-  "reasoning_style": "analytical",
-  "expertise_depth": 7,
-  "specialization_tags": ["标签1", "标签2"],
-  "created_by": "prompt_architect",
-  "created_at": "${new Date().toISOString()}"
-}`;
+  // 从 i18n 加载提示词
+  const systemMessage = loadPrompt(
+    "ExpertSystem.promptArchitect.systemMessage",
+    locale,
+  );
+  const generationPrompt = loadPrompt(
+    "ExpertSystem.promptArchitect.generationPrompt",
+    locale,
+    {
+      domain: request.domain,
+      reason: request.reason,
+      heterogeneityPoint: request.heterogeneity_point,
+      knowledgeScope: request.knowledge_scope.join(locale === "zh-CN" ? "、" : ", "),
+      createdAt: new Date().toISOString(),
+    },
+  );
 
   const completion = await openai.chat.completions.create({
     model,
     messages: [
       {
         role: "system",
-        content: "你是提示词建筑师代理。仅生成有效的 JSON 格式的专家配置。",
+        content: systemMessage,
       },
-      { role: "user", content: generation_prompt },
+      { role: "user", content: generationPrompt },
     ],
     temperature: 0.8,
     response_format: { type: "json_object" },
@@ -123,5 +132,6 @@ async function generateNewSpecialExpert(
   content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
   const expertConfig = JSON.parse(content);
+  expertConfig.locale = locale; // 标记语言
   return expertConfig as ExpertConfig;
 }

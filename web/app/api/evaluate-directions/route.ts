@@ -1,13 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { EVALUATION_CONFIG } from "@/config/evaluation-rules";
-
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
 
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+import { loadEvaluateDirectionsPrompts } from "@/lib/utils/prompt-loader";
 
 import type { Locale} from "@/types/i18n";
 
@@ -30,15 +29,13 @@ export async function POST(request: NextRequest) {
 
     const { openai, model } = getOpenAIClient();
 
+    // 从 i18n 加载提示词
+    const prompts = loadEvaluateDirectionsPrompts(locale);
+    const lawImpactsJson = JSON.stringify(lawImpacts, null, 2);
+    const userPrompt = prompts.userTemplate(lawImpactsJson);
+
     // 添加语言指令
-    const systemPrompt = createLanguageAwareSystemPrompt(EVALUATION_CONFIG.systemPrompt, locale);
-
-    const userPrompt = `Law Impacts to Evaluate:
-${JSON.stringify(lawImpacts, null, 2)}
-
-Please evaluate each direction against the criteria defined in the system prompt above.
-
-IMPORTANT: Return your response in valid JSON format following the structure specified in the system prompt.`;
+    const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
 
     const completion = await openai.chat.completions.create({
       model: model,

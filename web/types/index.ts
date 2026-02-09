@@ -1,3 +1,5 @@
+import type { Locale } from './i18n';
+
 export type Law = 
   | "Space" 
   | "Survival" 
@@ -154,6 +156,7 @@ export interface ExpertConfig {
   specialization_tags?: string[];      // ["硬科幻", "世界构建"]
   created_by: "system" | "prompt_architect"; // 来源追踪
   created_at?: string;                 // ISO 时间戳 (特殊专家)
+  locale?: 'zh-CN' | 'en';             // 该专家配置的语言版本
 }
 
 /**
@@ -223,6 +226,7 @@ export interface DEACContext {
   validation_result?: ValidationResult; // 来自步骤 2
   art_style?: string;                   // 来自步骤 4
   current_step: "premise" | "validation" | "artStyle" | "rules";
+  locale?: Locale;                      // 用户选择的语言
   user_preferences?: {
     max_experts?: number;               // 限制专家数量
     prefer_brevity?: boolean;           // 更简短的响应

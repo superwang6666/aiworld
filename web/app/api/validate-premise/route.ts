@@ -9,6 +9,7 @@ import {
   getOpenAIClient,
   cleanAIJsonResponse,
 } from "@/lib/utils/openai-client";
+import { loadValidatePremisePrompts } from "@/lib/utils/prompt-loader";
 
 import type { Locale} from "@/types/i18n";
 
@@ -19,72 +20,6 @@ function getBaseUrl(): string {
   }
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000";
 }
-
-const VALIDATION_PROMPT = `You are an expert World-Building Validator specializing in the "Core Anomaly Verification" methodology.
-
-Your task is to analyze a proposed Core Premise and determine if it meets the criteria for a truly unique and "structural" (non-decorative) world-building foundation.
-
-## Validation Framework (Based on 核心设定检验原则)
-
-### 1. Core Anomaly Identification (核心异质点)
-- Identify which of the 7 Laws is being fundamentally disrupted
-- Determine if this is a superficial change or a deep structural transformation
-- The 7 Laws are: Space, Survival, Cognition, Scarcity, Time, Power, Metaphysics
-
-### 2. Domino Effect Test (逻辑压力测试)
-- Analyze how this core premise forces changes across ALL other laws
-- A true core premise should create a cascading effect across the entire world structure
-- For each law, predict ONE concrete change this premise would necessitate
-
-### 3. The Eraser Test (橡皮擦实验)
-- Create a test scenario (e.g., a wedding, a murder, a trade negotiation)
-- Show what happens if we "erase" the core premise and replace it with a mundane setting
-- Verdict:
-  * STRUCTURAL: The scenario becomes impossible/nonsensical without the premise
-  * DECORATIVE: The scenario still works fine in a normal setting
-
-### 4. Uniqueness Scoring (0-100)
-- 0-30: Generic/derivative (easily found in existing works)
-- 31-60: Interesting but not revolutionary (minor twist on known concepts)
-- 61-85: Highly unique (rarely seen, strong potential)
-- 86-100: Revolutionary (completely unprecedented, paradigm-shifting)
-
-## Response Format (STRICT JSON only)
-
-CRITICAL: You MUST return valid JSON with double quotes (") only. NO single quotes (').
-All string values must use double quotes. Use proper JSON escaping for any quotes within strings.
-
-Return a JSON object with this exact structure:
-{
-  "isUnique": true,
-  "uniquenessScore": 75,
-  "coreAnomalyIdentified": "Which law is being disrupted and how",
-  "lawImpacts": [
-    {
-      "law": "Space",
-      "impact": "Brief description of how this law is affected",
-      "example": "One concrete example of this impact"
-    }
-  ],
-  "eraserTest": {
-    "originalScenario": "A scenario in this world (2-3 sentences)",
-    "replacementScenario": "The same scenario in a normal/mundane world (2-3 sentences)",
-    "analysis": "Explanation of what breaks or changes",
-    "verdict": "structural"
-  },
-  "warnings": [
-    "Array of potential issues or weaknesses in the premise"
-  ],
-  "recommendations": [
-    "Array of suggestions to strengthen the core premise"
-  ]
-}
-
-IMPORTANT RULES:
-1. Use ONLY double quotes (") for all strings - NEVER use single quotes (')
-2. Include all 7 laws in lawImpacts array (Space, Survival, Cognition, Scarcity, Time, Power, Metaphysics)
-3. verdict must be exactly "structural" or "decorative" (lowercase, double quotes)
-4. Be brutally honest. A weak premise should score low. Don't inflate scores out of politeness.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,10 +41,12 @@ export async function POST(request: NextRequest) {
     // Get configured OpenAI client
     const { openai, model } = getOpenAIClient();
 
-    const userPrompt = `Core Premise to validate:\n\n${corePremise}`;
+    // 从 i18n 加载提示词
+    const prompts = loadValidatePremisePrompts(locale);
+    const userPrompt = prompts.userTemplate(corePremise);
 
     // 创建带语言指令的系统提示词
-    const systemPrompt = createLanguageAwareSystemPrompt(VALIDATION_PROMPT, locale);
+    const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
 
     const completion = await openai.chat.completions.create({
       model: model,
