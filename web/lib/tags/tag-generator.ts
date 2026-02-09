@@ -2,9 +2,16 @@ import OpenAI from "openai";
 
 import type { WorldRule, RuleTag } from "@/types";
 
+
 import { PREDEFINED_TAGS } from "@/config/predefined-tags";
 
+
 import { logger } from "@/lib/utils/logger";
+import { getServerTranslation } from '@/lib/utils/server-translations';
+
+import { KEYWORDS_ZH, KEYWORDS_EN } from './keywords-i18n';
+
+import type { Locale } from '@/types/i18n';
 
 /**
  * LLM标签生成器
@@ -21,7 +28,7 @@ function getOpenAIClient(): OpenAI {
   if (!openaiClient) {
     const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      throw new Error("缺少API密钥: DEEPSEEK_API_KEY或OPENAI_API_KEY未设置");
+      throw new Error(getServerTranslation('Tags', 'missingApiKey', 'zh-CN'));
     }
 
     openaiClient = new OpenAI({
@@ -40,50 +47,20 @@ function getOpenAIClient(): OpenAI {
  * 使用关键词匹配算法
  *
  * @param rule 世界规则
+ * @param locale 语言环境
  * @returns 匹配的预定义标签ID数组
  */
-export function matchPredefinedTags(rule: WorldRule): string[] {
+export function matchPredefinedTags(rule: WorldRule, locale: Locale = 'zh-CN'): string[] {
   const ruleText = (rule.rule + " " + rule.expert_logic).toLowerCase();
   const matched: string[] = [];
 
-  // 关键词映射 (标签ID -> 关键词列表)
-  const keywordMap: Record<string, string[]> = {
-    // Tone
-    brutal: ["残酷", "暴力", "痛苦", "严酷", "无情", "死亡"],
-    hopeful: ["希望", "乐观", "光明", "向上", "积极"],
-    mysterious: ["神秘", "未知", "隐秘", "不可解", "谜"],
-    absurd: ["荒诞", "矛盾", "不合理", "反常", "怪异"],
-    dark: ["黑暗", "阴暗", "恐怖", "压抑", "绝望"],
-    whimsical: ["奇幻", "梦幻", "超现实", "魔幻", "童话"],
-
-    // Mechanism
-    cyclic: ["循环", "周期", "重复", "往复", "轮回"],
-    irreversible: ["不可逆", "永久", "无法回头", "一去不返"],
-    cascading: ["连锁", "雪崩", "扩散", "蔓延", "传播"],
-    resource_based: ["资源", "能量", "消耗", "储备", "积累"],
-    time_sensitive: ["时间", "时限", "截止", "过期", "倒计时"],
-    accumulative: ["累积", "叠加", "堆积", "积累", "增长"],
-    threshold_based: ["阈值", "临界", "突破", "达到", "超过"],
-
-    // Narrative
-    paradox: ["矛盾", "悖论", "自相矛盾", "冲突"],
-    emergent: ["浮现", "涌现", "突现", "自发"],
-    hierarchical: ["层级", "等级", "阶层", "等次"],
-    distributed: ["分布", "分散", "去中心", "多点"],
-    symbolic: ["象征", "符号", "寓意", "隐喻"],
-
-    // Logic
-    causal: ["因果", "导致", "引起", "造成", "原因"],
-    probabilistic: ["概率", "随机", "可能", "机会", "几率"],
-    deterministic: ["决定", "必然", "确定", "注定"],
-    conditional: ["条件", "如果", "当", "只有", "前提"],
-    reciprocal: ["互惠", "相互", "交换", "对等", "回报"],
-  };
+  // 根据 locale 选择关键词映射
+  const keywords = locale === 'zh-CN' ? KEYWORDS_ZH : KEYWORDS_EN;
 
   // 遍历每个标签,检查关键词匹配
-  Object.keys(keywordMap).forEach((tagId) => {
-    const keywords = keywordMap[tagId];
-    const hasMatch = keywords.some((keyword) => ruleText.includes(keyword));
+  Object.keys(keywords).forEach((tagId) => {
+    const tagKeywords = keywords[tagId];
+    const hasMatch = tagKeywords.some((keyword) => ruleText.includes(keyword.toLowerCase()));
 
     if (hasMatch) {
       matched.push(tagId);

@@ -272,3 +272,33 @@ export function getPredefinedTagById(id: string): RuleTag | undefined {
 export function getTagsByCategory(category: RuleTag['category']): RuleTag[] {
   return PREDEFINED_TAGS.filter((tag) => tag.category === category);
 }
+
+import en from '@/messages/en.json';
+import zhCN from '@/messages/zh-CN.json';
+
+import type { Locale } from '@/types/i18n';
+
+/**
+ * 获取标签的本地化名称
+ */
+export function getTagName(tagId: string, locale: Locale = 'zh-CN'): string {
+  const translations = locale === 'zh-CN' ? zhCN : en;
+  return (translations as any).Tags?.[tagId] || tagId;
+}
+
+/**
+ * 获取标签类别的本地化名称
+ */
+export function getCategoryLabel(category: string, locale: Locale = 'zh-CN'): string {
+  const translations = locale === 'zh-CN' ? zhCN : en;
+  return (translations as any).Tags?.[category] || category;
+}
+
+/**
+ * 获取标签类别的本地化描述
+ */
+export function getCategoryDescription(category: string, locale: Locale = 'zh-CN'): string {
+  const translations = locale === 'zh-CN' ? zhCN : en;
+  const key = `${category}Description`;
+  return (translations as any).Tags?.[key] || '';
+}

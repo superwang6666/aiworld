@@ -1,7 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { DEFAULT_LOCALE } from "@/types/i18n";
+
 import { generateTagsForRules } from "@/lib/tags/tag-generator";
+import { getServerTranslation } from "@/lib/utils/server-translations";
+
+import type { Locale } from "@/types/i18n";
 
 /**
  * POST /api/tags/generate
@@ -21,9 +26,15 @@ import { generateTagsForRules } from "@/lib/tags/tag-generator";
  * }
  */
 export async function POST(req: NextRequest) {
+  // 获取语言设置
+  let locale: Locale = DEFAULT_LOCALE;
+
   try {
     const body = await req.json();
-    const { rules, tagWeights } = body;
+    const { rules, tagWeights, locale: requestLocale } = body;
+
+    // 更新语言设置
+    locale = requestLocale || DEFAULT_LOCALE;
 
     // 验证请求
     if (!rules || !Array.isArray(rules)) {
@@ -72,7 +83,7 @@ export async function POST(req: NextRequest) {
     // Error handled silently
     return NextResponse.json(
       {
-        error: "标签生成失败",
+        error: getServerTranslation('Validation', 'tagGenerationFailed', locale),
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

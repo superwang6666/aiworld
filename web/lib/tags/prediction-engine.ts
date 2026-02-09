@@ -1,5 +1,9 @@
 import type { WorldRule, RuleTag } from "@/types";
 
+import { getServerTranslation } from '@/lib/utils/server-translations';
+
+import type { Locale } from '@/types/i18n';
+
 /**
  * 预测删除引擎
  *
@@ -99,12 +103,14 @@ export function getRiskLevel(rule: WorldRule): "none" | "warning" | "danger" {
  * @param rules 所有规则
  * @param tagWeights 标签权重映射
  * @param limit 返回数量限制 (默认5条)
+ * @param locale 语言环境
  * @returns 建议删除的规则数组
  */
 export function generateDeletionSuggestions(
   rules: WorldRule[],
   tagWeights: Record<string, RuleTag>,
   limit: number = 5,
+  locale: Locale = 'zh-CN',
 ): Array<{
   rule: WorldRule;
   deletion_score: number;
@@ -127,8 +133,8 @@ export function generateDeletionSuggestions(
 
       const reason =
         lowWeightTags.length > 0
-          ? `包含低评分标签: ${lowWeightTags.join(", ")}`
-          : "基于您的偏好,这条规则可能不符合您的审美";
+          ? `${getServerTranslation('Tags', 'containsLowRatedTags', locale)}: ${lowWeightTags.join(", ")}`
+          : getServerTranslation('Tags', 'mayNotMatchPreference', locale);
 
       return {
         rule: { ...rule, deletion_score: score },

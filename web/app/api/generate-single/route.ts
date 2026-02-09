@@ -15,6 +15,7 @@ import {
 import { generateTagsForRule } from "@/lib/tags/tag-generator";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
+import { getServerTranslation } from "@/lib/utils/server-translations";
 
 import type { Locale} from "@/types/i18n";
 
@@ -239,7 +240,7 @@ Do not include any other text or markdown formatting.`;
           } else {
             return NextResponse.json(
               {
-                error: "无法生成不重复的规则,请稍后重试",
+                error: getServerTranslation('Validation', 'cannotGenerateUniqueRule', locale),
                 retries: retryCount,
                 similarity: duplicationCheck.similarity,
                 reasoning: duplicationCheck.reasoning,
@@ -258,7 +259,7 @@ Do not include any other text or markdown formatting.`;
     }
 
     if (!finalRule) {
-      throw new Error("未能生成有效规则");
+      throw new Error(getServerTranslation('Validation', 'failedToGenerateValidRule', locale));
     }
 
     return NextResponse.json({

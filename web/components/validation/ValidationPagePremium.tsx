@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useTranslations } from "next-intl";
+
 import type {
   ValidationResult,
   LawWeight,
@@ -46,6 +48,7 @@ export default function ValidationPagePremium({
   onAccept,
   onReject,
 }: ValidationPagePremiumProps) {
+  const t = useTranslations("Validation");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluatedImpacts, setEvaluatedImpacts] = useState<LawImpact[]>(
@@ -99,7 +102,7 @@ export default function ValidationPagePremium({
           {/* Title */}
           <div className="mb-8 sm:mb-12">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-wider bg-gradient-to-b from-[#ebebf0] to-[#b4b9c3] bg-clip-text text-transparent mb-3">
-              验证报告
+              {t("validationReport")}
             </h1>
             <p className="text-[#7a7a88] text-sm sm:text-base">
               Core Anomaly Verification Protocol
@@ -123,7 +126,7 @@ export default function ValidationPagePremium({
           <div className="mb-8 sm:mb-12">
             <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl px-6 py-4 border border-[rgba(100,100,115,0.4)] backdrop-blur-sm">
               <label className="block text-sm font-bold text-[#c1c5cc] uppercase mb-3 font-mono">
-                Generation Mode
+                {t("generationMode")}
               </label>
               <div className="space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer group">
@@ -139,10 +142,10 @@ export default function ValidationPagePremium({
                   />
                   <div className="flex-1">
                     <div className="text-sm font-mono text-[#e5e5e5] group-hover:text-[#00ff88] transition-colors">
-                      <span className="font-bold">快速模式</span> (推荐)
+                      <span className="font-bold">{t("fastMode")}</span> ({t("recommended")})
                     </div>
                     <p className="text-xs text-gray-500 mt-1 font-mono">
-                      立即生成规则，基于法则权重。DEAC专家分析在后台异步运行，可稍后查看。
+                      {t("fastModeDescription")}
                     </p>
                   </div>
                 </label>
@@ -160,21 +163,21 @@ export default function ValidationPagePremium({
                   />
                   <div className="flex-1">
                     <div className="text-sm font-mono text-[#e5e5e5] group-hover:text-[#00ff88] transition-colors">
-                      <span className="font-bold">深度模式</span>
+                      <span className="font-bold">{t("deepMode")}</span>
                       <span className="ml-2 text-xs">
                         {deacLoading ? (
                           <span className="text-yellow-400">
-                            (专家分析中...)
+                            ({t("expertAnalysisInProgress")})
                           </span>
                         ) : deacAnalysis && deacAnalysis.expert_responses ? (
                           <span className="text-green-400">
-                            ✓ {deacAnalysis.expert_responses.length} 个专家就绪
+                            ✓ {deacAnalysis.expert_responses.length} {t("expertsReady")}
                           </span>
                         ) : null}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 mt-1 font-mono">
-                      等待DEAC专家分析完成后，整合专家洞察生成规则。耗时10-15秒，规则更具深度和一致性。
+                      {t("deepModeDescription")}
                     </p>
                   </div>
                 </label>
@@ -221,13 +224,13 @@ export default function ValidationPagePremium({
         <LoadingSpinner
           title={
             generationMode === "deep"
-              ? "正在深度生成世界规则..."
-              : "正在生成世界规则..."
+              ? t("generatingDeepRules")
+              : t("generatingRules")
           }
           subtitle={
             generationMode === "deep"
-              ? "整合专家洞察，构建深度规则体系"
-              : "基于法则权重，快速生成规则"
+              ? t("integratingExpertInsights")
+              : t("quickGeneratingRules")
           }
           fullScreen
         />

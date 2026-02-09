@@ -2,6 +2,9 @@ import type { WorldRule, LawWeight, DEACAnalysis, RuleTag } from "@/types";
 
 import { logger } from "@/lib/utils/logger";
 
+import type { Locale } from "@/types/i18n";
+
+
 /**
  * 生成选项接口
  */
@@ -12,6 +15,8 @@ export interface GenerationOptions {
   generationMode: "fast" | "deep";
   deacAnalysis?: DEACAnalysis;
   deacLoading: boolean;
+  locale?: Locale;
+  t?: (key: string) => string; // Translation function for error messages
 }
 
 /**
@@ -99,7 +104,10 @@ export async function generateRules(
       }
 
       if (deacLoading) {
-        throw new Error("专家分析超时，请切换到快速模式或稍后重试");
+        const errorMsg = options.t
+          ? options.t('expertAnalysisTimeout')
+          : "Expert analysis timeout, please switch to fast mode or try again later";
+        throw new Error(errorMsg);
       }
     }
 

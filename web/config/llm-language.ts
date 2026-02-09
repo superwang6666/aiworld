@@ -6,7 +6,7 @@ import type { Locale } from '@/types/i18n';
  */
 export const LLM_LANGUAGE_INSTRUCTIONS: Record<Locale, string> = {
   'zh-CN':
-    'IMPORTANT: You MUST respond in Chinese (简体中文). All text output, including rule descriptions, analysis, and feedback, must be in Chinese.',
+    '重要: 你的回答必须使用中文。所有文本输出，包括规则描述、分析和反馈，都必须是中文。',
   'en':
     'IMPORTANT: You MUST respond in English. All text output, including rule descriptions, analysis, and feedback, must be in English.',
 };
