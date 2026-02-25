@@ -1,18 +1,5 @@
 [
   {
-    "id": "544c3fcd-3281-41b2-8632-c092f39d6d0a",
-    "name": "world1",
-    "core_premise": "一个说谎就会重力增加的世界",
-    "created_at": "2026-01-20T06:55:58.367Z",
-    "updated_at": "2026-01-20T06:55:58.367Z",
-    "rules_count": 20,
-    "preview_rules": [
-      "每次说谎都会导致说谎者周围半径10米内重力增加0.1g，效果持续24小时，且重力增加会累积叠加，影响所有物体和生物。",
-      "社会建立了'重力缓冲仪式'，允许在医疗、艺术等必要职业中说谎，但需在专用'重力稳定室'中进行，由集体分担重力增加风险。",
-      "国际'真相仲裁机构'使用可验证的事实交换协议来稳定跨国重力环境，防止'谎言武器'开发导致的区域性重力灾难。"
-    ]
-  },
-  {
     "id": "151c10ba-8ce3-4277-9ff1-3628d41bb3ec",
     "name": "异度之刃(去重版)",
     "core_premise": "一个生活在鲸鱼背上的世界",
@@ -36,19 +23,6 @@
       "猫语以高频元音和嘶嘶声为基础，辅以尾巴姿态和耳朵角度作为语法标记，例如尾巴竖起表示肯定，平放表示疑问，用于日常交流和仪式场合。",
       "社会信仰崇拜'太阳神'作为温暖和狩猎能量的来源，每日黎明举行梳理毛发的集体仪式，以强化社群纽带和领地归属感。",
       "成年礼要求年轻猫独自在夜间狩猎一只小型虚拟数据生物，成功者获得气味标记作为社会身份凭证，失败者需接受社群监督直至完成。"
-    ]
-  },
-  {
-    "id": "913e5c93-fb20-4176-b674-55a98bd3c436",
-    "name": "World-2026/2/5",
-    "core_premise": "In a world where humans have vanished or retreated, players embody an animal navigating a transformed environment, using innate senses and abilities to uncover secrets and survive, blending atmospheric exploration with themes of decay, connection, and post-human society.",
-    "created_at": "2026-02-05T14:01:17.713Z",
-    "updated_at": "2026-02-05T14:01:17.734Z",
-    "rules_count": 21,
-    "preview_rules": [
-      "Animals communicate through a multi-modal language system integrating bioluminescent signals (visual), ultrasonic chirps (auditory), and pheromone trails (olfactory), with each species having distinct dialects based on their ecological niche.",
-      "Rituals such as the 'Scent Convergence' (where animals gather at decaying human structures to exchange pheromone-based memories) and 'Echo Mapping' (using resonant sounds to navigate ruins) form the core of cultural practices, reinforcing themes of connection and decay.",
-      "Belief systems are centered on 'The Great Withdrawal'—a mythologized event where humans vanished—interpreted through species-specific lenses: predators view it as a purification, prey as a liberation, and scavengers as an opportunity, shaping inter-species conflicts and alliances."
     ]
   },
   {
