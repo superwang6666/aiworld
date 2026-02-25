@@ -37,62 +37,62 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const experts = [
-    {
-      id: "geologist",
-      name: t('experts.geologist'),
-      color: "from-[rgba(139,69,19,0.95)] to-transparent",
-      borderColor: "border-[rgba(139,69,19,0.6)]",
-      textColor: "text-[#f4e4c1]",
-      image:
-        "https://images.unsplash.com/photo-1765606290905-b9d377ea4d5e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYW50YXN5JTIwd2FycmlvciUyMGNoYXJhY3RlcnxlbnwxfHx8fDE3NjkxMTY2NjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    },
-    {
-      id: "anthropologist",
-      name: t('experts.anthropologist'),
-      color: "from-[rgba(70,130,180,0.95)] to-transparent",
-      borderColor: "border-[rgba(70,130,180,0.6)]",
-      textColor: "text-[#e6f2ff]",
-      image:
-        "https://images.unsplash.com/photo-1741805190358-aff8c1c1d72a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxycGclMjBjaGFyYWN0ZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjkxODUyMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    },
-    {
-      id: "linguist",
-      name: t('experts.linguist'),
-      color: "from-[rgba(128,0,128,0.95)] to-transparent",
-      borderColor: "border-[rgba(128,0,128,0.6)]",
-      textColor: "text-[#f4d4ff]",
-      image:
-        "https://images.unsplash.com/photo-1692306088530-e81ab626753b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMHJvZ3VlJTIwdGhpZWZ8ZW58MXx8fHwxNzY5MTg1MjEyfDA&ixlib=rb-4.1.0&q=80&w=1080",
-    },
-    {
-      id: "economist",
-      name: t('experts.economist'),
-      color: "from-[rgba(218,165,32,0.95)] to-transparent",
-      borderColor: "border-[rgba(218,165,32,0.6)]",
-      textColor: "text-[#fff8dc]",
-      image:
-        "https://images.unsplash.com/photo-1644007497105-8d0ae9ec9754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMG1lcmNoYW50JTIwdHJhZGVyfGVufDF8fHx8MTc2OTE4NTIxMnww&ixlib=rb-4.1.0&q=80&w=1080",
-    },
-    {
-      id: "historian",
-      name: t('experts.historian'),
-      color: "from-[rgba(255,215,0,0.95)] to-transparent",
-      borderColor: "border-[rgba(255,215,0,0.6)]",
-      textColor: "text-[#fffacd]",
-      image:
-        "https://images.unsplash.com/photo-1644007497105-8d0ae9ec9754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMGNsZXJpYyUyMHByaWVzdHxlbnwxfHx8fDE3NjkxODUyMTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    },
-    {
-      id: "military_expert",
-      name: t('experts.military_expert'),
-      color: "from-[rgba(34,139,34,0.95)] to-transparent",
-      borderColor: "border-[rgba(34,139,34,0.6)]",
-      textColor: "text-[#e0ffe0]",
-      image:
-        "https://images.unsplash.com/photo-1606150062964-77af827610fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMGh1bnRlciUyMGFyY2hlcnxlbnwxfHx8fDE3NjkxODUyMTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-    },
-  ];
+  // const experts = [
+  //   {
+  //     id: "geologist",
+  //     name: t('experts.geologist'),
+  //     color: "from-[rgba(139,69,19,0.95)] to-transparent",
+  //     borderColor: "border-[rgba(139,69,19,0.6)]",
+  //     textColor: "text-[#f4e4c1]",
+  //     image:
+  //       "https://images.unsplash.com/photo-1765606290905-b9d377ea4d5e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYW50YXN5JTIwd2FycmlvciUyMGNoYXJhY3RlcnxlbnwxfHx8fDE3NjkxMTY2NjZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+  //   },
+  //   {
+  //     id: "anthropologist",
+  //     name: t('experts.anthropologist'),
+  //     color: "from-[rgba(70,130,180,0.95)] to-transparent",
+  //     borderColor: "border-[rgba(70,130,180,0.6)]",
+  //     textColor: "text-[#e6f2ff]",
+  //     image:
+  //       "https://images.unsplash.com/photo-1741805190358-aff8c1c1d72a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxycGclMjBjaGFyYWN0ZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjkxODUyMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+  //   },
+  //   {
+  //     id: "linguist",
+  //     name: t('experts.linguist'),
+  //     color: "from-[rgba(128,0,128,0.95)] to-transparent",
+  //     borderColor: "border-[rgba(128,0,128,0.6)]",
+  //     textColor: "text-[#f4d4ff]",
+  //     image:
+  //       "https://images.unsplash.com/photo-1692306088530-e81ab626753b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMHJvZ3VlJTIwdGhpZWZ8ZW58MXx8fHwxNzY5MTg1MjEyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+  //   },
+  //   {
+  //     id: "economist",
+  //     name: t('experts.economist'),
+  //     color: "from-[rgba(218,165,32,0.95)] to-transparent",
+  //     borderColor: "border-[rgba(218,165,32,0.6)]",
+  //     textColor: "text-[#fff8dc]",
+  //     image:
+  //       "https://images.unsplash.com/photo-1644007497105-8d0ae9ec9754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMG1lcmNoYW50JTIwdHJhZGVyfGVufDF8fHx8MTc2OTE4NTIxMnww&ixlib=rb-4.1.0&q=80&w=1080",
+  //   },
+  //   {
+  //     id: "historian",
+  //     name: t('experts.historian'),
+  //     color: "from-[rgba(255,215,0,0.95)] to-transparent",
+  //     borderColor: "border-[rgba(255,215,0,0.6)]",
+  //     textColor: "text-[#fffacd]",
+  //     image:
+  //       "https://images.unsplash.com/photo-1644007497105-8d0ae9ec9754?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMGNsZXJpYyUyMHByaWVzdHxlbnwxfHx8fDE3NjkxODUyMTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+  //   },
+  //   {
+  //     id: "military_expert",
+  //     name: t('experts.military_expert'),
+  //     color: "from-[rgba(34,139,34,0.95)] to-transparent",
+  //     borderColor: "border-[rgba(34,139,34,0.6)]",
+  //     textColor: "text-[#e0ffe0]",
+  //     image:
+  //       "https://images.unsplash.com/photo-1606150062964-77af827610fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwaXhlbCUyMGFydCUyMGh1bnRlciUyMGFyY2hlcnxlbnwxfHx8fDE3NjkxODUyMTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+  //   },
+  // ];
 
   const handleStart = () => {
     if (!worldDescription.trim()) {
@@ -166,7 +166,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
         </div>
 
         {/* 专家卡片组 */}
-        <div className="w-full max-w-6xl grid grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8 sm:mb-12 lg:mb-16 justify-items-center px-2">
+        {/* <div className="w-full max-w-6xl grid grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8 sm:mb-12 lg:mb-16 justify-items-center px-2">
           {experts.map((expert) => (
             <div
               key={expert.id}
@@ -198,7 +198,7 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {/* 艺术风格选择 */}
         <div className="w-full max-w-4xl mb-6">
