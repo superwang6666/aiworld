@@ -50,5 +50,18 @@
       "Rituals such as the 'Scent Convergence' (where animals gather at decaying human structures to exchange pheromone-based memories) and 'Echo Mapping' (using resonant sounds to navigate ruins) form the core of cultural practices, reinforcing themes of connection and decay.",
       "Belief systems are centered on 'The Great Withdrawal'—a mythologized event where humans vanished—interpreted through species-specific lenses: predators view it as a purification, prey as a liberation, and scavengers as an opportunity, shaping inter-species conflicts and alliances."
     ]
+  },
+  {
+    "id": "089fa36e-f426-4c49-9238-4f172b894738",
+    "name": "World-2026/2/9",
+    "core_premise": "一个永远卡在1999年除夕夜，正在‘格式化’的小镇。",
+    "created_at": "2026-02-09T14:25:10.999Z",
+    "updated_at": "2026-02-09T14:25:10.999Z",
+    "rules_count": 18,
+    "preview_rules": [
+      "每当午夜钟声敲响12下，小镇所有物理状态重置回1999年12月31日23:59:59，但居民保留部分记忆碎片，形成'记忆涟漪'循环。",
+      "居民的口述历史必须记录在'记忆卷轴'上，这些卷轴由特殊抗'格式化'材料制成，可保存跨循环的记忆，防止历史完全擦除。",
+      "小镇边缘存在'时间侵蚀区'，物体在此区域会缓慢褪色或数据化消解，居民必须定期修复这些区域以维持空间完整性。"
+    ]
   }
 ]

@@ -21,6 +21,7 @@ import ValidationActions from "./ValidationActions";
 import ValidationCoreAnomaly from "./ValidationCoreAnomaly";
 import ValidationDominoEffect from "./ValidationDominoEffect";
 import ValidationEraserTest from "./ValidationEraserTest";
+import ValidationGenerationMode from "./ValidationGenerationMode";
 import ValidationRecommendations from "./ValidationRecommendations";
 import ValidationScoreCard from "./ValidationScoreCard";
 import ValidationWarnings from "./ValidationWarnings";
@@ -122,68 +123,12 @@ export default function ValidationPagePremium({
             </div>
           </div>
 
-          {/* 生成模式选择 */}
-          <div className="mb-8 sm:mb-12">
-            <div className="bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] rounded-2xl px-6 py-4 border border-[rgba(100,100,115,0.4)] backdrop-blur-sm">
-              <label className="block text-sm font-bold text-[#c1c5cc] uppercase mb-3 font-mono">
-                {t("generationMode")}
-              </label>
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="generationMode"
-                    value="fast"
-                    checked={generationMode === "fast"}
-                    onChange={(e) =>
-                      onGenerationModeChange(e.target.value as "fast" | "deep")
-                    }
-                    className="mt-1 w-4 h-4 text-[#00ff88] border-gray-700 focus:ring-[#00ff88]/30"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm font-mono text-[#e5e5e5] group-hover:text-[#00ff88] transition-colors">
-                      <span className="font-bold">{t("fastMode")}</span> ({t("recommended")})
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 font-mono">
-                      {t("fastModeDescription")}
-                    </p>
-                  </div>
-                </label>
-
-                <label className="flex items-start gap-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="generationMode"
-                    value="deep"
-                    checked={generationMode === "deep"}
-                    onChange={(e) =>
-                      onGenerationModeChange(e.target.value as "fast" | "deep")
-                    }
-                    className="mt-1 w-4 h-4 text-[#00ff88] border-gray-700 focus:ring-[#00ff88]/30"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm font-mono text-[#e5e5e5] group-hover:text-[#00ff88] transition-colors">
-                      <span className="font-bold">{t("deepMode")}</span>
-                      <span className="ml-2 text-xs">
-                        {deacLoading ? (
-                          <span className="text-yellow-400">
-                            ({t("expertAnalysisInProgress")})
-                          </span>
-                        ) : deacAnalysis && deacAnalysis.expert_responses ? (
-                          <span className="text-green-400">
-                            ✓ {deacAnalysis.expert_responses.length} {t("expertsReady")}
-                          </span>
-                        ) : null}
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 font-mono">
-                      {t("deepModeDescription")}
-                    </p>
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
+          <ValidationGenerationMode
+            generationMode={generationMode}
+            deacAnalysis={deacAnalysis}
+            deacLoading={deacLoading}
+            onGenerationModeChange={onGenerationModeChange}
+          />
 
           {/* Domino Effect Analysis */}
           <ValidationDominoEffect
