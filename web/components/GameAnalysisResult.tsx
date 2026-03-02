@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import type { GameInfo } from "@/types";
 
@@ -27,21 +27,45 @@ interface GameAnalysis {
 
 interface GameAnalysisResultProps {
   selectedGames: GameInfo[];
+  worldDescription: string;
   onComplete: (premiseSummary: string) => void;
   onBack: () => void;
 }
 
 export default function GameAnalysisResult({
   selectedGames,
+  worldDescription,
   onComplete,
   onBack,
 }: GameAnalysisResultProps) {
   const t = useTranslations("GameAnalysis");
+  const locale = useLocale();
   const [analysis, setAnalysis] = useState<GameAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [premiseDraft, setPremiseDraft] = useState("");
+  const [isPremiseInitialized, setIsPremiseInitialized] = useState(false);
+  const [isMergingPremise, setIsMergingPremise] = useState(false);
+  const [mergeError, setMergeError] = useState<string | null>(null);
+  const trimmedPremiseSummary =
+    analysis?.comparativeAnalysis?.premiseSummary?.trim() ?? "";
+
+  const buildCombinedPremise = useCallback(() => {
+    const desiredWorld = worldDescription?.trim() ?? "";
+    const summary = trimmedPremiseSummary;
+
+    if (desiredWorld && summary) {
+      return t("combinedPremiseTemplate", {
+        userWorld: desiredWorld,
+        recommended: summary,
+      });
+    }
+
+    if (desiredWorld) return desiredWorld;
+    return summary;
+  }, [worldDescription, trimmedPremiseSummary, t]);
 
   useEffect(() => {
     setMounted(true);
@@ -75,12 +99,80 @@ export default function GameAnalysisResult({
     }
   };
 
+  const requestMergedPremise = useCallback(
+    async (existingDraftForMerge = "") => {
+      if (!trimmedPremiseSummary && !worldDescription?.trim()) {
+        return;
+      }
+
+      setIsMergingPremise(true);
+      setMergeError(null);
+
+      try {
+        const response = await fetch("/api/merge-premise", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userWorldDescription: worldDescription ?? "",
+            aiPremiseSummary: trimmedPremiseSummary,
+            existingDraft: existingDraftForMerge,
+            locale,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to merge premise");
+        }
+
+        const data = await response.json();
+        if (data?.mergedText) {
+          setPremiseDraft(data.mergedText.trim());
+        } else {
+          throw new Error("mergedText missing");
+        }
+      } catch (err: unknown) {
+        logger.error("Premise merge failed", { error: err });
+        setPremiseDraft(buildCombinedPremise());
+        setMergeError(t("mergePremiseFailed"));
+      } finally {
+        setIsMergingPremise(false);
+        setIsPremiseInitialized(true);
+      }
+    },
+    [
+      worldDescription,
+      trimmedPremiseSummary,
+      locale,
+      buildCombinedPremise,
+      t,
+    ],
+  );
+
+  useEffect(() => {
+    if (!isPremiseInitialized && (trimmedPremiseSummary || worldDescription)) {
+      requestMergedPremise();
+    }
+  }, [
+    trimmedPremiseSummary,
+    worldDescription,
+    isPremiseInitialized,
+    requestMergedPremise,
+  ]);
+
   const handleApplyInsights = () => {
+    const trimmedDraft = premiseDraft.trim();
+
+    if (!trimmedDraft) {
+      alert(t("premiseDraftRequired"));
+      return;
+    }
+
     if (analysis?.comparativeAnalysis?.premiseSummary) {
       setIsApplying(true);
       // 使用 setTimeout 确保 loading 状态先更新到 UI
       setTimeout(() => {
-        onComplete(analysis.comparativeAnalysis.premiseSummary);
+        onComplete(trimmedDraft);
       }, 100);
     } else {
       alert(t("incompleteData"));
@@ -277,9 +369,65 @@ export default function GameAnalysisResult({
                   {t("recommended")} <span className="text-[#00ff88]">{t("recommendedPremise")}</span>
                 </h2>
                 <div className="group relative bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] backdrop-blur-sm rounded-2xl overflow-hidden transition-all duration-300 border border-[rgba(0,255,136,0.5)] hover:border-[rgba(0,255,136,0.7)] p-8">
-                  <p className="text-[#c1c5cc] text-[16px] leading-relaxed font-light">
-                    {analysis.comparativeAnalysis.premiseSummary}
-                  </p>
+                  <div className="space-y-6 text-sm">
+                    <div>
+                      <p className="text-[#9A9AAA] text-[11px] uppercase tracking-[0.3em] mb-2">
+                        {t("userWorldHeading")}
+                      </p>
+                      <div className="text-[#e5e5e5] leading-relaxed bg-[rgba(10,10,15,0.55)] p-4 rounded-xl border border-[rgba(255,255,255,0.05)]">
+                        {worldDescription?.trim() || t("noWorldDescription")}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[#9A9AAA] text-[11px] uppercase tracking-[0.3em] mb-2">
+                        {t("aiSummaryHeading")}
+                      </p>
+                      <div className="text-[#c1c5cc] leading-relaxed bg-[rgba(10,10,15,0.4)] p-4 rounded-xl border border-[rgba(0,255,136,0.15)]">
+                        {analysis.comparativeAnalysis.premiseSummary}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <p className="text-[#00ff88] font-semibold tracking-[0.08em]">
+                          {t("mergedEditableHeading")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => requestMergedPremise(premiseDraft)}
+                          disabled={isMergingPremise}
+                          className={`text-[12px] px-3 py-1.5 rounded-full border border-[rgba(0,255,136,0.4)] text-[#00ff88] transition-colors ${
+                            isMergingPremise
+                              ? "opacity-60 cursor-not-allowed"
+                              : "hover:bg-[rgba(0,255,136,0.1)]"
+                          }`}
+                        >
+                          {isMergingPremise
+                            ? t("mergingPremise")
+                            : t("regenerateMergedPremise")}
+                        </button>
+                      </div>
+                      <label htmlFor="world-premise-editor" className="sr-only">
+                        {t("mergedEditableHeading")}
+                      </label>
+                      <textarea
+                        id="world-premise-editor"
+                        value={premiseDraft}
+                        onChange={(event) => setPremiseDraft(event.target.value)}
+                        placeholder={t("editablePremisePlaceholder")}
+                        className="w-full min-h-[160px] rounded-2xl bg-[rgba(10,10,15,0.6)] border border-[rgba(0,255,136,0.4)] text-[#e5e5e5] text-[15px] leading-relaxed p-4 focus:outline-none focus:ring-2 focus:ring-[#00ff88]/30 focus:border-[#00ff88] transition-colors placeholder:text-[#6f6f7a]"
+                      />
+                      <p className="text-xs text-[#8a8a95] mt-3">
+                        {t("editablePremiseHelper")}
+                      </p>
+                      {mergeError && (
+                        <p className="text-xs text-red-400 mt-2">
+                          {mergeError}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
                   {/* 卡片发光效果 */}
                   <div

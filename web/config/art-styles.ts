@@ -9,6 +9,13 @@ export interface ArtStyle {
 }
 
 export const ART_STYLES: ArtStyle[] = [
+    {
+    id: 'commonworld',
+    name: 'Common World',
+    nameCn: '通用世界',
+    description: '现实世界，日常场景',
+    keywords: ['realistic', 'everyday', 'natural', 'ordinary']
+  },
   {
     id: 'cyberpunk',
     name: 'Cyberpunk',
@@ -29,13 +36,6 @@ export const ART_STYLES: ArtStyle[] = [
     nameCn: '景泰蓝',
     description: '中国传统珐琅工艺，色彩鲜艳',
     keywords: ['enamel', 'traditional', 'ornate', 'colorful']
-  },
-  {
-    id: 'minimalist',
-    name: 'Minimalist',
-    nameCn: '极简主义',
-    description: '简洁线条，少即是多',
-    keywords: ['clean', 'simple', 'geometric', 'modern']
   },
   {
     id: 'fantasy',

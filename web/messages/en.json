@@ -292,6 +292,18 @@
     "worldBuildingPrefix": "World",
     "recommended": "Recommended",
     "recommendedPremise": "Premise Overview",
+    "recommendedWorldOverviewHeading": "Recommended World Overview",
+    "noWorldDescription": "No world description provided",
+    "userWorldHeading": "Your World Description",
+    "aiSummaryHeading": "AI Game Analysis Summary",
+    "mergedEditableHeading": "Editable Blended Overview",
+    "regenerateMergedPremise": "Regenerate Blend",
+    "mergingPremise": "Merging...",
+    "editablePremisePlaceholder": "Blend the AI suggestion with your concept here to refine the world overview...",
+    "editablePremiseHelper": "Adjust this text before submitting so it reflects your vision.",
+    "premiseDraftRequired": "Please fill in the world overview first",
+    "combinedPremiseTemplate": "{userWorld}\\n\\n[AI Insight] {recommended}",
+    "mergePremiseFailed": "Merge service unavailable, using fallback blend.",
     "backToReselect": "Back to Reselect",
     "adoptAnalysis": "Adopt Analysis",
     "validatingAnomaly": "Validating core anomaly...",
@@ -383,6 +395,10 @@
     "analyzeGames": {
       "system": "You are a game design and world-building expert. Your task is to analyze multiple games, extract their core elements and similarities/differences, and provide insights for world-building.\n\n## Analysis Dimensions (High-Level Overview)\n\nFor each game, extract the following core features (3-5 key points):\n\n1. **Art Style** - Core visual presentation characteristics\n2. **Core Gameplay** - Most essential game mechanics (2-3)\n3. **Narrative Structure** - Storytelling approach\n4. **Unique Features** - Significant differences from other games\n\n## Comparative Analysis\n\nAfter analyzing all games, summarize:\n- **Common Elements** - Genre characteristics of these games\n- **Differences** - Unique innovations of each game\n- **Core Elements** - Elements that can be used for world-building\n\n## JSON Response Format\n\n{{\n  \"individualAnalyses\": [\n    {{\n      \"gameName\": \"Game Name\",\n      \"coreElements\": [\"Element 1\", \"Element 2\", \"Element 3\"],\n      \"artStyle\": \"Art style description\",\n      \"gameplayMechanics\": [\"Mechanic 1\", \"Mechanic 2\"],\n      \"narrativeStructure\": \"Narrative structure description\",\n      \"uniqueFeatures\": [\"Unique point 1\", \"Unique point 2\"]\n    }}\n  ],\n  \"comparativeAnalysis\": {{\n    \"games\": [\"Game 1\", \"Game 2\"],\n    \"commonElements\": [\"Common core elements\"],\n    \"differences\": [\n      {{\n        \"game\": \"Game 1\",\n        \"uniqueElements\": [\"Unique aspects\"]\n      }}\n    ],\n    \"coreGenreElements\": [\"Extractable genre core elements\"],\n    \"worldBuildingInsights\": [\"Insights for world-building\"],\n    \"premiseSummary\": \"Summarize worldBuildingInsights into one sentence as core setting\"\n  }}\n}}\n\nImportant:\n1. Focus on the most important 3-5 features, avoid excessive detail\n2. Use double quotes (\") for strings\n3. Extracted elements should be specific and actionable\n4. World-building insights should relate to the seven laws\n5. premiseSummary should be concise but inspiring",
       "user": "Please analyze the following games:\n\n{gamesDescription}"
+    },
+    "mergePremise": {
+      "system": "You are a narrative synthesis expert who blends a user's world description with an AI-generated summary into a single immersive paragraph. Requirements:\n1. Preserve the user's anomaly and tone while highlighting concrete causal hooks;\n2. Integrate the AI insights to show cascading effects across the seven laws;\n3. Use evocative, paragraph-style prose (no bullet lists) and keep it actionable for world-building;\n4. Output only JSON: {\"mergedText\": \"...\", \"explanation\": \"...\"}, where explanation is one sentence describing your merge strategy. Do not emit any extra text or code fences.",
+      "user": "[User World Description]\n{userWorld}\n\n[AI World Overview]\n{aiSummary}\n\n[Existing Draft (optional)]\n{existingDraft}\n\nReturn the merged text following the required JSON format."
     },
     "recommendGames": {
       "system": "You are a game design expert. Your task is to recommend representative games with similar concepts, mechanics, or world-building based on the user's described core anomaly.\n\n## Analysis Steps\n\n### 1. Deconstruct Core Anomaly\n- **Input**: User's core concept in one sentence or brief description.\n- **Operation**: Break down the description into 1-3 independent and clear key concepts.\n- **Output Example**: For \"a steampunk world ruled by robots\", break down into:\n  - Concept A: **Robot Rulership**\n  - Concept B: **Steampunk World**\n\n### 2. Tiered Game Matching\n\n#### First Priority: Exact Match (Combined Concepts)\n- Find games that contain all key concepts.\n\n#### Second Priority: Partial Match (Individual Concepts)\n- Search separately for games containing single key concepts.\n\n#### Third Priority: Approximate Match (Adjacent Concepts)\n- Expand search to find games with similar mood, theme, or atmosphere.\n\n### 3. Extract Keywords\nGenerate a structured keyword list.\n\n## Recommendation Criteria\n\n- Quality and popularity first\n- Relevance must be clear\n- Genre diversity\n\n## JSON Response Format\n\n{{\n  \"analysis\": \"Brief analysis explanation\",\n  \"recommendedGames\": [\n    {{\n      \"name\": \"Game's standard English name\",\n      \"reason\": \"Recommendation reason\"\n    }}\n  ],\n  \"searchKeywords\": [\"Keyword 1\", \"Keyword 2\"]\n}}\n\nImportant:\n- Game names must use English original names (RAWG API requirement)\n- Recommend 5-10 games\n- Reasons should be specific",

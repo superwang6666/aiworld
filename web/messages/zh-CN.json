@@ -292,6 +292,18 @@
     "worldBuildingPrefix": "世界观",
     "recommended": "推荐的",
     "recommendedPremise": "世界观概述",
+    "recommendedWorldOverviewHeading": "推荐的 世界观概述",
+    "noWorldDescription": "暂无世界描述",
+    "userWorldHeading": "你的世界观描述",
+    "aiSummaryHeading": "分析游戏总结",
+    "mergedEditableHeading": "可编辑的整合概述",
+    "regenerateMergedPremise": "重新整合文本",
+    "mergingPremise": "正在整合...",
+    "editablePremisePlaceholder": "请结合 AI 推荐和你的想法，在这里完善世界观概述...",
+    "editablePremiseHelper": "你可以在提交前自由编辑这段文字，让结果更贴合你的世界设定。",
+    "premiseDraftRequired": "请先填写世界观概述",
+    "combinedPremiseTemplate": "{userWorld}\\n\\n【AI 综合洞察】{recommended}",
+    "mergePremiseFailed": "整合服务暂不可用，已使用临时合并。",
     "backToReselect": "返回重选",
     "adoptAnalysis": "采纳分析结果",
     "validatingAnomaly": "正在验证核心异质点...",
@@ -383,6 +395,10 @@
     "analyzeGames": {
       "system": "你是游戏设计与世界观构建专家。你的任务是分析多个游戏，提取它们的核心元素和异同点，为世界观构建提供参考。\n\n## 分析维度（高层概览）\n\n对每个游戏提取以下核心特征（3-5个关键点）：\n\n1. **美术风格** - 视觉呈现的核心特征\n2. **核心玩法** - 最本质的游戏机制（2-3个）\n3. **叙事结构** - 故事讲述方式\n4. **独特特征** - 与其他游戏的显著区别\n\n## 对比分析\n\n分析所有游戏后，总结：\n- **共同点** - 这类游戏的类型特征\n- **差异点** - 各游戏的独特创新\n- **核心元素** - 可用于世界观构建的要素\n\n## JSON响应格式\n\n{{\n  \"individualAnalyses\": [\n    {{\n      \"gameName\": \"游戏名称\",\n      \"coreElements\": [\"元素1\", \"元素2\", \"元素3\"],\n      \"artStyle\": \"美术风格描述\",\n      \"gameplayMechanics\": [\"玩法1\", \"玩法2\"],\n      \"narrativeStructure\": \"叙事结构描述\",\n      \"uniqueFeatures\": [\"独特点1\", \"独特点2\"]\n    }}\n  ],\n  \"comparativeAnalysis\": {{\n    \"games\": [\"游戏1\", \"游戏2\"],\n    \"commonElements\": [\"共同核心元素\"],\n    \"differences\": [\n      {{\n        \"game\": \"游戏1\",\n        \"uniqueElements\": [\"独特之处\"]\n      }}\n    ],\n    \"coreGenreElements\": [\"可提取的类型核心元素\"],\n    \"worldBuildingInsights\": [\"对世界观构建的启发\"],\n    \"premiseSummary\": \"将worldBuildingInsights总结成一句话的核心设定\"\n  }}\n}}\n\n重要：\n1. 聚焦最重要的3-5个特征，避免过度细节\n2. 使用双引号(\")表示字符串\n3. 提取的元素应具体且可操作\n4. 世界观启发应与七大法则关联\n5. premiseSummary应简洁但富有启发性",
       "user": "请分析以下游戏：\n\n{gamesDescription}"
+    },
+    "mergePremise": {
+      "system": "你是一位叙事整合专家，擅长把用户提供的世界观描述与 AI 的分析摘要融合成一段层次清晰的设定说明。请遵循：\n1. 尊重用户世界观的核心异质点，保留其语言风格；\n2. 把 AI 摘要里的亮点融入同一段叙事，突出可操作的设定钩子与七大法则影响；\n3. 保持富有沉浸感的语气，避免列表化；\n4. 只返回 JSON 对象，格式为 {\"mergedText\": \"...\", \"explanation\": \"...\"}，explanation 用一句话说明融合策略。\n不得输出任何额外文字或代码块。",
+      "user": "【用户世界观描述】\n{userWorld}\n\n【AI 推荐的世界观摘要】\n{aiSummary}\n\n【现有草稿（若为空可忽略）】\n{existingDraft}\n\n请生成新的融合文本。"
     },
     "recommendGames": {
       "system": "你是游戏设计专家。你的任务是根据用户描述的核心异质点，推荐具有相似概念、机制或世界观设定的代表作游戏。\n\n## 分析步骤\n\n### 1. 拆解核心异质点\n- **输入**：用户用一句话或简短描述提出的核心概念。\n- **操作**：将描述拆解为1-3个独立且明确的关键概念。\n- **输出示例**：对于\"一个由机器人统治的蒸汽朋克世界\"，拆解为：\n  - 概念A：**机器人统治**\n  - 概念B：**蒸汽朋克世界**\n\n### 2. 分层匹配游戏\n\n#### 第一优先级：精准匹配（组合概念）\n- 寻找同时包含所有关键概念的游戏。\n\n#### 第二优先级：部分匹配（独立概念）\n- 分别搜索包含单个关键概念的游戏。\n\n#### 第三优先级：近似匹配（邻接概念）\n- 扩大搜索范围，寻找意境、主题、氛围相近的游戏。\n\n### 3. 提取关键词\n生成结构化的关键词列表。\n\n## 推荐标准\n\n- 质量与知名度优先\n- 关联性必须明确\n- 类型多样化\n\n## JSON响应格式\n\n{{\n  \"analysis\": \"简要分析说明\",\n  \"recommendedGames\": [\n    {{\n      \"name\": \"游戏英文原名\",\n      \"reason\": \"推荐理由\"\n    }}\n  ],\n  \"searchKeywords\": [\"关键词1\", \"关键词2\"]\n}}\n\n重要：\n- 游戏名称必须使用英文原名（RAWG API需要）\n- 推荐5-10个游戏\n- 推荐理由要具体",

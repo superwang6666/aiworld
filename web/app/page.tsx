@@ -330,6 +330,7 @@ export default function Home() {
       ) : currentStep === "gameAnalysisResult" ? (
         <GameAnalysisResult
           selectedGames={selectedGamesForAnalysis}
+          worldDescription={worldDescription}
           onComplete={async (premiseSummary) => {
             setCorePremise(premiseSummary);
             // 直接进入验证流程

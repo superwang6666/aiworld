@@ -179,6 +179,25 @@ export function loadRecommendGamesPrompts(locale: Locale) {
 }
 
 /**
+ * 加载世界观整合（用户描述 + AI 摘要）的提示词
+ */
+export function loadMergePremisePrompts(locale: Locale) {
+  return {
+    system: loadPrompt('mergePremise.system', locale),
+    userTemplate: (
+      userWorld: string,
+      aiSummary: string,
+      existingDraft: string
+    ) =>
+      loadPrompt('mergePremise.user', locale, {
+        userWorld,
+        aiSummary,
+        existingDraft,
+      }),
+  };
+}
+
+/**
  * 加载方向评估提示词
  *
  * @param locale - 目标语言
