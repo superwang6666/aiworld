@@ -21,3 +21,4 @@ bin-release/
 # Claude Code local settings
 .claude/settings.local.json
 /web/__tests__
+/视频截图

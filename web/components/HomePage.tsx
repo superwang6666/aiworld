@@ -9,6 +9,8 @@ import { ART_STYLES } from "@/config/art-styles";
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 
+const DEFAULT_ART_STYLE_ID = "commonworld";
+
 /**
  * 新的主页组件 - 整合艺术风格选择
  */
@@ -24,7 +26,12 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
 
   const [showTip, setShowTip] = useState(true);
   const [worldDescription, setWorldDescription] = useState("");
-  const [selectedArtStyle, setSelectedArtStyle] = useState("");
+  const [selectedArtStyle, setSelectedArtStyle] = useState(() => {
+    const defaultStyle =
+      ART_STYLES.find((style) => style.id === DEFAULT_ART_STYLE_ID) ??
+      ART_STYLES[0];
+    return defaultStyle?.name ?? "";
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [useRecommendMode, setUseRecommendMode] = useState(false);
   const [_mounted, setMounted] = useState(false);
