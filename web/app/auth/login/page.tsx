@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import LoginForm from "@/components/auth/LoginForm";
 import CommonHeader from "@/components/common/CommonHeader";
 import PremiumBackground from "@/components/PremiumBackground";

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import RegisterForm from "@/components/auth/RegisterForm";
 import CommonHeader from "@/components/common/CommonHeader";
 import PremiumBackground from "@/components/PremiumBackground";
