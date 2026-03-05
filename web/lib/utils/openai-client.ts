@@ -11,15 +11,17 @@ export interface OpenAIClientConfig {
 /**
  * 获取配置好的 OpenAI 客户端
  *
- * 优先使用 DeepSeek API，如果未配置则使用 OpenAI API
- *
+ * 优先级：Agent Key → DeepSeek Key → OpenAI Key
+ * 
+ * @param agentApiKey - 来自 Agent 的 API Key（可选）
  * @returns OpenAI 客户端实例和对应的模型名称
- * @throws {Error} 如果两个 API Key 都未配置
+ * @throws {Error} 如果所有 API Key 都未配置
  */
-export function getOpenAIClient(): OpenAIClientConfig {
+export function getOpenAIClient(agentApiKey?: string): OpenAIClientConfig {
+  // 优先级：Agent 的 Key > DeepSeek Key > OpenAI Key
   const deepSeekKey = process.env.DEEPSEEK_API_KEY;
   const openAiKey = process.env.OPENAI_API_KEY;
-  const apiKey = deepSeekKey || openAiKey;
+  const apiKey = agentApiKey || deepSeekKey || openAiKey;
 
   if (!apiKey) {
     throw new Error(
@@ -27,13 +29,15 @@ export function getOpenAIClient(): OpenAIClientConfig {
     );
   }
 
-  const baseURL = deepSeekKey ? "https://api.deepseek.com" : undefined;
+  // 如果使用 Agent Key，使用 OpenAI 的基础 URL
+  const baseURL = agentApiKey ? "https://api.openai.com/v1" : (deepSeekKey ? "https://api.deepseek.com" : undefined);
   const openai = new OpenAI({
     apiKey: apiKey,
     baseURL: baseURL,
+    dangerouslyAllowBrowser: true,
   });
 
-  const model = deepSeekKey ? "deepseek-chat" : "gpt-4o-mini";
+  const model = deepSeekKey && !agentApiKey ? "deepseek-chat" : "gpt-4o-mini";
 
   return {
     openai,
