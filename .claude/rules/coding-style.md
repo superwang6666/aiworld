@@ -57,6 +57,17 @@ const schema = z.object({
 const validated = schema.parse(input)
 ```
 
+## Forbidden → Use Instead
+
+| 禁止 | 替代 |
+|------|------|
+| `data as string`（类型不确定时强断言） | 类型守卫 `typeof data === 'string'` |
+| `function f(x: any)` | `unknown` + 类型收窄 |
+| `alert('...')` | `setError()` 或 Toast 组件 |
+| 注释掉的旧代码 | 直接删除，用 Git 历史找回 |
+| 组件内硬编码中英文 | `t('key')`（next-intl） |
+| `new OpenAI(...)` | `getOpenAIClient()`（lib/utils/openai-client.ts） |
+
 ## Code Quality Checklist
 
 Before marking work complete:
