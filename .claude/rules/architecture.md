@@ -42,7 +42,7 @@ data/users/   本地用户数据（users.json tokens.json）
 
 DEAC 专家系统流水线：核心设定 → 差距分析(gap-analyzer) → 专家匹配(expert-matcher) → 提示词构造(prompt-architect) → LLM 调用 → 权重合成(weighted-synthesis) → DEACAnalysis 输出。
 
-七法则：`type Law = 'Space' | 'Survival' | 'Cognition' | 'Scarcity' | 'Time' | 'Power' | 'Metaphysics'`（config/law-names.ts）。
+七法则：`type Law` 联合类型定义在 **types/index.ts**（值 `Space|Survival|Cognition|Scarcity|Time|Power|Metaphysics`）；名称/颜色/多语言映射在 config/law-names.ts（`LAWS` / `LAW_NAMES` / `LAW_NAME_MAP`）。
 
 ## 配置归属（改常量先到对应文件，勿散落）
 

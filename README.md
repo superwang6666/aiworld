@@ -3,7 +3,7 @@
 aiWolrld 是一个围绕「七大世界构建法则」打造的世界观制作平台，借助 **DEAC（Dynamic Expert Agent Cluster）多智能体评分系统** 来完成几乎所有复杂的评分、筛选、博弈式讨论与规则生成任务。每个 Agent 都以独立的 JSON 配置存在，开发者可以通过编辑这些文件来定义口吻、知识范围、打分权重与推理流程，实现真正可定制的专家议事会。项目的长期目标是让规则驱动的世界观可以像组件一样被复用，既能帮助叙事型作品快速生成世界设定，也能在未来嵌入到游戏中，按照实时的设计决策生成或改写游戏世界。
 
 ## 核心特性
-- **多智能体评分链路**：DEAC 会根据用户输入的「异质性焦点」自动匹配最相关的专家 Agent（最多 5 名），并在 `app/api/deac/*` 接口内完成激活、查询与综合分析，让评分透明可追溯。
+- **多智能体评分链路**：DEAC 会根据用户输入的「异质性焦点」自动匹配最相关的专家 Agent（最多 5 名），并在 `app/api/deac/*` 接口内完成派遣、差距分析与综合，让评分透明可追溯。
 - **四段式世界构建流程**：从核心前提出发，依次走过【前提验证 → 艺术风格 → 规则生成 → 导出】，每个阶段都复用相同的 Agent 机制，确保评分口径一致。
 - **可编辑的 Agent 仓库**：所有默认专家位于 `web/lib/experts/core/*.json`，特殊专家位于 `web/lib/experts/special/`。新增或编辑文件即可引入新的领域知识，无需改动业务代码。
 - **面向游戏的规则引擎**：生成的 20 条具体规则会标注对应法则（Space/Survival/…），开发者可以在游戏运行时动态启用或禁用某条规则，为「按规则生成世界」提供落地点。
@@ -22,23 +22,24 @@ aiWolrld 是一个围绕「七大世界构建法则」打造的世界观制作�
 - **语言**：TypeScript  
 - **样式/组件**：Tailwind CSS、Lucide 图标、暗色终端主题  
 - **AI 接口**：DeepSeek Chat（推荐）与 OpenAI GPT-4o-mini，兼容统一的 OpenAI API 规范  
+- **国际化 & 认证**：next-intl（中文默认 / 英文）+ NextAuth v5（登录、用户存档）  
 - **核心模块**：
   - `app/page.tsx`：四步式工作流界面  
   - `app/api/validate-premise/route.ts`：核心前提验证  
   - `app/api/generate/route.ts`：规则生成  
-  - `app/api/deac/*`：Agent 激活 / 查询 / 综合  
-  - `components/ValidationReport.tsx`、`components/ExpertInsightsPanel.tsx`：可视化结果面板  
+  - `app/api/deac/*`：Agent 派遣 / 差距分析 / 综合（dispatch / analyze-gap / synthesize）  
+  - `components/validation/*`（ValidationScoreCard、ValidationWarnings、ExpertInsightsPanel 等）：可视化结果面板  
 
 ## 快速开始
 ### 运行环境
-- Node.js 18+
+- Node.js 20+（Next.js 16 / React 19 要求）
 - NPM 或 PNPM
 - DeepSeek 或 OpenAI API Key（可选但推荐）
 
 ### 安装步骤
 ```bash
 git clone <repo-url>
-cd ai-wolrld/web
+cd aiworld/web
 npm install
 cp .env.example .env
 # 在 .env 中配置至少一个 API key，例如：
@@ -57,7 +58,7 @@ web/
 │  │  └─ deac/               # Agent 激活/查询/综合
 │  ├─ layout.tsx
 │  └─ page.tsx
-├─ components/               # UI 组件（RuleCard / ValidationReport / ExpertInsightsPanel…）
+├─ components/               # UI 组件（RuleCard / ExpertInsightsPanel / validation·workflow·auth 等子目录）
 ├─ lib/experts/              # Agent 配置（core + special）
 └─ types/                    # TypeScript 类型定义
 docs/                        # 详细指南（DEAC、I18N、CODE_STANDARDS…）
@@ -66,7 +67,7 @@ docs/                        # 详细指南（DEAC、I18N、CODE_STANDARDS…）
 ## 自定义与扩展 Agent
 1. 在 `web/lib/experts/core/` 或 `web/lib/experts/special/` 内新增 JSON：定义 `name/domain/law_mapping/prompt_template` 等字段。  
 2. 重启开发服务器后，DEAC 会自动加载新专家并在评分阶段调用。  
-3. 如需定制调度策略，可在 `app/api/deac/activate/route.ts`、`app/api/deac/synthesize/route.ts` 中修改排序规则、并行数量或温度参数。  
+3. 如需定制调度策略，可在 `app/api/deac/dispatch/route.ts`、`app/api/deac/synthesize/route.ts` 中修改排序规则、并行数量或温度参数。  
 4. 结合 `docs/DEAC-README.md`、`docs/DEAC-EXPERTS.md` 可快速了解评分口径与配置规范。
 
 ## 应用场景与愿景

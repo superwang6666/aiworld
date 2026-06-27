@@ -31,7 +31,6 @@ config/     集中配置常量（law-names.ts 等，禁止魔法数字）
 lib/        业务逻辑：deac/ experts/ auth/ archive/ tags/ utils/ …
 types/      共享类型（types/index.ts 是单一数据源）
 messages/   i18n 翻译（zh-CN.json 默认 / en.json）
-__tests__/  Jest 测试（注意：被 .gitignore 忽略，不入库）
 ```
 
 ## 关键约定（细节见对应 rules 文件）
@@ -40,6 +39,7 @@ __tests__/  Jest 测试（注意：被 .gitignore 忽略，不入库）
 - 用户可见文本全部走 i18n（next-intl），禁止硬编码中英文。
 - 工作流是 HomeClient.tsx 里的状态机（homepage → gameRecommend → validation → rules），不是单页表单。
 - i18n 不用 URL locale 路由：服务端 i18n.ts 固定 DEFAULT_LOCALE，切换靠客户端 useI18n/setLocale。
+- 测试：jest.config.ts 已配置（含 per-file 覆盖率阈值），但**仓库当前无任何测试文件**。新增测试按 jest 约定放置。
 
 ## Rules 索引（权威细节，按需阅读）
 - 编码风格 / 不可变 / 文件大小 / 禁止事项 — see .claude/rules/coding-style.md
