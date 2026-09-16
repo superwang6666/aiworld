@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import type { Law, WorldRule } from "@/types";
+import type { Law, RuleTag, WorldRule } from "@/types";
 
 import { LAWS } from "@/config/law-names";
 
@@ -13,20 +13,26 @@ import {
   SEMANTIC_DEDUPLICATION_CONFIG,
 } from "@/lib/rules/semantic-matcher";
 import { generateTagsForRule } from "@/lib/tags/tag-generator";
+import { getTagSteeringHints } from "@/lib/tags/tag-manager";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
 import { loadGenerateSinglePrompts } from "@/lib/utils/prompt-loader";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 import { getServerTranslation } from "@/lib/utils/server-translations";
 
 import type { Locale} from "@/types/i18n";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "generate-single", RATE_LIMIT_PRESETS.llmLight);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const {
       corePremise,
       artStyle,
       law,
       existingRules = [],
+      tagWeights,
       locale: requestLocale,
     } = await request.json();
 
@@ -54,11 +60,18 @@ export async function POST(request: NextRequest) {
 
     const { openai, model } = getOpenAIClient();
 
+    // 把本次会话已经建立起来的标签偏好喂回生成 prompt(道理同 /api/generate)
+    const tagPreferences: { avoid: string[]; favor: string[] } | undefined =
+      tagWeights && typeof tagWeights === "object"
+        ? getTagSteeringHints(tagWeights as Record<string, RuleTag>)
+        : undefined;
+
     // 从 i18n 加载提示词
     const prompts = loadGenerateSinglePrompts(
       locale,
       validLaw.name,
-      validLaw.description
+      validLaw.description,
+      tagPreferences
     );
 
     // 添加语言指令

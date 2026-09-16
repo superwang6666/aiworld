@@ -89,6 +89,37 @@ export interface GameInfo {
   recommendationReason?: string;   // AI推荐理由
 }
 
+/**
+ * RAWG API 原始返回的单条游戏数据（未经过筛选/映射为 GameInfo 之前的形状）
+ */
+export interface RawgGameResult {
+  id: number;
+  name: string;
+  released: string | null;
+  rating: number | null;
+  metacritic: number | null;
+  background_image: string | null;
+  description_raw?: string;
+  platforms?: { platform: { name: string } }[];
+  genres?: { name: string }[];
+  tags?: { name: string }[];
+}
+
+/**
+ * LLM 生成规则接口返回的单条原始规则（JSON 解析后、格式化为 WorldRule 之前的形状）
+ * 字段大小写不统一是因为不同 prompt/模型返回习惯不一致，格式化时需要做兼容
+ */
+export interface RawGeneratedRule {
+  law?: string;
+  Law?: string;
+  rule?: string;
+  Rule?: string;
+  description?: string;
+  expert_logic?: string;
+  expertLogic?: string;
+  expert_reasoning?: string;
+}
+
 export interface GameAnalysis {
   gameName: string;
   coreElements: string[];          // 核心元素（3-5个）
@@ -154,9 +185,10 @@ export interface ExpertConfig {
   reasoning_style: ReasoningStyle;
   expertise_depth: number;             // 1-10, 影响响应细节程度
   specialization_tags?: string[];      // ["硬科幻", "世界构建"]
-  created_by: "system" | "prompt_architect"; // 来源追踪
+  created_by: "system" | "prompt_architect" | "expert_merger"; // 来源追踪
   created_at?: string;                 // ISO 时间戳 (特殊专家)
   locale?: 'zh-CN' | 'en';             // 该专家配置的语言版本
+  merged_from?: string[];              // 由多个专家合并而来时,记录被合并专家的 id
 }
 
 /**
@@ -340,6 +372,7 @@ export interface ArchiveMetadata {
   updated_at: string;
   rules_count: number;           // 活跃规则数 (不包括已删除)
   preview_rules: string[];       // 前3条规则预览
+  isOwner?: boolean;             // 当前请求用户是否为该存档所有者 (仅 /api/archive/list 响应携带,不持久化)
 }
 
 /**

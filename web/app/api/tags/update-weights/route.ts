@@ -7,6 +7,7 @@ import {
   mergeNewTags,
 } from "@/lib/tags/tag-manager";
 import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * POST /api/tags/update-weights
@@ -27,6 +28,9 @@ import { logger } from "@/lib/utils/logger";
  * }
  */
 export async function POST(req: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(req, "tags-update-weights", RATE_LIMIT_PRESETS.archive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await req.json();
     const { action, tags, currentWeights, newTags } = body;

@@ -1,15 +1,21 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import type { RawgGameResult } from "@/types";
+
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
 import { loadRecommendGamesPrompts } from "@/lib/utils/prompt-loader";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { Locale} from "@/types/i18n";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "recommend-games", RATE_LIMIT_PRESETS.llmLight);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { anomalyDescription, locale: requestLocale } = await request.json();
 
@@ -95,7 +101,7 @@ export async function POST(request: NextRequest) {
             return null;
           }
 
-          const data = await response.json();
+          const data: { results: RawgGameResult[] } = await response.json();
           const gameData = data.results[0];
 
           if (!gameData) {
@@ -109,11 +115,11 @@ export async function POST(request: NextRequest) {
             rating: gameData.rating || 0,
             metacritic: gameData.metacritic || null,
             platforms:
-              gameData.platforms?.map((p: any) => p.platform.name) || [],
-            genres: gameData.genres?.map((g: any) => g.name) || [],
+              gameData.platforms?.map((p) => p.platform.name) || [],
+            genres: gameData.genres?.map((g) => g.name) || [],
             background_image: gameData.background_image || "",
             description: gameData.description_raw || "",
-            tags: gameData.tags?.slice(0, 5).map((t: any) => t.name) || [],
+            tags: gameData.tags?.slice(0, 5).map((t) => t.name) || [],
             recommendationReason: game.reason,
           };
         } catch (_err) {

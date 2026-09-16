@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { loadArchive } from "@/lib/archive/archive-manager";
 import { getOptionalUser } from "@/lib/auth/middleware";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * GET /api/archive/load?id={archiveId}
@@ -18,6 +20,9 @@ import { getOptionalUser } from "@/lib/auth/middleware";
  * }
  */
 export async function GET(req: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(req, "archive-load", RATE_LIMIT_PRESETS.archive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // 获取当前用户（可选）
     const user = await getOptionalUser();
@@ -55,7 +60,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ archive });
   } catch (error) {
-    // Error handled silently
+    logger.error("Archive load failed", { error });
     return NextResponse.json(
       {
         error: "存档加载失败",

@@ -34,7 +34,6 @@ export function getOpenAIClient(agentApiKey?: string): OpenAIClientConfig {
   const openai = new OpenAI({
     apiKey: apiKey,
     baseURL: baseURL,
-    dangerouslyAllowBrowser: true,
   });
 
   const model = deepSeekKey && !agentApiKey ? "deepseek-chat" : "gpt-4o-mini";

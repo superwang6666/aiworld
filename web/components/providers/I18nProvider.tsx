@@ -8,6 +8,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from '@/types/i18n';
 
 import type { Locale} from '@/types/i18n';
+import type { AbstractIntlMessages } from 'next-intl';
 
 interface I18nContextType {
   locale: Locale;
@@ -20,7 +21,7 @@ const LOCALE_STORAGE_KEY = 'app-locale';
 
 interface I18nProviderProps {
   children: ReactNode;
-  messages: Record<string, any>;
+  messages: AbstractIntlMessages;
   initialLocale?: Locale;
 }
 

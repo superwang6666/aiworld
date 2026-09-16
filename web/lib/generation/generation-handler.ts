@@ -15,6 +15,7 @@ export interface GenerationOptions {
   generationMode: "fast" | "deep";
   deacAnalysis?: DEACAnalysis;
   deacLoading: boolean;
+  tagWeights?: Record<string, RuleTag>;
   locale?: Locale;
   t?: (key: string) => string; // Translation function for error messages
 }
@@ -88,6 +89,7 @@ export async function generateRules(
     generationMode,
     deacAnalysis,
     deacLoading,
+    tagWeights,
   } = options;
 
   let expertResponses = undefined;
@@ -130,6 +132,7 @@ export async function generateRules(
       lawWeights: lawWeights,
       mode: generationMode,
       expertResponses: expertResponses,
+      tagWeights: tagWeights,
     }),
   });
 

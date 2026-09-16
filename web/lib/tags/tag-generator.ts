@@ -132,8 +132,10 @@ Do not include any other text.`;
     const parsed = JSON.parse(cleaned);
 
     // 验证并规范化
-    const newTags: RuleTag[] = (Array.isArray(parsed) ? parsed : [parsed]).map(
-      (item: any) => ({
+    const rawItems: { id: string; name: string; category: RuleTag["category"] }[] =
+      Array.isArray(parsed) ? parsed : [parsed];
+    const newTags: RuleTag[] = rawItems.map(
+      (item) => ({
         id: item.id,
         name: item.name,
         category: item.category,

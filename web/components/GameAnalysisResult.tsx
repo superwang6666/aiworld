@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { GameInfo } from "@/types";
 
 import { logger } from "@/lib/utils/logger";
+import { toast } from "@/lib/utils/toast-store";
 
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
@@ -164,7 +165,7 @@ export default function GameAnalysisResult({
     const trimmedDraft = premiseDraft.trim();
 
     if (!trimmedDraft) {
-      alert(t("premiseDraftRequired"));
+      toast.error(t("premiseDraftRequired"));
       return;
     }
 
@@ -175,7 +176,7 @@ export default function GameAnalysisResult({
         onComplete(trimmedDraft);
       }, 100);
     } else {
-      alert(t("incompleteData"));
+      toast.error(t("incompleteData"));
     }
   };
 

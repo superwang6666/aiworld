@@ -29,10 +29,15 @@ export function getServerTranslation(
   namespace: string,
   key: string,
   locale: Locale = 'zh-CN',
-  params?: Record<string, any>
+  params?: Record<string, string | number>
 ): string {
   const translations = locale === 'zh-CN' ? zhCN : en;
-  let text = (translations as any)[namespace]?.[key] || key;
+  const namespaceMessages = (translations as Record<string, unknown>)[namespace];
+  const rawText =
+    namespaceMessages && typeof namespaceMessages === 'object'
+      ? (namespaceMessages as Record<string, unknown>)[key]
+      : undefined;
+  let text = typeof rawText === 'string' ? rawText : key;
 
   // 参数插值 - 替换 {paramName} 格式的占位符
   if (params) {

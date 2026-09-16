@@ -13,10 +13,12 @@ interface RulesDisplayProps {
   rules: WorldRule[];
   tagWeights: Record<string, RuleTag>;
   archiveName: string;
+  isPublic: boolean;
   confirmedCount: number;
   onToggleRule: (id: string) => void;
   onDeleteRule: (id: string) => void;
   onArchiveNameChange: (name: string) => void;
+  onIsPublicChange: (isPublic: boolean) => void;
   onSaveArchive: () => void;
   onShowArchiveManager: () => void;
   onExport: () => void;
@@ -27,10 +29,12 @@ export default function RulesDisplay({
   rules,
   tagWeights,
   archiveName,
+  isPublic,
   confirmedCount,
   onToggleRule,
   onDeleteRule,
   onArchiveNameChange,
+  onIsPublicChange,
   onSaveArchive,
   onShowArchiveManager,
   onExport,
@@ -118,8 +122,17 @@ export default function RulesDisplay({
                   {t("saveArchive")}
                 </button>
               </div>
-              <p className="text-xs text-[#7a7a88] mt-3">
-                {t("archiveWillInclude")}
+              <label className="flex items-center gap-2 mt-4 cursor-pointer select-none w-fit">
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(e) => onIsPublicChange(e.target.checked)}
+                  className="w-4 h-4 rounded border-[rgba(100,100,115,0.5)] accent-[#39ff14]"
+                />
+                <span className="text-sm text-[#c1c5cc]">{t("makePublicArchive")}</span>
+              </label>
+              <p className="text-xs text-[#7a7a88] mt-1">
+                {isPublic ? t("makePublicArchiveHint") : t("archiveWillInclude")}
               </p>
             </div>
           )}

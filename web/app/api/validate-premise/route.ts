@@ -5,11 +5,13 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
 import { calculateLawWeights } from "@/lib/laws/weight-calculator";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
+import { logger } from "@/lib/utils/logger";
 import {
   getOpenAIClient,
   cleanAIJsonResponse,
 } from "@/lib/utils/openai-client";
 import { loadValidatePremisePrompts } from "@/lib/utils/prompt-loader";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { Locale} from "@/types/i18n";
 
@@ -22,6 +24,9 @@ function getBaseUrl(): string {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "validate-premise", RATE_LIMIT_PRESETS.llmHeavy);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { corePremise, locale: requestLocale } = await request.json();
 
@@ -127,8 +132,8 @@ export async function POST(request: NextRequest) {
       ...validationResult,
       lawWeights, // 添加法则权重到返回结果
     });
-  } catch (_error: any) {
-    // Error handled silently
+  } catch (error) {
+    logger.error("Premise validation failed", { error });
     return NextResponse.json(
       { error: "Failed to validate premise" },
       { status: 500 },

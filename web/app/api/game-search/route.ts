@@ -1,7 +1,15 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import type { RawgGameResult } from "@/types";
+
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
+
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "game-search", RATE_LIMIT_PRESETS.external);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { query, genre } = await request.json();
 
@@ -37,39 +45,37 @@ export async function POST(request: NextRequest) {
       throw new Error("RAWG API request failed");
     }
 
-    const data = await response.json();
+    const data: { results: RawgGameResult[]; count: number } = await response.json();
 
     // 格式化响应，并过滤低质量结果
     const games = data.results
       .filter(
-        (game: any) =>
+        (game) =>
           // 过滤条件：必须有发行日期且评分 > 2.5，或者Metacritic评分存在
-          (game.released && game.released !== "Unknown" && game.rating > 2.5) ||
+          (game.released && game.released !== "Unknown" && (game.rating ?? 0) > 2.5) ||
           game.metacritic !== null,
       )
       .slice(0, 10) // 只取前10个
-      .map((game: any) => ({
+      .map((game) => ({
         id: game.id,
         name: game.name,
         released: game.released || "Unknown",
         rating: game.rating || 0,
         metacritic: game.metacritic || null,
-        platforms: game.platforms?.map((p: any) => p.platform.name) || [],
-        genres: game.genres?.map((g: any) => g.name) || [],
+        platforms: game.platforms?.map((p) => p.platform.name) || [],
+        genres: game.genres?.map((g) => g.name) || [],
         background_image: game.background_image || "",
         description: game.description_raw || "",
-        tags: game.tags?.slice(0, 5).map((t: any) => t.name) || [],
+        tags: game.tags?.slice(0, 5).map((t) => t.name) || [],
       }));
 
     return NextResponse.json({
       games,
       totalCount: data.count,
     });
-  } catch (error: any) {
-    // Error handled silently
-    return NextResponse.json(
-      { error: error.message || "Failed to search games" },
-      { status: 500 },
-    );
+  } catch (error) {
+    logger.error("Game search failed", { error });
+    const message = error instanceof Error ? error.message : "Failed to search games";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

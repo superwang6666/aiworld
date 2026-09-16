@@ -9,6 +9,8 @@ import { analyzeGaps } from "@/lib/experts/gap-analyzer";
 import { loadCoreExperts } from "@/lib/experts/loader";
 import { dispatchExperts } from "@/lib/experts/orchestrator";
 import { generateSpecialExpert } from "@/lib/experts/prompt-architect";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * POST /api/deac/dispatch
@@ -32,6 +34,9 @@ import { generateSpecialExpert } from "@/lib/experts/prompt-architect";
  * }
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "deac-dispatch", RATE_LIMIT_PRESETS.llmHeavy);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const {
       heterogeneity_point,
@@ -77,8 +82,11 @@ export async function POST(request: NextRequest) {
           // 缓存以备将来使用（使用指定语言）
           await cacheSpecialExpert(specialExpert, locale);
           specialExperts.push(specialExpert);
-        } catch (_error) {
-          // Error handled silently
+        } catch (error) {
+          logger.error("Failed to generate special expert, skipping", {
+            domain: gap.domain,
+            error,
+          });
           // 继续处理其他专家
         }
       }
@@ -99,8 +107,8 @@ export async function POST(request: NextRequest) {
       expert_responses: dispatch_result.expert_responses,
       special_experts_generated: specialExperts,
     });
-  } catch (_error: any) {
-    // Error handled silently
+  } catch (error) {
+    logger.error("Expert dispatch failed", { error });
     return NextResponse.json(
       { error: "专家调度失败" },
       { status: 500 },

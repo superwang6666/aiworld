@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { deleteArchive, loadArchive } from "@/lib/archive/archive-manager";
 import { requireAuth } from "@/lib/auth/middleware";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * DELETE /api/archive/delete?id={archiveId}
@@ -19,6 +21,9 @@ import { requireAuth } from "@/lib/auth/middleware";
  * }
  */
 export async function DELETE(req: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(req, "archive-delete", RATE_LIMIT_PRESETS.archive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // 要求用户登录
     const userOrResponse = await requireAuth(req);
@@ -67,7 +72,7 @@ export async function DELETE(req: NextRequest) {
       message: "存档删除成功",
     });
   } catch (error) {
-    // Error handled silently
+    logger.error("Archive delete failed", { error });
     return NextResponse.json(
       {
         error: "存档删除失败",

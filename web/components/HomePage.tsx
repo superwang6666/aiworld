@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 
 import { ART_STYLES } from "@/config/art-styles";
 
+import { toast } from "@/lib/utils/toast-store";
+
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 
@@ -103,11 +105,11 @@ export default function HomePage({ onStart, onRecommendMode }: HomePageProps) {
 
   const handleStart = () => {
     if (!worldDescription.trim()) {
-      alert(t('pleaseEnterDescription'));
+      toast.error(t('pleaseEnterDescription'));
       return;
     }
     if (!selectedArtStyle) {
-      alert(t('pleaseSelectArtStyle'));
+      toast.error(t('pleaseSelectArtStyle'));
       return;
     }
     setIsLoading(true);

@@ -1,0 +1,47 @@
+name: CI
+
+# .claude/rules/testing.md 和 security.md 里写的"80% 覆盖率 + TDD"、"提交前必须过
+# lint/type-check"等要求，此前完全没有任何东西真正强制执行——全靠开发者自觉记得手动
+# 跑，或者记得手动调用 code-reviewer/tdd-guide 这些 subagent。这个 workflow 把这些
+# 要求接入 CI：push/PR 到 main 时自动跑 lint、type-check、test（含每个文件的覆盖率
+# 阈值）、build，任何一步失败都会在 PR 上显式标红，而不是"没人查就当没发生"。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  verify:
+    name: lint / type-check / test / build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Test (with per-file coverage thresholds)
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build

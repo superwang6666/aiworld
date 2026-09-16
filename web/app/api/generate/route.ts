@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import type { Law, ExpertResponse } from "@/types";
+import type { Law, ExpertResponse, RuleTag, RawGeneratedRule } from "@/types";
 
 import { LAWS } from "@/config/law-names";
 
@@ -9,18 +9,23 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
 
 import { validateRuleDistribution } from "@/lib/laws/weight-calculator";
+import { getTagSteeringHints } from "@/lib/tags/tag-manager";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import {
   getOpenAIClient,
   cleanAIJsonResponse,
 } from "@/lib/utils/openai-client";
 import { loadGeneratePrompts } from "@/lib/utils/prompt-loader";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { Locale} from "@/types/i18n";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "generate", RATE_LIMIT_PRESETS.llmHeavy);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
-    const { corePremise, artStyle, lawWeights, mode, expertResponses, locale: requestLocale } =
+    const { corePremise, artStyle, lawWeights, mode, expertResponses, tagWeights, locale: requestLocale } =
       await request.json();
 
     if (!corePremise || !artStyle) {
@@ -64,11 +69,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 把本次会话已经建立起来的标签偏好(用户确认/删除过的规则)喂回生成 prompt，
+    // 否则这些偏好只会停留在"预测删除率"的展示上，永远不会影响下一批规则实际生成的方向
+    const tagPreferences: { avoid: string[]; favor: string[] } | undefined =
+      tagWeights && typeof tagWeights === "object"
+        ? getTagSteeringHints(tagWeights as Record<string, RuleTag>)
+        : undefined;
+
     const prompts = loadGeneratePrompts(
       locale,
       !!weightDistribution,
       weightDistribution,
-      expertInsights
+      expertInsights,
+      tagPreferences
     );
 
     // 添加语言指令
@@ -127,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and format the rules
-    const formattedRules = rulesData.map((rule: any, index: number) => {
+    const formattedRules = (rulesData as RawGeneratedRule[]).map((rule, index: number) => {
       // Ensure law is one of the valid laws
       const lawName = rule.law || rule.Law || "";
       const validLaw =

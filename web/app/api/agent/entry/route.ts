@@ -2,13 +2,17 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { getOpenAIClient } from '@/lib/utils/openai-client';
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from '@/lib/utils/rate-limit';
 
 /**
  * AgentPass 握手入口
- * 
+ *
  * Agent 通过 BYOK 模式自带 API Key 调用
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "agent-entry", RATE_LIMIT_PRESETS.llmHeavy);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body = await request.json();
 

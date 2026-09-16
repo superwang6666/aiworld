@@ -7,6 +7,8 @@ import { useTranslations } from "next-intl";
 
 import type { ArchiveMetadata } from "@/types";
 
+import { toast } from "@/lib/utils/toast-store";
+
 interface ArchiveManagerProps {
   onLoadArchive: (archiveId: string) => void;
   onClose: () => void;
@@ -65,7 +67,7 @@ export default function ArchiveManager({
       // 重新加载列表
       await loadArchives();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("deleteFailed"));
+      toast.error(err instanceof Error ? err.message : t("deleteFailed"));
     } finally {
       setDeletingId(null);
     }
@@ -127,9 +129,25 @@ export default function ArchiveManager({
                   className="relative bg-gradient-to-r from-[rgba(35,35,45,0.9)] to-[rgba(45,45,55,0.9)] border border-[rgba(100,100,115,0.4)] hover:border-[rgba(140,140,160,0.6)] rounded-2xl p-4 sm:p-5 transition-all duration-300 overflow-hidden group"
                 >
                   <div className="space-y-2">
-                    <h3 className="text-lg font-bold text-[#ebebf0] break-words">
-                      {archive.name}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg font-bold text-[#ebebf0] break-words">
+                        {archive.name}
+                      </h3>
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full whitespace-nowrap ${
+                          archive.is_public
+                            ? "bg-[rgba(57,255,20,0.12)] text-[#39ff14] border border-[rgba(57,255,20,0.4)]"
+                            : "bg-[rgba(120,120,135,0.15)] text-[#9ba0ad] border border-[rgba(120,120,135,0.4)]"
+                        }`}
+                      >
+                        {archive.is_public ? t("publicBadge") : t("privateBadge")}
+                      </span>
+                      {!archive.isOwner && (
+                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full whitespace-nowrap bg-[rgba(0,194,255,0.12)] text-[#00c2ff] border border-[rgba(0,194,255,0.4)]">
+                          {t("viewOnlyBadge")}
+                        </span>
+                      )}
+                    </div>
 
                     <p className="text-sm text-[#c1c5cc] line-clamp-2 break-words">
                       {archive.core_premise}
@@ -180,17 +198,19 @@ export default function ArchiveManager({
                         <Download className="w-4 h-4" />
                       </button>
 
-                      <button
-                        onClick={() => handleDelete(archive.id)}
-                        disabled={deletingId === archive.id}
-                        className="px-4 py-2 bg-gradient-to-r from-[rgba(139,0,0,0.4)] to-[rgba(139,0,0,0.3)] border border-[rgba(220,38,38,0.6)] hover:border-[rgba(220,38,38,0.9)] text-[#fca5a5] rounded-xl hover:bg-[rgba(139,0,0,0.6)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
-                      >
-                        {deletingId === archive.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
+                      {archive.isOwner && (
+                        <button
+                          onClick={() => handleDelete(archive.id)}
+                          disabled={deletingId === archive.id}
+                          className="px-4 py-2 bg-gradient-to-r from-[rgba(139,0,0,0.4)] to-[rgba(139,0,0,0.3)] border border-[rgba(220,38,38,0.6)] hover:border-[rgba(220,38,38,0.9)] text-[#fca5a5] rounded-xl hover:bg-[rgba(139,0,0,0.6)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                        >
+                          {deletingId === archive.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

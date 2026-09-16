@@ -61,7 +61,7 @@ export async function fetchWithLocale(
  * @param locale 语言代码（可选）
  * @returns Promise<Response>
  */
-export async function postWithLocale<T = any>(
+export async function postWithLocale<T = unknown>(
   url: string,
   data: T,
   locale?: Locale

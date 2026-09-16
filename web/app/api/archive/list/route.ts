@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { listArchives } from "@/lib/archive/archive-manager";
 import { getOptionalUser } from "@/lib/auth/middleware";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * GET /api/archive/list
@@ -14,7 +16,10 @@ import { getOptionalUser } from "@/lib/auth/middleware";
  *   archives: ArchiveMetadata[]
  * }
  */
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(req, "archive-list", RATE_LIMIT_PRESETS.archive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // 获取当前用户（可选）
     const user = await getOptionalUser();
@@ -23,25 +28,31 @@ export async function GET(_req: NextRequest) {
     const allArchives = await listArchives();
 
     // 过滤：显示用户自己的存档 + 公开存档
-    const filteredArchives = allArchives.filter((archive) => {
-      // 如果是用户自己的存档，显示
-      if (user && archive.user_id === user.id) {
-        return true;
-      }
-      // 如果是公开存档，显示
-      if (archive.is_public) {
-        return true;
-      }
-      // 如果存档没有 user_id（旧存档），显示（软迁移）
-      if (!archive.user_id) {
-        return true;
-      }
-      return false;
-    });
+    const filteredArchives = allArchives
+      .filter((archive) => {
+        // 如果是用户自己的存档，显示
+        if (user && archive.user_id === user.id) {
+          return true;
+        }
+        // 如果是公开存档，显示
+        if (archive.is_public) {
+          return true;
+        }
+        // 如果存档没有 user_id（旧存档），显示（软迁移）
+        if (!archive.user_id) {
+          return true;
+        }
+        return false;
+      })
+      // 标注当前用户是否为所有者，前端据此决定是否展示删除按钮
+      .map((archive) => ({
+        ...archive,
+        isOwner: !!user && (archive.user_id === user.id || !archive.user_id),
+      }));
 
     return NextResponse.json({ archives: filteredArchives });
   } catch (error) {
-    // Error handled silently
+    logger.error("Archive list failed", { error });
     return NextResponse.json(
       {
         error: "获取存档列表失败",

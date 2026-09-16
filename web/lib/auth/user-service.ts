@@ -3,7 +3,10 @@ import path from "path";
 
 import { v4 as uuidv4 } from "uuid";
 
+import { withFileLock, writeJsonFileAtomic } from "@/lib/utils/json-file-store";
+
 import { hashPassword, verifyPassword } from "./password-utils";
+
 
 import type {
   User,
@@ -54,7 +57,16 @@ async function readUserDatabase(): Promise<UserDatabase> {
  */
 async function writeUserDatabase(db: UserDatabase): Promise<void> {
   await ensureDataDir();
-  await fs.writeFile(USERS_FILE, JSON.stringify(db, null, 2), "utf-8");
+  await writeJsonFileAtomic(USERS_FILE, db);
+}
+
+/**
+ * 串行化对用户数据库的读改写(注册/改密等)，避免并发请求互相覆盖
+ */
+async function withUserDatabase<T>(
+  fn: (db: UserDatabase) => Promise<T>,
+): Promise<T> {
+  return withFileLock(USERS_FILE, async () => fn(await readUserDatabase()));
 }
 
 /**
@@ -80,7 +92,16 @@ async function readTokenDatabase(): Promise<TokenDatabase> {
  */
 async function writeTokenDatabase(db: TokenDatabase): Promise<void> {
   await ensureDataDir();
-  await fs.writeFile(TOKENS_FILE, JSON.stringify(db, null, 2), "utf-8");
+  await writeJsonFileAtomic(TOKENS_FILE, db);
+}
+
+/**
+ * 串行化对令牌数据库的读改写，避免并发请求互相覆盖
+ */
+async function withTokenDatabase<T>(
+  fn: (db: TokenDatabase) => Promise<T>,
+): Promise<T> {
+  return withFileLock(TOKENS_FILE, async () => fn(await readTokenDatabase()));
 }
 
 /**
@@ -107,35 +128,35 @@ export async function createUser(
   password: string,
   username: string,
 ): Promise<PublicUser> {
-  const db = await readUserDatabase();
-
-  // 检查邮箱是否已存在
-  if (db.email_index[email.toLowerCase()]) {
-    throw new Error("该邮箱已被注册");
-  }
-
-  // 加密密码
+  // 加密密码放在锁外面（较慢，且不依赖数据库当前状态），减少持锁时间
   const password_hash = await hashPassword(password);
 
-  // 创建用户
-  const now = new Date().toISOString();
-  const user: User = {
-    id: uuidv4(),
-    email: email.toLowerCase(),
-    password_hash,
-    username,
-    email_verified: false,
-    created_at: now,
-    updated_at: now,
-  };
+  return withUserDatabase(async (db) => {
+    // 检查邮箱是否已存在（放在锁内，避免并发注册产生重复用户）
+    if (db.email_index[email.toLowerCase()]) {
+      throw new Error("该邮箱已被注册");
+    }
 
-  // 添加到数据库
-  db.users.push(user);
-  db.email_index[user.email] = user.id;
+    // 创建用户
+    const now = new Date().toISOString();
+    const user: User = {
+      id: uuidv4(),
+      email: email.toLowerCase(),
+      password_hash,
+      username,
+      email_verified: false,
+      created_at: now,
+      updated_at: now,
+    };
 
-  await writeUserDatabase(db);
+    // 添加到数据库
+    db.users.push(user);
+    db.email_index[user.email] = user.id;
 
-  return toPublicUser(user);
+    await writeUserDatabase(db);
+
+    return toPublicUser(user);
+  });
 }
 
 /**
@@ -148,46 +169,46 @@ export async function createOAuthUser(
   oauthId: string,
   avatarUrl?: string,
 ): Promise<PublicUser> {
-  const db = await readUserDatabase();
-
-  // 检查 OAuth 用户是否已存在
-  const oauthKey = `${provider}:${oauthId}`;
-  if (db.oauth_index[oauthKey]) {
-    const existingUserId = db.oauth_index[oauthKey];
-    const existingUser = db.users.find((u) => u.id === existingUserId);
-    if (existingUser) {
-      return toPublicUser(existingUser);
+  return withUserDatabase(async (db) => {
+    // 检查 OAuth 用户是否已存在
+    const oauthKey = `${provider}:${oauthId}`;
+    if (db.oauth_index[oauthKey]) {
+      const existingUserId = db.oauth_index[oauthKey];
+      const existingUser = db.users.find((u) => u.id === existingUserId);
+      if (existingUser) {
+        return toPublicUser(existingUser);
+      }
     }
-  }
 
-  // 检查邮箱是否已存在
-  if (db.email_index[email.toLowerCase()]) {
-    throw new Error("该邮箱已被注册");
-  }
+    // 检查邮箱是否已存在
+    if (db.email_index[email.toLowerCase()]) {
+      throw new Error("该邮箱已被注册");
+    }
 
-  // 创建用户
-  const now = new Date().toISOString();
-  const user: User = {
-    id: uuidv4(),
-    email: email.toLowerCase(),
-    password_hash: "", // OAuth 用户没有密码
-    username,
-    avatar_url: avatarUrl,
-    email_verified: true, // OAuth 用户默认已验证
-    oauth_provider: provider,
-    oauth_id: oauthId,
-    created_at: now,
-    updated_at: now,
-  };
+    // 创建用户
+    const now = new Date().toISOString();
+    const user: User = {
+      id: uuidv4(),
+      email: email.toLowerCase(),
+      password_hash: "", // OAuth 用户没有密码
+      username,
+      avatar_url: avatarUrl,
+      email_verified: true, // OAuth 用户默认已验证
+      oauth_provider: provider,
+      oauth_id: oauthId,
+      created_at: now,
+      updated_at: now,
+    };
 
-  // 添加到数据库
-  db.users.push(user);
-  db.email_index[user.email] = user.id;
-  db.oauth_index[oauthKey] = user.id;
+    // 添加到数据库
+    db.users.push(user);
+    db.email_index[user.email] = user.id;
+    db.oauth_index[oauthKey] = user.id;
 
-  await writeUserDatabase(db);
+    await writeUserDatabase(db);
 
-  return toPublicUser(user);
+    return toPublicUser(user);
+  });
 }
 
 /**
@@ -264,21 +285,22 @@ export async function authenticateUser(
  * 更新用户邮箱验证状态
  */
 export async function markEmailAsVerified(userId: string): Promise<void> {
-  const db = await readUserDatabase();
-  const userIndex = db.users.findIndex((u) => u.id === userId);
+  await withUserDatabase(async (db) => {
+    const userIndex = db.users.findIndex((u) => u.id === userId);
 
-  if (userIndex === -1) {
-    throw new Error("用户不存在");
-  }
+    if (userIndex === -1) {
+      throw new Error("用户不存在");
+    }
 
-  // 不可变更新
-  db.users[userIndex] = {
-    ...db.users[userIndex],
-    email_verified: true,
-    updated_at: new Date().toISOString(),
-  };
+    // 不可变更新
+    db.users[userIndex] = {
+      ...db.users[userIndex],
+      email_verified: true,
+      updated_at: new Date().toISOString(),
+    };
 
-  await writeUserDatabase(db);
+    await writeUserDatabase(db);
+  });
 }
 
 /**
@@ -288,21 +310,24 @@ export async function updateUserPassword(
   userId: string,
   newPassword: string,
 ): Promise<void> {
-  const db = await readUserDatabase();
-  const userIndex = db.users.findIndex((u) => u.id === userId);
+  const password_hash = await hashPassword(newPassword);
 
-  if (userIndex === -1) {
-    throw new Error("用户不存在");
-  }
+  await withUserDatabase(async (db) => {
+    const userIndex = db.users.findIndex((u) => u.id === userId);
 
-  // 不可变更新
-  db.users[userIndex] = {
-    ...db.users[userIndex],
-    password_hash: await hashPassword(newPassword),
-    updated_at: new Date().toISOString(),
-  };
+    if (userIndex === -1) {
+      throw new Error("用户不存在");
+    }
 
-  await writeUserDatabase(db);
+    // 不可变更新
+    db.users[userIndex] = {
+      ...db.users[userIndex],
+      password_hash,
+      updated_at: new Date().toISOString(),
+    };
+
+    await writeUserDatabase(db);
+  });
 }
 
 // ==================== 邮箱验证令牌操作 ====================
@@ -313,26 +338,26 @@ export async function updateUserPassword(
 export async function createEmailVerificationToken(
   userId: string,
 ): Promise<EmailVerificationToken> {
-  const db = await readTokenDatabase();
+  return withTokenDatabase(async (db) => {
+    // 删除该用户的旧令牌
+    db.email_verification_tokens = db.email_verification_tokens.filter(
+      (t) => t.user_id !== userId,
+    );
 
-  // 删除该用户的旧令牌
-  db.email_verification_tokens = db.email_verification_tokens.filter(
-    (t) => t.user_id !== userId,
-  );
+    // 创建新令牌（24小时有效）
+    const token: EmailVerificationToken = {
+      id: uuidv4(),
+      user_id: userId,
+      token: uuidv4(),
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString(),
+    };
 
-  // 创建新令牌（24小时有效）
-  const token: EmailVerificationToken = {
-    id: uuidv4(),
-    user_id: userId,
-    token: uuidv4(),
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date().toISOString(),
-  };
+    db.email_verification_tokens.push(token);
+    await writeTokenDatabase(db);
 
-  db.email_verification_tokens.push(token);
-  await writeTokenDatabase(db);
-
-  return token;
+    return token;
+  });
 }
 
 /**
@@ -341,27 +366,28 @@ export async function createEmailVerificationToken(
 export async function verifyEmailToken(
   tokenString: string,
 ): Promise<string | null> {
-  const db = await readTokenDatabase();
-  const token = db.email_verification_tokens.find(
-    (t) => t.token === tokenString,
-  );
+  return withTokenDatabase(async (db) => {
+    const token = db.email_verification_tokens.find(
+      (t) => t.token === tokenString,
+    );
 
-  if (!token) {
-    return null;
-  }
+    if (!token) {
+      return null;
+    }
 
-  // 检查是否过期
-  if (new Date(token.expires_at) < new Date()) {
-    return null;
-  }
+    // 检查是否过期
+    if (new Date(token.expires_at) < new Date()) {
+      return null;
+    }
 
-  // 删除已使用的令牌
-  db.email_verification_tokens = db.email_verification_tokens.filter(
-    (t) => t.token !== tokenString,
-  );
-  await writeTokenDatabase(db);
+    // 删除已使用的令牌
+    db.email_verification_tokens = db.email_verification_tokens.filter(
+      (t) => t.token !== tokenString,
+    );
+    await writeTokenDatabase(db);
 
-  return token.user_id;
+    return token.user_id;
+  });
 }
 
 // ==================== 密码重置令牌操作 ====================
@@ -372,27 +398,27 @@ export async function verifyEmailToken(
 export async function createPasswordResetToken(
   userId: string,
 ): Promise<PasswordResetToken> {
-  const db = await readTokenDatabase();
+  return withTokenDatabase(async (db) => {
+    // 删除该用户的旧令牌
+    db.password_reset_tokens = db.password_reset_tokens.filter(
+      (t) => t.user_id !== userId,
+    );
 
-  // 删除该用户的旧令牌
-  db.password_reset_tokens = db.password_reset_tokens.filter(
-    (t) => t.user_id !== userId,
-  );
+    // 创建新令牌（1小时有效）
+    const token: PasswordResetToken = {
+      id: uuidv4(),
+      user_id: userId,
+      token: uuidv4(),
+      expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      created_at: new Date().toISOString(),
+      used: false,
+    };
 
-  // 创建新令牌（1小时有效）
-  const token: PasswordResetToken = {
-    id: uuidv4(),
-    user_id: userId,
-    token: uuidv4(),
-    expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    created_at: new Date().toISOString(),
-    used: false,
-  };
+    db.password_reset_tokens.push(token);
+    await writeTokenDatabase(db);
 
-  db.password_reset_tokens.push(token);
-  await writeTokenDatabase(db);
-
-  return token;
+    return token;
+  });
 }
 
 /**
@@ -427,11 +453,14 @@ export async function verifyPasswordResetToken(
 export async function markPasswordResetTokenAsUsed(
   tokenString: string,
 ): Promise<void> {
-  const db = await readTokenDatabase();
-  const token = db.password_reset_tokens.find((t) => t.token === tokenString);
+  await withTokenDatabase(async (db) => {
+    const token = db.password_reset_tokens.find(
+      (t) => t.token === tokenString,
+    );
 
-  if (token) {
-    token.used = true;
-    await writeTokenDatabase(db);
-  }
+    if (token) {
+      token.used = true;
+      await writeTokenDatabase(db);
+    }
+  });
 }

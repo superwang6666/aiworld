@@ -203,6 +203,40 @@ export function getMostDislikedTags(
 }
 
 /**
+ * 提取用于引导生成方向的标签提示
+ *
+ * 把用户已经通过确认/删除建立起来的标签偏好,转成可以喂给生成 prompt 的
+ * "避免方向" / "可发散方向" 标签名列表 —— 否则这些权重只用来事后预测删除率,
+ * 从不影响下一批规则实际生成的内容,用户的选择就没有真正被系统记住。
+ *
+ * 只统计 usage_count > 0(真实出现过)的标签,避免未使用过的预定义标签
+ * 因权重刚好落在阈值边缘而被误判。
+ *
+ * @param weights 当前标签权重映射
+ * @param limit 每个方向最多返回的标签数(避免 prompt 过长)
+ */
+export function getTagSteeringHints(
+  weights: Record<string, RuleTag>,
+  limit: number = 8,
+): { avoid: string[]; favor: string[] } {
+  const usedTags = Object.values(weights).filter((tag) => tag.usage_count > 0);
+
+  const avoid = usedTags
+    .filter((tag) => tag.weight < 0.3)
+    .sort((a, b) => a.weight - b.weight)
+    .slice(0, limit)
+    .map((tag) => tag.name);
+
+  const favor = usedTags
+    .filter((tag) => tag.weight > 0.7)
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, limit)
+    .map((tag) => tag.name);
+
+  return { avoid, favor };
+}
+
+/**
  * 重置所有标签权重到初始状态 (0.5)
  * 用于长期使用后权重极化时的重置
  *

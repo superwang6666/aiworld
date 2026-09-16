@@ -67,10 +67,9 @@ export default function UserMenu() {
   }
 
   // 已登录状态
-  const user = session.user as any;
-  const username =
-    user.username || user.name || user.email?.split("@")[0] || "User";
-  const avatarUrl = user.avatar_url || user.image;
+  const user = session.user;
+  const username = user.username || user.email?.split("@")[0] || "User";
+  const avatarUrl = user.avatar_url;
 
   return (
     <div className="relative" ref={menuRef}>

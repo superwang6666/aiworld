@@ -13,6 +13,7 @@ import {
   createEmailVerificationToken,
 } from "@/lib/auth/user-service";
 import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { RegisterRequest, RegisterResponse } from "@/types/auth";
 
@@ -20,6 +21,9 @@ import type { RegisterRequest, RegisterResponse } from "@/types/auth";
  * 用户注册 API
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "auth-register", RATE_LIMIT_PRESETS.authSensitive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body: RegisterRequest = await request.json();
     const { email, password, username } = body;
@@ -91,10 +95,11 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 },
     );
-  } catch (error: any) {
-    logger.error("User registration failed", { error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "注册失败，请稍后重试";
+    logger.error("User registration failed", { error: message });
     return NextResponse.json<RegisterResponse>(
-      { success: false, error: error.message || "注册失败，请稍后重试" },
+      { success: false, error: message },
       { status: 500 },
     );
   }

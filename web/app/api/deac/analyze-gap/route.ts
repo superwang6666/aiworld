@@ -6,6 +6,8 @@ import { DEFAULT_LOCALE } from "@/types/i18n";
 
 import { analyzeGaps } from "@/lib/experts/gap-analyzer";
 import { loadCoreExperts } from "@/lib/experts/loader";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * POST /api/deac/analyze-gap
@@ -25,6 +27,9 @@ import { loadCoreExperts } from "@/lib/experts/loader";
  * }
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "deac-analyze-gap", RATE_LIMIT_PRESETS.llmHeavy);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { heterogeneity_point, validation_result, locale = DEFAULT_LOCALE } =
       await request.json();
@@ -48,11 +53,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ gap_analysis: gapAnalysis });
-  } catch (error: any) {
-    // Error handled silently
-    return NextResponse.json(
-      { error: error.message || "差距分析失败" },
-      { status: 500 },
-    );
+  } catch (error) {
+    logger.error("Gap analysis failed", { error });
+    const message = error instanceof Error ? error.message : "差距分析失败";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

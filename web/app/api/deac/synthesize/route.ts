@@ -15,6 +15,7 @@ import {
 } from "@/lib/deac/weighted-synthesis";
 import { logger } from "@/lib/utils/logger";
 import { loadSynthesizePrompts } from "@/lib/utils/prompt-loader";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { Locale } from "@/types/i18n";
 
@@ -43,6 +44,9 @@ import type { Locale } from "@/types/i18n";
  * }
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "deac-synthesize", RATE_LIMIT_PRESETS.llmHeavy);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { expert_responses, heterogeneity_point, law_weights, locale: requestLocale } =
       await request.json();
@@ -149,10 +153,10 @@ ${r.warnings?.length ? `警告: ${r.warnings.join("; ")}` : ""}
     let synthesis;
     try {
       synthesis = JSON.parse(content);
-    } catch (parseError: any) {
+    } catch (parseError) {
       logger.error("JSON parsing failed for synthesis", {
         content: content.substring(0, 200),
-        error: parseError.message,
+        error: parseError instanceof Error ? parseError.message : parseError,
       });
 
       // 尝试修复常见的 JSON 问题
@@ -196,10 +200,11 @@ ${r.warnings?.length ? `警告: ${r.warnings.join("; ")}` : ""}
       weighted_predictions: weightedPredictions,
       math_consensus: mathConsensus,
     });
-  } catch (error: any) {
-    logger.error("Expert synthesis failed", { error: error.message });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "响应综合失败";
+    logger.error("Expert synthesis failed", { error: message });
     return NextResponse.json(
-      { error: error.message || "响应综合失败" },
+      { error: message },
       { status: 500 },
     );
   }

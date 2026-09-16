@@ -22,6 +22,7 @@ export interface ArchiveState {
   deacAnalysis: DEACAnalysis | null;
   rules: WorldRule[];
   tagWeights: Record<string, RuleTag>;
+  isPublic?: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ export interface RestoredState {
   rules: WorldRule[];
   tagWeights: Record<string, RuleTag>;
   archiveName: string;
+  isPublic: boolean;
 }
 
 /**
@@ -64,6 +66,7 @@ export function prepareArchiveData(state: ArchiveState): WorldArchive {
     name: state.archiveName,
     core_premise: state.corePremise,
     art_style: state.artStyle,
+    is_public: state.isPublic ?? false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     validation_result: state.validationResult!,
@@ -233,5 +236,6 @@ export function restoreArchiveState(
     rules: archive.rules || [],
     tagWeights: restoredTagWeights,
     archiveName: archive.name,
+    isPublic: archive.is_public ?? false,
   };
 }

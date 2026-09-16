@@ -7,6 +7,8 @@ import {
   markEmailAsVerified,
   getUserById,
 } from "@/lib/auth/user-service";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { VerifyEmailRequest, VerifyEmailResponse } from "@/types/auth";
 
@@ -14,6 +16,9 @@ import type { VerifyEmailRequest, VerifyEmailResponse } from "@/types/auth";
  * 邮箱验证 API
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "auth-verify-email", RATE_LIMIT_PRESETS.authSensitive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body: VerifyEmailRequest = await request.json();
     const { token } = body;
@@ -45,8 +50,12 @@ export async function POST(request: NextRequest) {
     if (user) {
       try {
         await sendWelcomeEmail(user.email, user.username);
-      } catch (_emailError) {
-        // Error handled silently - welcome email is not critical
+      } catch (emailError) {
+        // 欢迎邮件不是关键路径,失败不影响验证结果,但要留痕方便排查邮件服务问题
+        logger.error("Failed to send welcome email", {
+          userId: user.id,
+          error: emailError,
+        });
       }
     }
 
@@ -57,8 +66,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 },
     );
-  } catch (_error: any) {
-    // Error handled silently
+  } catch (error) {
+    logger.error("Email verification failed", { error });
     return NextResponse.json<VerifyEmailResponse>(
       { success: false, error: "验证失败，请稍后重试" },
       { status: 500 },

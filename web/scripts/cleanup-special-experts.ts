@@ -130,8 +130,8 @@ async function _cleanupDuplicates() {
   const finalExperts = await loadAllSpecialExperts();
   finalExperts.forEach((expert, idx) => {
     console.log(`${idx + 1}. ${expert.name} (${expert.domain})`);
-    if ((expert as any).merged_from && (expert as any).merged_from.length > 0) {
-      console.log(`   🔀 合并自: ${(expert as any).merged_from.join(', ')}`);
+    if (expert.merged_from && expert.merged_from.length > 0) {
+      console.log(`   🔀 合并自: ${expert.merged_from.join(', ')}`);
     }
   });
 

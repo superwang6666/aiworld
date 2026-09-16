@@ -7,6 +7,8 @@ import {
   updateUserPassword,
   markPasswordResetTokenAsUsed,
 } from "@/lib/auth/user-service";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { ResetPasswordRequest, PasswordResetResponse } from "@/types/auth";
 
@@ -14,6 +16,9 @@ import type { ResetPasswordRequest, PasswordResetResponse } from "@/types/auth";
  * 重置密码 API
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "auth-reset-password", RATE_LIMIT_PRESETS.authSensitive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body: ResetPasswordRequest = await request.json();
     const { token, new_password } = body;
@@ -57,10 +62,11 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 },
     );
-  } catch (error: any) {
-    // Error handled silently
+  } catch (error) {
+    logger.error("Password reset failed", { error });
+    const message = error instanceof Error ? error.message : "重置失败，请稍后重试";
     return NextResponse.json<PasswordResetResponse>(
-      { success: false, error: error.message || "重置失败，请稍后重试" },
+      { success: false, error: message },
       { status: 500 },
     );
   }

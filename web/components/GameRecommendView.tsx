@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import type { GameInfo } from "@/types";
 
 import { logger } from "@/lib/utils/logger";
+import { toast } from "@/lib/utils/toast-store";
 
 import CommonHeader from "@/components/common/CommonHeader";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
@@ -88,7 +89,7 @@ export default function GameRecommendView({
   const handleProceed = () => {
     const selected = searchResults.filter((g) => selectedGames.has(g.id));
     if (selected.length === 0) {
-      alert(t("pleaseSelectAtLeastOne"));
+      toast.error(t("pleaseSelectAtLeastOne"));
       return;
     }
     onGameSelect(selected);

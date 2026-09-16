@@ -4,6 +4,7 @@ import Discord from "next-auth/providers/discord";
 import Google from "next-auth/providers/google";
 import Twitter from "next-auth/providers/twitter";
 
+
 import {
   authenticateUser,
   getUserByOAuth,
@@ -11,13 +12,14 @@ import {
 } from "./user-service";
 
 import type { SessionUser } from "@/types/auth";
+import type { Provider } from "next-auth/providers";
 
 /**
  * 构建 OAuth providers 列表
  * 只添加已配置环境变量的 provider
  */
 function buildProviders() {
-  const providers: any[] = [
+  const providers: Provider[] = [
     // 邮箱密码登录（始终可用）
     Credentials({
       name: "credentials",
@@ -175,7 +177,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email_verified: token.emailVerified as boolean,
         };
 
-        // 使用类型断言，因为 NextAuth 的 session.user 类型与我们的 SessionUser 不完全匹配
+        // NextAuth v5 的 session 回调参数类型是 database/jwt 两种策略形状的交叉类型，
+        // 这里只用 jwt 策略，session.user 在类型层面仍会被推导成 AdapterUser & SessionUser，
+        // 无法通过模块扩展消除，只能显式断言。
         session.user = sessionUser as unknown as typeof session.user;
       }
 

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { DEFAULT_LOCALE } from "@/types/i18n";
 
 import SessionProvider from "@/components/auth/SessionProvider";
+import ToastContainer from "@/components/common/ToastContainer";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 
 import type { Metadata } from "next";
@@ -43,6 +44,7 @@ export default async function RootLayout({
         <SessionProvider>
           <I18nProvider messages={messages} initialLocale={DEFAULT_LOCALE}>
             {children}
+            <ToastContainer />
           </I18nProvider>
         </SessionProvider>
       </body>

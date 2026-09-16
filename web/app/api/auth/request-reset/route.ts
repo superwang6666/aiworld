@@ -7,6 +7,8 @@ import {
   getUserByEmail,
   createPasswordResetToken,
 } from "@/lib/auth/user-service";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type {
   RequestPasswordResetRequest,
@@ -17,6 +19,9 @@ import type {
  * 请求密码重置 API
  */
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "auth-request-reset", RATE_LIMIT_PRESETS.authSensitive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const body: RequestPasswordResetRequest = await request.json();
     const { email } = body;
@@ -67,8 +72,11 @@ export async function POST(request: NextRequest) {
     // 发送密码重置邮件
     try {
       await sendPasswordResetEmail(user.email, user.username, resetToken.token);
-    } catch (_emailError) {
-      // Error handled silently
+    } catch (emailError) {
+      logger.error("Failed to send password reset email", {
+        userId: user.id,
+        error: emailError,
+      });
       return NextResponse.json<PasswordResetResponse>(
         { success: false, error: "发送邮件失败，请稍后重试" },
         { status: 500 },
@@ -82,8 +90,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 200 },
     );
-  } catch (_error: any) {
-    // Error handled silently
+  } catch (error) {
+    logger.error("Password reset request failed", { error });
     return NextResponse.json<PasswordResetResponse>(
       { success: false, error: "请求失败，请稍后重试" },
       { status: 500 },

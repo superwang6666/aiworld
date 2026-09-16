@@ -1,3 +1,5 @@
+import type { Law } from '@/types';
+
 import type { WorldDirection, DirectionLawMapping } from '@/types/world-directions';
 
 /**
@@ -242,8 +244,8 @@ export function getDirectionById(id: string): WorldDirection | undefined {
 /**
  * 根据法则获取相关的基础方向
  */
-export function getDirectionsByLaw(law: string): WorldDirection[] {
-  return BASE_DIRECTIONS.filter((d) => d.associatedLaws.includes(law as any));
+export function getDirectionsByLaw(law: Law): WorldDirection[] {
+  return BASE_DIRECTIONS.filter((d) => d.associatedLaws.includes(law));
 }
 
 /**

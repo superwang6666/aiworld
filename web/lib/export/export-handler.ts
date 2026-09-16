@@ -1,5 +1,7 @@
 import type { WorldRule, ValidationResult } from "@/types";
 
+import { toast } from "@/lib/utils/toast-store";
+
 /**
  * 导出元数据接口
  */
@@ -100,7 +102,7 @@ export function exportConfirmedRules(
   const confirmedRules = rules.filter((rule) => rule.confirmed);
 
   if (confirmedRules.length === 0) {
-    alert(
+    toast.error(
       "No rules confirmed. Please confirm at least one rule before exporting.",
     );
     return;

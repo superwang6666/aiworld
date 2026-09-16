@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { DEFAULT_LOCALE } from "@/types/i18n";
 
 import { generateTagsForRules } from "@/lib/tags/tag-generator";
+import { logger } from "@/lib/utils/logger";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 import { getServerTranslation } from "@/lib/utils/server-translations";
 
 import type { Locale } from "@/types/i18n";
@@ -26,6 +28,9 @@ import type { Locale } from "@/types/i18n";
  * }
  */
 export async function POST(req: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(req, "tags-generate", RATE_LIMIT_PRESETS.llmLight);
+  if (rateLimitResponse) return rateLimitResponse;
+
   // 获取语言设置
   let locale: Locale = DEFAULT_LOCALE;
 
@@ -80,7 +85,7 @@ export async function POST(req: NextRequest) {
       updatedWeights: updatedWeights,
     });
   } catch (error) {
-    // Error handled silently
+    logger.error("Tag generation failed", { error });
     return NextResponse.json(
       {
         error: getServerTranslation('Validation', 'tagGenerationFailed', locale),

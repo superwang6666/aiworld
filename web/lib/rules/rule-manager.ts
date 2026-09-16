@@ -3,6 +3,7 @@ import type { WorldRule, RuleTag } from "@/types";
 import { LAW_NAMES } from "@/config/law-names";
 
 import { logger } from "@/lib/utils/logger";
+import { toast } from "@/lib/utils/toast-store";
 
 /**
  * 规则切换结果接口
@@ -172,6 +173,7 @@ export async function deleteRule(
         artStyle: artStyle.trim(),
         law: rule.law,
         existingRules: updatedRules.filter((r) => !r.rejected),
+        tagWeights: updatedTagWeights,
       }),
     });
 
@@ -195,7 +197,7 @@ export async function deleteRule(
           reasoning: errorData.reasoning,
           retries: errorData.retries,
         });
-        alert(
+        toast.error(
           `暂时无法生成不重复的规则\n相似度: ${errorData.similarity}%\n原因: ${errorData.reasoning}`,
         );
       } else {
@@ -220,6 +222,7 @@ export async function generateRandomRule(
   corePremise: string,
   artStyle: string,
   existingRules: WorldRule[],
+  tagWeights?: Record<string, RuleTag>,
 ): Promise<WorldRule> {
   const randomLaw = LAW_NAMES[Math.floor(Math.random() * LAW_NAMES.length)];
 
@@ -232,6 +235,7 @@ export async function generateRandomRule(
       artStyle: artStyle.trim(),
       law: randomLaw,
       existingRules: existingRules.filter((r) => !r.rejected),
+      tagWeights,
     }),
   });
 

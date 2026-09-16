@@ -9,6 +9,16 @@ import zhCN from '@/messages/zh-CN.json';
 import type { Locale } from '@/types/i18n';
 
 /**
+ * 把标签名数组格式化为可读列表,按语言选择合适的分隔符和"无"占位文案
+ */
+function formatTagList(tags: string[], locale: Locale): string {
+  if (tags.length === 0) {
+    return locale === 'zh-CN' ? '（无）' : '(none)';
+  }
+  return tags.join(locale === 'zh-CN' ? '、' : ', ');
+}
+
+/**
  * 从 i18n 消息文件加载 AI 提示词
  *
  * @param key - AIPrompts 命名空间内的点分隔键 (如 "generateSingle.system")
@@ -36,10 +46,13 @@ export function loadPrompt(
 
   // 支持嵌套键，如 "generateSingle.system"
   const parts = key.split('.');
-  let value: any = translations.AIPrompts;
+  let value: unknown = translations.AIPrompts;
 
   for (const part of parts) {
-    value = value?.[part];
+    value =
+      value && typeof value === 'object'
+        ? (value as Record<string, unknown>)[part]
+        : undefined;
   }
 
   if (typeof value !== 'string') {
@@ -70,13 +83,26 @@ export function loadPrompt(
 export function loadGenerateSinglePrompts(
   locale: Locale,
   lawName: string,
-  lawDescription: string
+  lawDescription: string,
+  tagPreferences?: { avoid: string[]; favor: string[] }
 ) {
+  let systemPrompt = loadPrompt('generateSingle.system', locale, {
+    lawName,
+    lawDescription,
+  });
+
+  if (tagPreferences && (tagPreferences.avoid.length > 0 || tagPreferences.favor.length > 0)) {
+    const header = loadPrompt('generateSingle.tagPreferenceHeader', locale, {
+      avoidList: formatTagList(tagPreferences.avoid, locale),
+      favorList: formatTagList(tagPreferences.favor, locale),
+    });
+    systemPrompt = systemPrompt.replace('{tagPreferenceSection}', header);
+  } else {
+    systemPrompt = systemPrompt.replace('{tagPreferenceSection}', '');
+  }
+
   return {
-    system: loadPrompt('generateSingle.system', locale, {
-      lawName,
-      lawDescription,
-    }),
+    system: systemPrompt,
     userTemplate: (corePremise: string, artStyle: string) =>
       loadPrompt('generateSingle.user', locale, {
         corePremise,
@@ -114,7 +140,8 @@ export function loadGeneratePrompts(
   locale: Locale,
   weighted: boolean = false,
   weightDistribution?: string,
-  expertInsights?: string
+  expertInsights?: string,
+  tagPreferences?: { avoid: string[]; favor: string[] }
 ) {
   let systemPrompt: string;
 
@@ -131,6 +158,17 @@ export function loadGeneratePrompts(
       systemPrompt = systemPrompt.replace('{expertInsightsSection}', expertHeader);
     } else {
       systemPrompt = systemPrompt.replace('{expertInsightsSection}', '');
+    }
+
+    // 如果本次会话已经积累了标签偏好信号,把它喂回生成 prompt
+    if (tagPreferences && (tagPreferences.avoid.length > 0 || tagPreferences.favor.length > 0)) {
+      const tagHeader = loadPrompt('generate.tagPreferenceHeader', locale, {
+        avoidList: formatTagList(tagPreferences.avoid, locale),
+        favorList: formatTagList(tagPreferences.favor, locale),
+      });
+      systemPrompt = systemPrompt.replace('{tagPreferenceSection}', tagHeader);
+    } else {
+      systemPrompt = systemPrompt.replace('{tagPreferenceSection}', '');
     }
   } else {
     systemPrompt = loadPrompt('generate.baseSystem', locale);

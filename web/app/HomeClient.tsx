@@ -6,6 +6,7 @@ import type {
   WorldRule,
   ValidationResult,
   DEACAnalysis,
+  GameInfo,
   LawWeight,
   RuleTag,
 } from "@/types";
@@ -29,6 +30,8 @@ import {
   generateRandomRule,
 } from "@/lib/rules/rule-manager";
 import { initializeTagWeights } from "@/lib/tags/tag-manager";
+import { logger } from "@/lib/utils/logger";
+import { toast } from "@/lib/utils/toast-store";
 import {
   validatePremise,
   triggerDEACAnalysis,
@@ -55,7 +58,7 @@ export default function HomeClient() {
   const [currentStep, setCurrentStep] = useState<WorkflowStep>("homepage");
   const [worldDescription, setWorldDescription] = useState("");
   const [selectedGamesForAnalysis, setSelectedGamesForAnalysis] = useState<
-    any[]
+    GameInfo[]
   >([]);
   const [corePremise, setCorePremise] = useState("");
   const [artStyle, setArtStyle] = useState("");
@@ -73,17 +76,19 @@ export default function HomeClient() {
   );
   const [showArchiveManager, setShowArchiveManager] = useState(false);
   const [archiveName, setArchiveName] = useState("");
+  const [isPublicArchive, setIsPublicArchive] = useState(false);
   const [currentArchiveId, setCurrentArchiveId] = useState<string>("");
   const [isTogglingRule, setIsTogglingRule] = useState(false);
 
-  // 主界面开始构建
-  const handleStart = async (description: string, selectedArtStyle: string) => {
-    setCorePremise(description);
-    setArtStyle(selectedArtStyle);
+  // 验证核心前提并异步触发 DEAC 专家分析
+  // 两个入口（直接描述 / 游戏推荐总结）走到这一步后逻辑完全一致,抽成一个函数
+  // 避免像之前那样同一段逻辑在两处分别维护、容易漏改。
+  const runValidationFlow = async (premise: string) => {
+    setCorePremise(premise);
 
     try {
       const { validationResult: result, lawWeights: weights } =
-        await validatePremise(description.trim());
+        await validatePremise(premise.trim());
       setValidationResult(result);
       setLawWeights(weights);
       setCurrentStep("validation");
@@ -91,20 +96,26 @@ export default function HomeClient() {
       // 触发 DEAC 专家分析（异步）
       setDeacLoading(true);
       setDeacFailed(false);
-      triggerDEACAnalysis(description.trim(), result, weights)
+      triggerDEACAnalysis(premise.trim(), result, weights)
         .then((analysis) => {
           setDeacAnalysis(analysis);
           setDeacLoading(false);
         })
-        .catch((_err) => {
-          // Error handled silently
+        .catch((err) => {
+          logger.error("DEAC analysis failed", { error: err });
           setDeacLoading(false);
           setDeacFailed(true);
         });
-    } catch (err: any) {
-      // Error handled silently
-      alert(err.message || "An error occurred while validating premise");
+    } catch (err) {
+      logger.error("Premise validation failed", { error: err });
+      toast.error(err instanceof Error ? err.message : "An error occurred while validating premise");
     }
+  };
+
+  // 主界面开始构建
+  const handleStart = async (description: string, selectedArtStyle: string) => {
+    setArtStyle(selectedArtStyle);
+    await runValidationFlow(description);
   };
 
   // 验证通过，开始生成规则
@@ -119,6 +130,7 @@ export default function HomeClient() {
         generationMode,
         deacAnalysis: deacAnalysis || undefined,
         deacLoading,
+        tagWeights,
       });
 
       // 为规则生成标签
@@ -128,8 +140,8 @@ export default function HomeClient() {
             await generateRulesWithTags(generatedRules, tagWeights);
           setRules(rulesWithTags);
           setTagWeights(updatedWeights);
-        } catch (_tagError) {
-          // Error handled silently
+        } catch (tagError) {
+          logger.error("Failed to generate tags for rules", { error: tagError });
           setRules(generatedRules);
         }
       } else {
@@ -137,9 +149,9 @@ export default function HomeClient() {
       }
 
       setCurrentStep("rules");
-    } catch (err: any) {
-      // Error handled silently
-      alert(err.message || "An error occurred while generating rules");
+    } catch (err) {
+      logger.error("Rule generation failed", { error: err });
+      toast.error(err instanceof Error ? err.message : "An error occurred while generating rules");
     } finally {
       setIsGeneratingRules(false);
     }
@@ -182,6 +194,7 @@ export default function HomeClient() {
               deacAnalysis,
               rules: result.updatedRules,
               tagWeights: result.updatedTagWeights,
+              isPublic: isPublicArchive,
             };
             const newArchiveId = await autoSaveArchive(
               archiveState,
@@ -195,10 +208,11 @@ export default function HomeClient() {
               corePremise.trim(),
               artStyle.trim(),
               result.updatedRules.filter((r) => !r.rejected),
+              result.updatedTagWeights,
             );
             setRules((prevRules) => [...prevRules, newRule]);
-          } catch (_err) {
-            // Error handled silently
+          } catch (err) {
+            logger.error("Auto-save or random rule generation failed", { error: err });
           } finally {
             setIsTogglingRule(false);
           }
@@ -206,8 +220,8 @@ export default function HomeClient() {
       } else {
         setIsTogglingRule(false);
       }
-    } catch (_err) {
-      // Error handled silently
+    } catch (err) {
+      logger.error("Toggle rule failed", { error: err });
       setIsTogglingRule(false);
     }
   };
@@ -232,8 +246,8 @@ export default function HomeClient() {
       setRules((prevRules) =>
         updateDeletionScores(prevRules, result.updatedTagWeights),
       );
-    } catch (_err) {
-      // Error handled silently
+    } catch (err) {
+      logger.error("Delete rule failed", { error: err });
     }
   };
 
@@ -248,6 +262,7 @@ export default function HomeClient() {
       deacAnalysis,
       rules,
       tagWeights,
+      isPublic: isPublicArchive,
     };
 
     const result = await saveArchiveManual(archiveName, archiveState);
@@ -256,10 +271,10 @@ export default function HomeClient() {
       if (result.archiveId && !currentArchiveId) {
         setCurrentArchiveId(result.archiveId);
       }
-      alert(`Archive "${archiveName}" saved successfully!`);
+      toast.success(`Archive "${archiveName}" saved successfully!`);
       setArchiveName("");
     } else {
-      alert(`Failed to save archive: ${result.error}`);
+      toast.error(`Failed to save archive: ${result.error}`);
     }
   };
 
@@ -268,7 +283,7 @@ export default function HomeClient() {
       const archive = await loadArchiveData(archiveId);
 
       if (!archive) {
-        alert("存档数据格式错误");
+        toast.error("存档数据格式错误");
         return;
       }
 
@@ -286,13 +301,14 @@ export default function HomeClient() {
       setTagWeights(restoredState.tagWeights);
       setCurrentArchiveId(archive.id);
       setArchiveName(restoredState.archiveName);
+      setIsPublicArchive(restoredState.isPublic);
       setCurrentStep("rules");
       setShowArchiveManager(false);
 
-      alert(`Archive "${archive.name}" loaded successfully!`);
-    } catch (_err) {
-      // Error handled silently
-      alert("Failed to load archive. Please try again.");
+      toast.success(`Archive "${archive.name}" loaded successfully!`);
+    } catch (err) {
+      logger.error("Load archive failed", { archiveId, error: err });
+      toast.error("Failed to load archive. Please try again.");
     }
   };
 
@@ -306,6 +322,7 @@ export default function HomeClient() {
     setArtStyle("");
     setValidationResult(null);
     setRules([]);
+    setIsPublicArchive(false);
   };
 
   const confirmedCount = rules.filter((r) => r.confirmed).length;
@@ -335,34 +352,7 @@ export default function HomeClient() {
           selectedGames={selectedGamesForAnalysis}
           worldDescription={worldDescription}
           onComplete={async (premiseSummary) => {
-            setCorePremise(premiseSummary);
-            // 直接进入验证流程
-            try {
-              const { validationResult: result, lawWeights: weights } =
-                await validatePremise(premiseSummary.trim());
-              setValidationResult(result);
-              setLawWeights(weights);
-              setCurrentStep("validation");
-
-              // 触发 DEAC 专家分析（异步）
-              setDeacLoading(true);
-              setDeacFailed(false);
-              triggerDEACAnalysis(premiseSummary.trim(), result, weights)
-                .then((analysis) => {
-                  setDeacAnalysis(analysis);
-                  setDeacLoading(false);
-                })
-                .catch((_err) => {
-                  // Error handled silently
-                  setDeacLoading(false);
-                  setDeacFailed(true);
-                });
-            } catch (err: any) {
-              // Error handled silently
-              alert(
-                err.message || "An error occurred while validating premise",
-              );
-            }
+            await runValidationFlow(premiseSummary);
           }}
           onBack={() => setCurrentStep("gameRecommend")}
         />
@@ -384,10 +374,12 @@ export default function HomeClient() {
           rules={rules}
           tagWeights={tagWeights}
           archiveName={archiveName}
+          isPublic={isPublicArchive}
           confirmedCount={confirmedCount}
           onToggleRule={handleToggleRule}
           onDeleteRule={handleDeleteRule}
           onArchiveNameChange={setArchiveName}
+          onIsPublicChange={setIsPublicArchive}
           onSaveArchive={handleSaveArchive}
           onShowArchiveManager={() => setShowArchiveManager(true)}
           onExport={handleExport}

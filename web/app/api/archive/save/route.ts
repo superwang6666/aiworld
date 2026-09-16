@@ -5,6 +5,7 @@ import type { WorldArchive } from "@/types";
 
 import { saveArchive } from "@/lib/archive/archive-manager";
 import { getOptionalUser } from "@/lib/auth/middleware";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 /**
  * 验证存档数据结构
@@ -63,6 +64,9 @@ function validateArchive(archive: unknown): archive is WorldArchive {
  * }
  */
 export async function POST(req: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(req, "archive-save", RATE_LIMIT_PRESETS.archive);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     // 获取当前用户（可选）
     const user = await getOptionalUser();

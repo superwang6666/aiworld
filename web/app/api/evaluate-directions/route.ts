@@ -7,10 +7,14 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { getOpenAIClient } from "@/lib/utils/openai-client";
 import { loadEvaluateDirectionsPrompts } from "@/lib/utils/prompt-loader";
+import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
 import type { Locale} from "@/types/i18n";
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = enforceRateLimit(request, "evaluate-directions", RATE_LIMIT_PRESETS.llmLight);
+  if (rateLimitResponse) return rateLimitResponse;
+
   try {
     const { lawImpacts, locale: requestLocale } = await request.json();
 

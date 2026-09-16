@@ -76,8 +76,18 @@ const eslintConfig = defineConfig([
       ],
       // 禁止重复导入
       "import/no-duplicates": "error",
-      // 禁止使用 any 类型（警告级别）
-      "@typescript-eslint/no-explicit-any": "warn",
+      // 禁止使用 any 类型
+      "@typescript-eslint/no-explicit-any": "error",
+      // 禁止使用 alert()，用 Toast 组件（lib/utils/toast-store）替代
+      // 注意：不用内置 no-alert，因为它连 confirm()/prompt() 一起禁掉了，
+      // 而 confirm() 目前还在用于删除等需要阻塞式确认的场景，不在这次替换范围内
+      "no-restricted-globals": [
+        "error",
+        {
+          name: "alert",
+          message: "使用 lib/utils/toast-store 的 toast.error()/toast.success() 代替 alert()",
+        },
+      ],
       // 要求一致的类型导入
       "@typescript-eslint/consistent-type-imports": [
         "error",
@@ -96,6 +106,8 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "node_modules/**",
+    // jest --coverage 生成的报告目录，不是源码
+    "coverage/**",
   ]),
 ]);
 
