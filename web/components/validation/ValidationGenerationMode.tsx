@@ -14,13 +14,14 @@ interface ModeOption {
   description: string;
   icon: ReactNode;
   badge?: string;
-  status?: { text: string; tone: "success" | "warning" };
+  status?: { text: string; tone: "success" | "warning" | "error" };
 }
 
 interface ValidationGenerationModeProps {
   generationMode: "fast" | "deep";
   deacAnalysis: DEACAnalysis | null;
   deacLoading: boolean;
+  deacFailed: boolean;
   onGenerationModeChange: (mode: "fast" | "deep") => void;
 }
 
@@ -28,6 +29,7 @@ export default function ValidationGenerationMode({
   generationMode,
   deacAnalysis,
   deacLoading,
+  deacFailed,
   onGenerationModeChange,
 }: ValidationGenerationModeProps) {
   const t = useTranslations("Validation");
@@ -48,9 +50,11 @@ export default function ValidationGenerationMode({
       icon: <Layers className="w-5 h-5 text-[#00c2ff]" />,
       status: deacLoading
         ? { text: t("expertAnalysisInProgress"), tone: "warning" }
-        : expertCount > 0
-          ? { text: `${expertCount} ${t("expertsReady")}`, tone: "success" }
-          : undefined,
+        : deacFailed
+          ? { text: t("expertAnalysisFailed"), tone: "error" }
+          : expertCount > 0
+            ? { text: `${expertCount} ${t("expertsReady")}`, tone: "success" }
+            : undefined,
     },
   ];
 
@@ -140,14 +144,18 @@ export default function ValidationGenerationMode({
                     className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
                       option.status.tone === "success"
                         ? "bg-[rgba(57,255,20,0.08)] text-[#39ff14]"
-                        : "bg-[rgba(255,186,38,0.08)] text-[#ffba26]"
+                        : option.status.tone === "error"
+                          ? "bg-[rgba(255,90,90,0.08)] text-[#ff5a5a]"
+                          : "bg-[rgba(255,186,38,0.08)] text-[#ffba26]"
                     }`}
                   >
                     <span
                       className={`h-2 w-2 rounded-full ${
                         option.status.tone === "success"
                           ? "bg-[#39ff14]"
-                          : "bg-[#ffba26]"
+                          : option.status.tone === "error"
+                            ? "bg-[#ff5a5a]"
+                            : "bg-[#ffba26]"
                       }`}
                     />
                     {option.status.text}

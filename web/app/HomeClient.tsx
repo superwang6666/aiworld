@@ -66,6 +66,7 @@ export default function HomeClient() {
   const [rules, setRules] = useState<WorldRule[]>([]);
   const [deacAnalysis, setDeacAnalysis] = useState<DEACAnalysis | null>(null);
   const [deacLoading, setDeacLoading] = useState(false);
+  const [deacFailed, setDeacFailed] = useState(false);
   const [isGeneratingRules, setIsGeneratingRules] = useState(false);
   const [tagWeights, setTagWeights] = useState<Record<string, RuleTag>>(
     initializeTagWeights(),
@@ -89,6 +90,7 @@ export default function HomeClient() {
 
       // 触发 DEAC 专家分析（异步）
       setDeacLoading(true);
+      setDeacFailed(false);
       triggerDEACAnalysis(description.trim(), result, weights)
         .then((analysis) => {
           setDeacAnalysis(analysis);
@@ -97,6 +99,7 @@ export default function HomeClient() {
         .catch((_err) => {
           // Error handled silently
           setDeacLoading(false);
+          setDeacFailed(true);
         });
     } catch (err: any) {
       // Error handled silently
@@ -343,6 +346,7 @@ export default function HomeClient() {
 
               // 触发 DEAC 专家分析（异步）
               setDeacLoading(true);
+              setDeacFailed(false);
               triggerDEACAnalysis(premiseSummary.trim(), result, weights)
                 .then((analysis) => {
                   setDeacAnalysis(analysis);
@@ -351,6 +355,7 @@ export default function HomeClient() {
                 .catch((_err) => {
                   // Error handled silently
                   setDeacLoading(false);
+                  setDeacFailed(true);
                 });
             } catch (err: any) {
               // Error handled silently
@@ -367,6 +372,7 @@ export default function HomeClient() {
           lawWeights={lawWeights}
           deacAnalysis={deacAnalysis}
           deacLoading={deacLoading}
+          deacFailed={deacFailed}
           generationMode={generationMode}
           isGeneratingRules={isGeneratingRules}
           onGenerationModeChange={setGenerationMode}

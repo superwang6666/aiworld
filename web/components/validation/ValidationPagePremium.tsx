@@ -31,6 +31,7 @@ interface ValidationPagePremiumProps {
   lawWeights: LawWeight[];
   deacAnalysis: DEACAnalysis | null;
   deacLoading: boolean;
+  deacFailed: boolean;
   generationMode: "fast" | "deep";
   isGeneratingRules?: boolean;
   onGenerationModeChange: (mode: "fast" | "deep") => void;
@@ -43,6 +44,7 @@ export default function ValidationPagePremium({
   lawWeights,
   deacAnalysis,
   deacLoading,
+  deacFailed,
   generationMode,
   isGeneratingRules = false,
   onGenerationModeChange,
@@ -127,6 +129,7 @@ export default function ValidationPagePremium({
             generationMode={generationMode}
             deacAnalysis={deacAnalysis}
             deacLoading={deacLoading}
+            deacFailed={deacFailed}
             onGenerationModeChange={onGenerationModeChange}
           />
 

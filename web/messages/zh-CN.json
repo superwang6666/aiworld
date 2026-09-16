@@ -189,6 +189,7 @@
     "deepModeDescription": "等待DEAC专家分析完成后，整合专家洞察生成规则。耗时10-15秒，规则更具深度和一致性。",
     "expertAnalysisInProgress": "专家分析中...",
     "expertsReady": "个专家就绪",
+    "expertAnalysisFailed": "专家分析失败，深度模式将退化为快速模式效果",
     "generatingDeepRules": "正在深度生成世界规则...",
     "generatingRules": "正在生成世界规则...",
     "integratingExpertInsights": "整合专家洞察，构建深度规则体系",

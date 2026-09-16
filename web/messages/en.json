@@ -189,6 +189,7 @@
     "deepModeDescription": "Wait for DEAC expert analysis to complete, then integrate expert insights to generate rules. Takes 10-15 seconds, rules are more in-depth and consistent.",
     "expertAnalysisInProgress": "Expert analysis in progress...",
     "expertsReady": "experts ready",
+    "expertAnalysisFailed": "Expert analysis failed, deep mode will fall back to fast mode results",
     "generatingDeepRules": "Generating world rules in deep mode...",
     "generatingRules": "Generating world rules...",
     "integratingExpertInsights": "Integrating expert insights, building in-depth rule system",
