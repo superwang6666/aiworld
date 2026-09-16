@@ -12,6 +12,23 @@ interface _LogEntry {
   timestamp: string;
 }
 
+/**
+ * JSON.stringify 默认序列化 Error 实例得到 "{}"——message/stack/name 都不是它自己的
+ * 可枚举属性。这个 replacer 把 data 里(包括嵌套的)Error 对象转成能看见内容的普通对象，
+ * 否则 logger.error("...", { error }) 在日志里就是一句没有任何信息量的空对象。
+ */
+function errorReplacer(_key: string, value: unknown): unknown {
+  if (value instanceof Error) {
+    return {
+      name: value.name,
+      message: value.message,
+      stack: value.stack,
+      ...("cause" in value ? { cause: value.cause } : {}),
+    };
+  }
+  return value;
+}
+
 class Logger {
   private isDevelopment = process.env.NODE_ENV === "development";
 
@@ -21,7 +38,7 @@ class Logger {
     data?: unknown,
   ): string {
     const timestamp = new Date().toISOString();
-    const dataStr = data ? ` ${JSON.stringify(data)}` : "";
+    const dataStr = data ? ` ${JSON.stringify(data, errorReplacer)}` : "";
     return `[${timestamp}] [${level.toUpperCase()}] ${message}${dataStr}`;
   }
 
