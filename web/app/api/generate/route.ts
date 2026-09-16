@@ -10,11 +10,11 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
 import { validateRuleDistribution } from "@/lib/laws/weight-calculator";
 import { getTagSteeringHints } from "@/lib/tags/tag-manager";
-import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import {
-  getOpenAIClient,
+  createChatCompletion,
   cleanAIJsonResponse,
-} from "@/lib/utils/openai-client";
+} from "@/lib/utils/llm-client";
+import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { loadGeneratePrompts } from "@/lib/utils/prompt-loader";
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
@@ -40,9 +40,6 @@ export async function POST(request: NextRequest) {
       requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
         ? requestLocale
         : DEFAULT_LOCALE;
-
-    // Get configured OpenAI client
-    const { openai, model } = getOpenAIClient();
 
     // 从 i18n 加载提示词
     // 如果有权重信息，使用加权提示词；深度模式会传递 expertResponses
@@ -88,26 +85,14 @@ export async function POST(request: NextRequest) {
     const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
     const userPrompt = prompts.userTemplate(corePremise, artStyle);
 
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
+    // 20 条规则的整批 JSON 输出，容易超出默认 max_tokens，给到更大的余量
+    const responseContent = await createChatCompletion({
+      systemPrompt,
+      userPrompt,
       temperature: 0.9,
-      response_format: { type: "json_object" },
+      jsonMode: true,
+      maxTokens: 8192,
     });
-
-    const responseContent = completion.choices[0]?.message?.content;
-    if (!responseContent) {
-      throw new Error("No response from AI service");
-    }
 
     // Parse the JSON response with robust error handling
     let rulesData;

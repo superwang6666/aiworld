@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
-import { getOpenAIClient } from "@/lib/utils/openai-client";
 import { loadAnalyzeGamesPrompts } from "@/lib/utils/prompt-loader";
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
@@ -29,8 +29,6 @@ export async function POST(request: NextRequest) {
       requestLocale && SUPPORTED_LOCALES.includes(requestLocale)
         ? requestLocale
         : DEFAULT_LOCALE;
-
-    const { openai, model } = getOpenAIClient();
 
     // 从 i18n 加载提示词
     const gamesDescription = games
@@ -58,20 +56,12 @@ export async function POST(request: NextRequest) {
     // 添加语言指令
     const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
 
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
+    const responseContent = await createChatCompletion({
+      systemPrompt,
+      userPrompt,
       temperature: 0.7,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    const responseContent = completion.choices[0]?.message?.content;
-    if (!responseContent) {
-      throw new Error("No response from AI service");
-    }
 
     let analysisResult;
     try {

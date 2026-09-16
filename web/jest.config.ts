@@ -64,6 +64,12 @@ const config: Config = {
       lines: 85,
       statements: 85,
     },
+    './lib/utils/llm-client.ts': {
+      branches: 95,
+      functions: 100,
+      lines: 100,
+      statements: 100,
+    },
   },
 };
 

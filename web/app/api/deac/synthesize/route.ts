@@ -1,8 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import OpenAI from "openai";
-
 import type { ExpertResponse } from "@/types";
 
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
@@ -13,6 +11,7 @@ import {
   generateEmergentInsights,
   identifyConsensus,
 } from "@/lib/deac/weighted-synthesis";
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { logger } from "@/lib/utils/logger";
 import { loadSynthesizePrompts } from "@/lib/utils/prompt-loader";
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
@@ -90,16 +89,6 @@ export async function POST(request: NextRequest) {
 
     const disagreements = detectDisagreements(expert_responses, 0.3);
 
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-    const baseURL = process.env.DEEPSEEK_API_KEY
-      ? "https://api.deepseek.com"
-      : undefined;
-    const model = process.env.DEEPSEEK_API_KEY
-      ? "deepseek-chat"
-      : "gpt-4o-mini";
-
-    const openai = new OpenAI({ apiKey, baseURL });
-
     // 从 i18n 加载提示词
     const mathInsightsSection = mathConsensus
       ? `
@@ -132,17 +121,19 @@ ${r.warnings?.length ? `警告: ${r.warnings.join("; ")}` : ""}
       emergentNote
     );
 
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: prompts.system },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.7,
-      response_format: { type: "json_object" },
-    });
-
-    let content = completion.choices[0]?.message?.content || "{}";
+    // 保留原本"拿不到内容就退化成 {} 继续走默认综合结构"的容错行为,
+    // 不让 LLM 这一步的失败拖垮已经算好的 weightedPredictions/mathConsensus
+    let content: string;
+    try {
+      content = await createChatCompletion({
+        systemPrompt: prompts.system,
+        userPrompt,
+        temperature: 0.7,
+        jsonMode: true,
+      });
+    } catch {
+      content = "{}";
+    }
 
     // 清理可能的 markdown 代码块
     content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");

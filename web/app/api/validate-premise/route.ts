@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
 import { calculateLawWeights } from "@/lib/laws/weight-calculator";
+import {
+  createChatCompletion,
+  cleanAIJsonResponse,
+} from "@/lib/utils/llm-client";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
 import { logger } from "@/lib/utils/logger";
-import {
-  getOpenAIClient,
-  cleanAIJsonResponse,
-} from "@/lib/utils/openai-client";
 import { loadValidatePremisePrompts } from "@/lib/utils/prompt-loader";
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
@@ -43,9 +43,6 @@ export async function POST(request: NextRequest) {
         ? requestLocale
         : DEFAULT_LOCALE;
 
-    // Get configured OpenAI client
-    const { openai, model } = getOpenAIClient();
-
     // 从 i18n 加载提示词
     const prompts = loadValidatePremisePrompts(locale);
     const userPrompt = prompts.userTemplate(corePremise);
@@ -53,26 +50,12 @@ export async function POST(request: NextRequest) {
     // 创建带语言指令的系统提示词
     const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
 
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
+    const responseContent = await createChatCompletion({
+      systemPrompt,
+      userPrompt,
       temperature: 0.7,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    const responseContent = completion.choices[0]?.message?.content;
-    if (!responseContent) {
-      throw new Error("No response from AI service");
-    }
 
     // Parse the JSON response with robust error handling
     let validationResult;

@@ -66,7 +66,7 @@ const validated = schema.parse(input)
 | `alert('...')` | `setError()` 或 Toast 组件 |
 | 注释掉的旧代码 | 直接删除，用 Git 历史找回 |
 | 组件内硬编码中英文 | `t('key')`（next-intl） |
-| `new OpenAI(...)` | `getOpenAIClient()`（lib/utils/openai-client.ts） |
+| `new OpenAI(...)` / `new Anthropic(...)` | `createChatCompletion()`（lib/utils/llm-client.ts） |
 
 ## Code Quality Checklist
 

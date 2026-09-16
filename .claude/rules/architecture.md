@@ -22,7 +22,7 @@ config/               # 集中常量（禁止魔法数字，统一在此定义�
   evaluation-rules.ts game-source-config.ts world-directions.ts
   predefined-tags.ts llm-language.ts
 lib/
-  utils/      openai-client.ts api-client.ts logger.ts
+  utils/      llm-client.ts api-client.ts logger.ts
               prompt-loader.ts llm-language.ts
               translations.ts server-translations.ts
   deac/       index background-service cache-manager weighted-synthesis
@@ -73,7 +73,7 @@ DEAC 专家系统流水线：核心设定 → 差距分析(gap-analyzer) → 专
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
-import { getOpenAIClient } from '@/lib/utils/openai-client';
+import { createChatCompletion } from '@/lib/utils/llm-client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     if (!body.requiredField) {
       return NextResponse.json({ error: 'Missing required field' }, { status: 400 });
     }
-    const { openai, model } = getOpenAIClient();
+    const content = await createChatCompletion({ systemPrompt, userPrompt, jsonMode: true });
     // ... 业务逻辑
     return NextResponse.json({ success: true, data: result });
   } catch (error: unknown) {

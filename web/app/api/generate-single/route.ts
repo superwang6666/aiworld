@@ -14,8 +14,8 @@ import {
 } from "@/lib/rules/semantic-matcher";
 import { generateTagsForRule } from "@/lib/tags/tag-generator";
 import { getTagSteeringHints } from "@/lib/tags/tag-manager";
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
-import { getOpenAIClient } from "@/lib/utils/openai-client";
 import { loadGenerateSinglePrompts } from "@/lib/utils/prompt-loader";
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 import { getServerTranslation } from "@/lib/utils/server-translations";
@@ -58,8 +58,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { openai, model } = getOpenAIClient();
-
     // 把本次会话已经建立起来的标签偏好喂回生成 prompt(道理同 /api/generate)
     const tagPreferences: { avoid: string[]; favor: string[] } | undefined =
       tagWeights && typeof tagWeights === "object"
@@ -78,26 +76,12 @@ export async function POST(request: NextRequest) {
     const systemPrompt = createLanguageAwareSystemPrompt(prompts.system, locale);
     const userPrompt = prompts.userTemplate(corePremise, artStyle);
 
-    const completion = await openai.chat.completions.create({
-      model: model,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
+    const responseContent = await createChatCompletion({
+      systemPrompt,
+      userPrompt,
       temperature: 0.9,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    const responseContent = completion.choices[0]?.message?.content;
-    if (!responseContent) {
-      throw new Error("No response from AI service");
-    }
 
     let ruleData;
     try {
@@ -188,27 +172,12 @@ export async function POST(request: NextRequest) {
           retryCount++;
 
           if (retryCount <= SEMANTIC_DEDUPLICATION_CONFIG.MAX_RETRIES) {
-            const retryCompletion = await openai.chat.completions.create({
-              model: model,
-              messages: [
-                {
-                  role: "system",
-                  content: systemPrompt,
-                },
-                {
-                  role: "user",
-                  content: userPrompt,
-                },
-              ],
+            const retryResponseContent = await createChatCompletion({
+              systemPrompt,
+              userPrompt,
               temperature: 0.9 + retryCount * 0.05,
-              response_format: { type: "json_object" },
+              jsonMode: true,
             });
-
-            const retryResponseContent =
-              retryCompletion.choices[0]?.message?.content;
-            if (!retryResponseContent) {
-              throw new Error("No response from AI service during retry");
-            }
 
             let cleanedContent = retryResponseContent.trim();
             const jsonMatch = cleanedContent.match(

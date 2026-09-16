@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/types/i18n";
 
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { createLanguageAwareSystemPrompt } from "@/lib/utils/llm-language";
-import { getOpenAIClient } from "@/lib/utils/openai-client";
 import { loadMergePremisePrompts } from "@/lib/utils/prompt-loader";
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from "@/lib/utils/rate-limit";
 
@@ -44,8 +44,6 @@ export async function POST(request: NextRequest) {
         ? requestLocale
         : DEFAULT_LOCALE;
 
-    const { openai, model } = getOpenAIClient();
-
     const prompts = loadMergePremisePrompts(locale);
     const systemPrompt = createLanguageAwareSystemPrompt(
       prompts.system,
@@ -57,20 +55,12 @@ export async function POST(request: NextRequest) {
       existingDraft ?? "",
     );
 
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
+    const responseContent = await createChatCompletion({
+      systemPrompt,
+      userPrompt,
       temperature: 0.6,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    const responseContent = completion.choices[0]?.message?.content;
-    if (!responseContent) {
-      throw new Error("No response from AI service");
-    }
 
     let mergeResult;
     try {

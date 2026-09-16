@@ -7,10 +7,9 @@
  * 3. 性能优化:仅比对同一法则的规则
  */
 
-import OpenAI from "openai";
-
 import type { WorldRule } from "@/types";
 
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { logger } from "@/lib/utils/logger";
 
 /**
@@ -34,23 +33,6 @@ export interface SemanticDuplicationCheckResult {
 }
 
 /**
- * 获取OpenAI客户端实例
- */
-function getOpenAIClient(): OpenAI {
-  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("缺少API密钥: DEEPSEEK_API_KEY或OPENAI_API_KEY未设置");
-  }
-
-  const baseURL = process.env.DEEPSEEK_API_KEY
-    ? "https://api.deepseek.com"
-    : undefined;
-
-  return new OpenAI({ apiKey, baseURL });
-}
-
-/**
  * 使用LLM计算两条规则的语义相似度
  *
  * @param ruleA 规则A
@@ -61,9 +43,6 @@ async function calculateSemanticSimilarity(
   ruleA: WorldRule,
   ruleB: WorldRule,
 ): Promise<{ similarity: number; reasoning: string }> {
-  const openai = getOpenAIClient();
-  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
-
   const prompt = `你是一个世界构建规则分析专家。请分析以下两条规则是否表达了相似或重复的概念。
 
 【规则A】
@@ -94,20 +73,12 @@ async function calculateSemanticSimilarity(
 - 0-49: 完全不同的规则`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "你是世界构建规则分析专家。只返回有效的 JSON。",
-        },
-        { role: "user", content: prompt },
-      ],
+    let content = await createChatCompletion({
+      systemPrompt: "你是世界构建规则分析专家。只返回有效的 JSON。",
+      userPrompt: prompt,
       temperature: 0.3, // 低温度保证一致性
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    let content = completion.choices[0]?.message?.content || "{}";
     // 清理可能的 markdown 包装
     content = content
       .replace(/```json\n?/g, "")

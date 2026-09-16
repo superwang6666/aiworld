@@ -1,5 +1,3 @@
-import OpenAI from "openai";
-
 import type {
   ExpertConfig,
   ExpertResponse,
@@ -8,6 +6,7 @@ import type {
   Law,
 } from "@/types";
 
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { logger } from "@/lib/utils/logger";
 
 interface DispatchInput {
@@ -96,14 +95,6 @@ async function queryExpert(
   heterogeneity_point: string,
   context: DEACContext,
 ): Promise<ExpertResponse> {
-  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY
-    ? "https://api.deepseek.com"
-    : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
-
-  const openai = new OpenAI({ apiKey, baseURL });
-
   // 根据专家的 locale 决定使用的语言
   const isEnglish = expert.locale === "en";
   const separator = isEnglish ? ", " : "、";
@@ -170,17 +161,12 @@ ${
 }`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
+    let content = await createChatCompletion({
+      systemPrompt,
+      userPrompt,
       temperature: 0.7,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    let content = completion.choices[0]?.message?.content || "{}";
 
     // 清理可能的 markdown 代码块
     content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");

@@ -1,13 +1,11 @@
-import OpenAI from "openai";
-
 import type { WorldRule, RuleTag } from "@/types";
 
 
 import { PREDEFINED_TAGS } from "@/config/predefined-tags";
 
 
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { logger } from "@/lib/utils/logger";
-import { getServerTranslation } from '@/lib/utils/server-translations';
 
 import { KEYWORDS_ZH, KEYWORDS_EN } from './keywords-i18n';
 
@@ -20,27 +18,6 @@ import type { Locale } from '@/types/i18n';
  * 1. 首先从预定义标签池匹配
  * 2. 如果需要,使用LLM生成额外的特殊标签
  */
-
-// API客户端
-let openaiClient: OpenAI | null = null;
-
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error(getServerTranslation('Tags', 'missingApiKey', 'zh-CN'));
-    }
-
-    openaiClient = new OpenAI({
-      apiKey: apiKey,
-      baseURL: process.env.DEEPSEEK_API_KEY
-        ? "https://api.deepseek.com"
-        : "https://api.openai.com/v1",
-    });
-  }
-
-  return openaiClient;
-}
 
 /**
  * 从预定义标签池匹配规则标签
@@ -83,8 +60,6 @@ export async function generateSupplementaryTags(
   rule: WorldRule,
   existingTagIds: string[],
 ): Promise<RuleTag[]> {
-  const client = getOpenAIClient();
-
   const existingTagNames = existingTagIds
     .map((id) => PREDEFINED_TAGS.find((t) => t.id === id)?.name)
     .filter(Boolean)
@@ -114,15 +89,12 @@ Return ONLY a JSON array of tag objects with this format:
 Do not include any other text.`;
 
   try {
-    const response = await client.chat.completions.create({
-      model: process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4",
-      messages: [{ role: "user", content: prompt }],
+    const content = await createChatCompletion({
+      userPrompt: prompt,
       temperature: 0.7,
-      max_tokens: 200,
+      maxTokens: 200,
+      jsonMode: true,
     });
-
-    const content = response.choices[0]?.message?.content;
-    if (!content) return [];
 
     // 清理响应 (移除可能的markdown包装)
     const cleaned = content

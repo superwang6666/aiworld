@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { getOpenAIClient } from '@/lib/utils/openai-client';
+import { getByokOpenAIClient } from '@/lib/utils/llm-client';
 import { enforceRateLimit, RATE_LIMIT_PRESETS } from '@/lib/utils/rate-limit';
 
 /**
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     console.log(`[AgentPass] ${identity || 'unknown'} - Task: ${task.action}`);
 
     // ✅ 用 Agent 的 API Key 调用 LLM
-    const { openai, model } = getOpenAIClient(credentials.api_key);
+    const { openai, model } = getByokOpenAIClient(credentials.api_key);
     
     let result;
 

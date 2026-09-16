@@ -7,7 +7,7 @@
 ## Stack（以 web/package.json、配置文件为准）
 - Next.js 16 (App Router) · React 19 · TypeScript 5（strict）
 - Tailwind CSS 4 · next-intl 4（i18n）· NextAuth 5 beta（认证）
-- OpenAI SDK 6（接 DeepSeek/OpenAI，见 lib/utils/openai-client.ts）
+- OpenAI SDK 6 + Anthropic SDK（接 Claude/DeepSeek/OpenAI，统一入口见 lib/utils/llm-client.ts）
 - 测试：Jest 30 + Testing Library（jsdom）
 - 路径别名：`@/*` → `web/` 根（tsconfig.json）
 
@@ -34,12 +34,12 @@ messages/   i18n 翻译（zh-CN.json 默认 / en.json）
 ```
 
 ## 关键约定（细节见对应 rules 文件）
-- LLM 客户端只用 `getOpenAIClient()`，禁止在路由里直接 `new OpenAI(...)`。
+- LLM 调用只用 `createChatCompletion()`（`lib/utils/llm-client.ts`），禁止在路由/lib 里直接 `new OpenAI(...)` / `new Anthropic(...)`。Provider 优先级：`ANTHROPIC_API_KEY` > `DEEPSEEK_API_KEY` > `OPENAI_API_KEY`（Agent BYOK 场景固定走 OpenAI 官方，见 `getByokOpenAIClient()`）。
 - 跨文件类型只定义在 `types/index.ts`，组件内不重复定义。
 - 用户可见文本全部走 i18n（next-intl），禁止硬编码中英文。
 - 工作流是 HomeClient.tsx 里的状态机（homepage → gameRecommend → validation → rules），不是单页表单。
 - i18n 不用 URL locale 路由：服务端 i18n.ts 固定 DEFAULT_LOCALE，切换靠客户端 useI18n/setLocale。
-- 测试：jest.config.ts 已配置（含 per-file 覆盖率阈值），但**仓库当前无任何测试文件**。新增测试按 jest 约定放置。
+- 测试：jest.config.ts 已配置 per-file 覆盖率阈值，纯逻辑/工具模块按 jest 约定放同目录 `*.test.ts`。
 
 ## Rules 索引（权威细节，按需阅读）
 - 编码风格 / 不可变 / 文件大小 / 禁止事项 — see .claude/rules/coding-style.md

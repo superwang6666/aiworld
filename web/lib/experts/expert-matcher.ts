@@ -1,11 +1,10 @@
-import OpenAI from "openai";
-
 import type { ExpertConfig } from "@/types";
 
 
 import { DEFAULT_LOCALE } from "@/types/i18n";
 
 import { cacheSpecialExpert } from "@/lib/deac/cache-manager";
+import { createChatCompletion } from "@/lib/utils/llm-client";
 import { logger } from "@/lib/utils/logger";
 
 import { loadAllSpecialExperts } from "./loader";
@@ -33,14 +32,6 @@ async function analyzeExpertSimilarity(
   existingExpert: ExpertConfig,
   newRequest: SpecialExpertRequest,
 ): Promise<{ similarity: number; reason: string }> {
-  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY
-    ? "https://api.deepseek.com"
-    : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
-
-  const openai = new OpenAI({ apiKey, baseURL });
-
   const prompt = `你是专家匹配分析器。请分析已有专家与新需求的相似度。
 
 **已有专家:**
@@ -70,17 +61,12 @@ async function analyzeExpertSimilarity(
 - 0-49: 完全不同,必须创建新专家`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        { role: "system", content: "你是专家匹配分析器。只返回有效的 JSON。" },
-        { role: "user", content: prompt },
-      ],
+    let content = await createChatCompletion({
+      systemPrompt: "你是专家匹配分析器。只返回有效的 JSON。",
+      userPrompt: prompt,
       temperature: 0.3, // 低温度保证一致性
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    let content = completion.choices[0]?.message?.content || "{}";
     content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
     const result = JSON.parse(content);
@@ -101,14 +87,6 @@ async function updateExpertWithNewKnowledge(
   existingExpert: ExpertConfig,
   newRequest: SpecialExpertRequest,
 ): Promise<ExpertConfig> {
-  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY
-    ? "https://api.deepseek.com"
-    : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
-
-  const openai = new OpenAI({ apiKey, baseURL });
-
   const prompt = `你是专家配置更新助手。请将新知识整合到已有专家中。
 
 **已有专家配置:**
@@ -132,20 +110,12 @@ ${JSON.stringify(existingExpert, null, 2)}
 返回完整的更新后的专家配置 JSON。保持原有结构,只增强内容。`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "你是专家配置更新助手。只返回有效的 JSON。",
-        },
-        { role: "user", content: prompt },
-      ],
+    let content = await createChatCompletion({
+      systemPrompt: "你是专家配置更新助手。只返回有效的 JSON。",
+      userPrompt: prompt,
       temperature: 0.7,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    let content = completion.choices[0]?.message?.content || "{}";
     content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
     const updatedExpert = JSON.parse(content);
@@ -305,14 +275,6 @@ export async function mergeExperts(
     return experts[0];
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY;
-  const baseURL = process.env.DEEPSEEK_API_KEY
-    ? "https://api.deepseek.com"
-    : undefined;
-  const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "gpt-4o-mini";
-
-  const openai = new OpenAI({ apiKey, baseURL });
-
   const prompt = `你是专家配置合并助手。请将多个相似专家合并为一个综合专家。
 
 **待合并的专家配置:**
@@ -339,20 +301,12 @@ ${JSON.stringify(e, null, 2)}
 返回完整的合并后的专家配置 JSON。`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model,
-      messages: [
-        {
-          role: "system",
-          content: "你是专家配置合并助手。只返回有效的 JSON。",
-        },
-        { role: "user", content: prompt },
-      ],
+    let content = await createChatCompletion({
+      systemPrompt: "你是专家配置合并助手。只返回有效的 JSON。",
+      userPrompt: prompt,
       temperature: 0.7,
-      response_format: { type: "json_object" },
+      jsonMode: true,
     });
-
-    let content = completion.choices[0]?.message?.content || "{}";
     content = content.replace(/```json\n?/g, "").replace(/```\n?/g, "");
 
     const mergedExpert = JSON.parse(content);
